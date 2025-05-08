@@ -13,16 +13,16 @@
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"2900"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022aNPcLFwdCCGS2v1guSR64Htd4Ly5uclT7taAptnMPbs=\u0022"},{"Name":"Last-Modified","Value":"Wed, 30 Apr 2025 15:45:55 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/BlazorApp1/BlazorApp1.bundle.scp.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\BlazorApp1.xghi6c7q6u.bundle.scp.css'))</AssetFile>
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\BlazorApp1.e0hm1c4msc.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-8Y5A4tf3R9ZHIwRdUUMvO70NwxaO/quy/wkBaIFJ/6o="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"26223"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00228Y5A4tf3R9ZHIwRdUUMvO70NwxaO/quy/wkBaIFJ/6o=\u0022"},{"Name":"Last-Modified","Value":"Tue, 06 May 2025 16:09:12 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-Yu8U55o3ZUS/ifjjtP\u002BT0jf\u002BVzl8JCbkJ9amk\u002Bo\u002Bly8="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"25997"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022Yu8U55o3ZUS/ifjjtP\u002BT0jf\u002BVzl8JCbkJ9amk\u002Bo\u002Bly8=\u0022"},{"Name":"Last-Modified","Value":"Thu, 08 May 2025 17:50:39 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/BlazorApp1/BlazorApp1.xghi6c7q6u.bundle.scp.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\BlazorApp1.xghi6c7q6u.bundle.scp.css'))</AssetFile>
+    <StaticWebAssetEndpoint Include="_content/BlazorApp1/BlazorApp1.e0hm1c4msc.bundle.scp.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\BlazorApp1.e0hm1c4msc.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xghi6c7q6u"},{"Name":"integrity","Value":"sha256-8Y5A4tf3R9ZHIwRdUUMvO70NwxaO/quy/wkBaIFJ/6o="},{"Name":"label","Value":"_content/BlazorApp1/BlazorApp1.bundle.scp.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"26223"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00228Y5A4tf3R9ZHIwRdUUMvO70NwxaO/quy/wkBaIFJ/6o=\u0022"},{"Name":"Last-Modified","Value":"Tue, 06 May 2025 16:09:12 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"e0hm1c4msc"},{"Name":"integrity","Value":"sha256-Yu8U55o3ZUS/ifjjtP\u002BT0jf\u002BVzl8JCbkJ9amk\u002Bo\u002Bly8="},{"Name":"label","Value":"_content/BlazorApp1/BlazorApp1.bundle.scp.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"25997"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022Yu8U55o3ZUS/ifjjtP\u002BT0jf\u002BVzl8JCbkJ9amk\u002Bo\u002Bly8=\u0022"},{"Name":"Last-Modified","Value":"Thu, 08 May 2025 17:50:39 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/BlazorApp1/favicon.ifv42okdf2.png">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\favicon.png'))</AssetFile>

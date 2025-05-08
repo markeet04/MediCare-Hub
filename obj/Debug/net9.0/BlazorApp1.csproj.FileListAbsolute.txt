@@ -77,5 +77,6 @@ C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\BlazorApp1.genruntimec
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\ref\BlazorApp1.dll
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Layout\DoctorLayout.razor.rz.scp.css
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Pages\Doctor\DoctorDashboard.razor.rz.scp.css
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-xghi6c7q6u.gz
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-xghi6c7q6u.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\BlazorApp1.sourcelink.json
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-e0hm1c4msc.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-e0hm1c4msc.gz
