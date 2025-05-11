@@ -16,7 +16,6 @@ C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\L
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Layout\NavMenu.razor.rz.scp.css
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\bundle\BlazorApp1.styles.css
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\projectbundle\BlazorApp1.bundle.scp.css
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\psnyflj9j1-khy4lop6wu.gz
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\xscm68l0ox-bqjiyaj88i.gz
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\a413awwuph-c2jlpeoesf.gz
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\hbq4d3qinw-erw9l3u2r3.gz
@@ -75,8 +74,8 @@ C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\refint\BlazorApp1.dll
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\BlazorApp1.pdb
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\BlazorApp1.genruntimeconfig.cache
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\ref\BlazorApp1.dll
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Layout\DoctorLayout.razor.rz.scp.css
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Pages\Doctor\DoctorDashboard.razor.rz.scp.css
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\BlazorApp1.sourcelink.json
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-e0hm1c4msc.gz
-C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-e0hm1c4msc.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\psnyflj9j1-w6cxmjiq0i.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-uin0erjt0i.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-uin0erjt0i.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\bx461rgr7t-q6c21z2nuc.gz

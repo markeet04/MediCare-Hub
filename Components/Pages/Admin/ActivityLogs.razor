@@ -1,0 +1,183 @@
+@page "/admin/logs"
+@layout BlazorApp1.Components.Layout.AdminLayout
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Activity Logs</h4>
+        <p class="text-muted">Track and monitor system activity</p>
+    </div>
+    <div>
+        <button class="btn btn-outline-primary me-2 rounded-pill shadow-sm px-3">
+            <i class="bi bi-funnel me-2"></i>Filter
+        </button>
+        <button class="btn btn-outline-primary rounded-pill shadow-sm px-3">
+            <i class="bi bi-download me-2"></i>Export
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 fw-bold">System Logs</h5>
+        <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text bg-light border-end-0 text-muted">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-light border-start-0" placeholder="Search logs...">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" style="width: 200px;">Timestamp</th>
+                        <th scope="col" style="width: 150px;">User</th>
+                        <th scope="col">Action</th>
+                        <th scope="col" style="width: 100px">Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in logs)
+                    {
+                        <tr class="log-row">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2 text-primary"><i class="bi bi-clock"></i></span>
+                                    @log.Timestamp.ToString("MMM dd, yyyy HH:mm:ss")
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                        @log.User.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <span>@log.User</span>
+                                </div>
+                            </td>
+                            <td>@log.Action</td>
+                            <td>
+                                @{
+                                    var badgeType = log.Action.Contains("Created") ? "bg-success" : 
+                                                    log.Action.Contains("Deleted") ? "bg-danger" : 
+                                                    log.Action.Contains("Updated") ? "bg-warning" : "bg-info";
+                                    var actionType = log.Action.Contains("Created") ? "Create" : 
+                                                     log.Action.Contains("Deleted") ? "Delete" : 
+                                                     log.Action.Contains("Updated") ? "Update" : "View";
+                                }
+                                <span class="badge rounded-pill @badgeType bg-opacity-75">@actionType</span>
+                            </td>
+                        </tr>
+                    }
+                    <tr class="log-row">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2 text-primary"><i class="bi bi-clock"></i></span>
+                                @DateTime.Now.AddHours(-2).ToString("MMM dd, yyyy HH:mm:ss")
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                    A
+                                </div>
+                                <span>Admin</span>
+                            </div>
+                        </td>
+                        <td>Updated system settings</td>
+                        <td>
+                            <span class="badge rounded-pill bg-warning bg-opacity-75">Update</span>
+                        </td>
+                    </tr>
+                    <tr class="log-row">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2 text-primary"><i class="bi bi-clock"></i></span>
+                                @DateTime.Now.AddHours(-3).ToString("MMM dd, yyyy HH:mm:ss")
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                    S
+                                </div>
+                                <span>System</span>
+                            </div>
+                        </td>
+                        <td>Backup completed successfully</td>
+                        <td>
+                            <span class="badge rounded-pill bg-info bg-opacity-75">System</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white py-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<style>
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.85em;
+    }
+    
+    .log-row {
+        transition: all 0.3s ease;
+    }
+    
+    .log-row:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+        cursor: pointer;
+    }
+    
+    .avatar-wrapper {
+        transition: all 0.3s;
+    }
+    
+    .avatar-wrapper:hover {
+        transform: scale(1.05);
+    }
+    
+    .page-link {
+        color: var(--bs-primary);
+        border-radius: 0.25rem;
+        margin: 0 2px;
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .btn-outline-primary {
+        transition: all 0.2s;
+    }
+    
+    .btn-outline-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+@code {
+    private List<(DateTime Timestamp, string User, string Action)> logs = new()
+    {
+        (DateTime.Now.AddMinutes(-10), "Admin", "Created user Doctor1"),
+        (DateTime.Now.AddMinutes(-5), "Admin", "Deleted user Nurse1")
+    };
+}

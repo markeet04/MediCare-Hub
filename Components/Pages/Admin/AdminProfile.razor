@@ -1,0 +1,221 @@
+@page "/admin/profile"
+@rendermode InteractiveServer
+@layout BlazorApp1.Components.Layout.AdminLayout
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Profile Settings</h4>
+        <p class="text-muted">Manage your account information</p>
+    </div>
+    <button class="btn btn-primary rounded-pill shadow-sm px-4" @onclick="Save">
+        <i class="bi bi-check-lg me-2"></i>Save Changes
+    </button>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm profile-card">
+            <div class="card-body text-center p-4">
+                <div class="position-relative mx-auto mb-4" style="width:120px">
+                    <div class="profile-image-container rounded-circle overflow-hidden border shadow-sm" style="width:120px; height:120px;">
+                        <img src="@(string.IsNullOrEmpty(profileImage) ? "avatar-placeholder.png" : profileImage)" 
+                             class="img-fluid" style="width:120px; height:120px; object-fit:cover" />
+                    </div>
+                    <button class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow-sm">
+                        <i class="bi bi-camera"></i>
+                    </button>
+                </div>
+                <h5 class="mb-1 fw-bold">@name</h5>
+                <p class="text-muted mb-3">System Administrator</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary rounded-pill">
+                        <i class="bi bi-upload me-2"></i>Upload New Picture
+                    </button>
+                    <button class="btn btn-outline-danger rounded-pill">
+                        <i class="bi bi-trash me-2"></i>Remove Picture
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-4 profile-card">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        <input class="form-control bg-light" @bind="name" placeholder="Enter your full name" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control bg-light" @bind="email" placeholder="Enter your email" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control bg-light" placeholder="Enter your phone number" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Role</label>
+                        <input class="form-control bg-light" value="System Administrator" disabled />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Profile Picture URL</label>
+                        <input class="form-control bg-light" @bind="profileImage" placeholder="Enter profile picture URL" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm mb-4 profile-card">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Change Password</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Current Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control bg-light" placeholder="Enter current password" />
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control bg-light" placeholder="Enter new password" />
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Confirm New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control bg-light" placeholder="Confirm new password" />
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm profile-card">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Notification Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3 d-flex justify-content-between align-items-center setting-item">
+                    <div>
+                        <h6 class="mb-1">Email Notifications</h6>
+                        <p class="text-muted small mb-0">Receive system notifications via email</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="emailNotif" checked />
+                    </div>
+                </div>
+                <div class="mb-3 d-flex justify-content-between align-items-center setting-item">
+                    <div>
+                        <h6 class="mb-1">System Alerts</h6>
+                        <p class="text-muted small mb-0">Get alerts about system activities</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="systemAlerts" checked />
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center setting-item">
+                    <div>
+                        <h6 class="mb-1">Two-Factor Authentication</h6>
+                        <p class="text-muted small mb-0">Enable enhanced security for your account</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="twoFactor" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+    }
+    
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    .form-control, .form-select {
+        border: 1px solid #e0e0e0;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .profile-image-container {
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .profile-image-container:hover img {
+        transform: scale(1.05);
+    }
+    
+    .profile-image-container img {
+        transition: all 0.3s ease;
+    }
+    
+    .form-check-input {
+        cursor: pointer;
+        width: 2.5em;
+        height: 1.25em;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .setting-item {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+    }
+    
+    .setting-item:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .btn {
+        transition: all 0.2s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+@code {
+    private string name = "Admin Qasim";
+    private string email = "admin@hospital.com";
+    private string profileImage = "/image.png";
+
+    private void Save()
+    {
+        // Placeholder for saving profile info
+    }
+}

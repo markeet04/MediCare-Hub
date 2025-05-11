@@ -2,7 +2,7 @@
   "Files": [
     {
       "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\scopedcss\\projectbundle\\BlazorApp1.bundle.scp.css",
-      "PackagePath": "staticwebassets\\BlazorApp1.e0hm1c4msc.bundle.scp.css"
+      "PackagePath": "staticwebassets\\BlazorApp1.uin0erjt0i.bundle.scp.css"
     },
     {
       "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\app.css",
@@ -11,6 +11,10 @@
     {
       "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\favicon.png",
       "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\image.png",
+      "PackagePath": "staticwebassets\\image.png"
     },
     {
       "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
@@ -187,6 +191,10 @@
     {
       "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map",
       "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
+    },
+    {
+      "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\reportHelper.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\reportHelper.js"
     },
     {
       "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.BlazorApp1.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",

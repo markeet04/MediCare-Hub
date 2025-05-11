@@ -1,0 +1,806 @@
+@page "/admin/reports"
+@using System
+@using System.Collections.Generic
+@using System.Threading.Tasks
+@using BlazorApp1.Models
+@using BlazorApp1.Services
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JSRuntime
+@inject ReportService ReportService
+@layout BlazorApp1.Components.Layout.AdminLayout
+@rendermode InteractiveServer
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">Reports</h4>
+        <p class="text-muted">Generate and view system reports</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" @onclick="ShowCreateReportModal">
+            <i class="bi bi-plus-lg me-2"></i>New Report
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Available Reports</h5>
+            </div>
+            <div class="card-body p-0">
+                @if (availableReports.Count > 0)
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var report in availableReports)
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                        <i class="@report.IconClass fs-5 text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">@report.Name</h6>
+                                        <p class="text-muted small mb-0">@report.Description</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => ViewReport(report.Id)">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" @onclick="() => GenerateReport(report.Id)">
+                                        <i class="bi bi-download me-1"></i>Export
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 text-center">
+                        <p class="text-muted">No reports available. Create a new report to get started.</p>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        @if (isGeneratingReport)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Report Preview: @currentReport.Name</h5>
+                </div>
+                <div class="card-body">
+                    @if (isLoadingReport)
+                    {
+                        <div class="text-center p-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Generating report, please wait...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="report-preview">
+                            <div class="mb-4">
+                                <h4>@currentReport.Name</h4>
+                                <p class="text-muted">Generated on @DateTime.Now.ToString("MMMM d, yyyy")</p>
+                                <p>Report period: @GetReportPeriodText()</p>
+                            </div>
+                            
+                            @if (includeCharts && currentReport.Id == "user-activity")
+                            {
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">User Logins</h6>
+                                                <div class="chart-placeholder bg-light" style="height: 200px;">
+                                                    <!-- Chart would render here -->
+                                                    <div class="d-flex justify-content-center align-items-center h-100">
+                                                        <p class="text-muted">Login activity chart</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">System Access by Role</h6>
+                                                <div class="chart-placeholder bg-light" style="height: 200px;">
+                                                    <!-- Chart would render here -->
+                                                    <div class="d-flex justify-content-center align-items-center h-100">
+                                                        <p class="text-muted">Access by role chart</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            <div class="table-responsive">
+                                @if (currentReport.Id == "user-activity")
+                                {
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Action</th>
+                                                <th>Date & Time</th>
+                                                <th>IP Address</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in GetSampleUserActivityData())
+                                            {
+                                                <tr>
+                                                    <td>@item.User</td>
+                                                    <td>@item.Action</td>
+                                                    <td>@item.DateTime</td>
+                                                    <td>@item.IPAddress</td>
+                                                    <td>
+                                                        <span class="badge @item.StatusClass">@item.Status</span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                }
+                            </div>
+                            
+                            <div class="mt-4">
+                                <button class="btn btn-primary" @onclick="DownloadReport">
+                                    <i class="bi bi-download me-2"></i>Download @GetSelectedFormatName()
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Report Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Date Range</label>
+                    <select class="form-select" @bind="selectedDateRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="custom">Custom range</option>
+                    </select>
+                </div>
+                
+                @if (selectedDateRange == "custom")
+                {
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" @bind="startDate" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" @bind="endDate" />
+                        </div>
+                    </div>
+                }
+                
+                <div class="mb-3">
+                    <label class="form-label">Report Format</label>
+                    <div class="d-flex">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="radio" name="formatRadio" id="pdfFormat" 
+                                   @onchange="@(() => selectedFormat = "pdf")" checked="@(selectedFormat == "pdf")">
+                            <label class="form-check-label" for="pdfFormat">PDF</label>
+                        </div>
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="radio" name="formatRadio" id="excelFormat"
+                                   @onchange="@(() => selectedFormat = "excel")" checked="@(selectedFormat == "excel")">
+                            <label class="form-check-label" for="excelFormat">Excel</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="formatRadio" id="csvFormat"
+                                   @onchange="@(() => selectedFormat = "csv")" checked="@(selectedFormat == "csv")">
+                            <label class="form-check-label" for="csvFormat">CSV</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Include Charts</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="includeCharts" @bind="includeCharts">
+                        <label class="form-check-label" for="includeCharts">Yes</label>
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button class="btn btn-primary" @onclick="ApplySettings">
+                        <i class="bi bi-gear me-2"></i>Apply Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Scheduled Reports</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach (var schedule in scheduledReports)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <h6 class="mb-1">@schedule.Name</h6>
+                                <p class="text-muted small mb-0">@schedule.Schedule</p>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" 
+                                       @bind="schedule.IsActive"
+                                       @onclick="() => ToggleSchedule(schedule.Id)">
+                            </div>
+                        </div>
+                    }
+                    <div class="list-group-item p-3">
+                        <button class="btn btn-sm btn-outline-primary w-100" @onclick="ShowCreateScheduleModal">
+                            <i class="bi bi-plus me-1"></i>Add Schedule
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showCreateReportModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Report</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModals"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Report Name</label>
+                        <input type="text" class="form-control" @bind="newReportName" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" @bind="newReportType">
+                            <option value="">Select a report type</option>
+                            <option value="user-activity">User Activity</option>
+                            <option value="system-performance">System Performance</option>
+                            <option value="security-audit">Security Audit</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="newReportDescription"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModals">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateReport">Create Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showCreateScheduleModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Schedule</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModals"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Schedule Name</label>
+                        <input type="text" class="form-control" @bind="newScheduleName" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" @bind="newScheduleReportId">
+                            <option value="">Select a report</option>
+                            @foreach (var report in availableReports)
+                            {
+                                <option value="@report.Id">@report.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Frequency</label>
+                        <select class="form-select" @bind="newScheduleFrequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    @if (newScheduleFrequency == "weekly")
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Day of Week</label>
+                            <select class="form-select" @bind="newScheduleDayOfWeek">
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+                                <option value="0">Sunday</option>
+                            </select>
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <input type="time" class="form-control" @bind="newScheduleTime" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recipients</label>
+                        <input type="text" class="form-control" @bind="newScheduleRecipients" 
+                               placeholder="Enter email addresses separated by commas" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModals">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateSchedule">Create Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showAlert)
+{
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header @alertClass">
+                <strong class="me-auto text-white">@alertTitle</strong>
+                <button type="button" class="btn-close" @onclick="() => showAlert = false"></button>
+            </div>
+            <div class="toast-body">
+                @alertMessage
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Report data models
+    private class Report
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string IconClass { get; set; }
+    }
+
+    private class UserActivityItem
+    {
+        public string User { get; set; }
+        public string Action { get; set; }
+        public string DateTime { get; set; }
+        public string IPAddress { get; set; }
+        public string Status { get; set; }
+        public string StatusClass { get; set; }
+    }
+
+    private class ScheduledReport
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Schedule { get; set; }
+        public bool IsActive { get; set; }
+        public string ReportId { get; set; }
+    }
+
+    // Lists to store data
+    private List<Report> availableReports = new List<Report>();
+    private List<ScheduledReport> scheduledReports = new List<ScheduledReport>();
+    
+    // Current report being viewed/generated
+    private Report currentReport;
+    
+    // Report settings
+    private string selectedDateRange = "7";
+    private DateTime startDate = DateTime.Now.AddDays(-7);
+    private DateTime endDate = DateTime.Now;
+    private string selectedFormat = "pdf";
+    private bool includeCharts = true;
+    
+    // Modal controls
+    private bool showCreateReportModal = false;
+    private bool showCreateScheduleModal = false;
+    
+    // New report form fields
+    private string newReportName;
+    private string newReportType;
+    private string newReportDescription;
+    
+    // New schedule form fields
+    private string newScheduleName;
+    private string newScheduleReportId;
+    private string newScheduleFrequency = "weekly";
+    private string newScheduleDayOfWeek = "1";
+    private DateTime newScheduleTime = new DateTime(2000, 1, 1, 8, 0, 0);
+    private string newScheduleRecipients;
+    
+    // Report generation states
+    private bool isGeneratingReport = false;
+    private bool isLoadingReport = false;
+    
+    // Alert message
+    private bool showAlert = false;
+    private string alertMessage;
+    private string alertTitle;
+    private string alertClass;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with sample data
+        LoadSampleData();
+    }
+
+    private void LoadSampleData()
+    {
+        // Sample reports
+        availableReports = new List<Report>
+        {
+            new Report 
+            { 
+                Id = "user-activity", 
+                Name = "User Activity Report", 
+                Description = "User logins, actions and system access",
+                IconClass = "bi bi-people"
+            },
+            new Report 
+            { 
+                Id = "system-performance", 
+                Name = "System Performance", 
+                Description = "CPU, memory usage and response times",
+                IconClass = "bi bi-speedometer"
+            },
+            new Report 
+            { 
+                Id = "security-audit", 
+                Name = "Security Audit Log", 
+                Description = "Security events and potential threats",
+                IconClass = "bi bi-shield-check"
+            }
+        };
+
+        // Sample scheduled reports
+        scheduledReports = new List<ScheduledReport>
+        {
+            new ScheduledReport 
+            { 
+                Id = "weekly-summary", 
+                Name = "Weekly Summary", 
+                Schedule = "Every Monday at 8:00 AM",
+                IsActive = true,
+                ReportId = "user-activity"
+            },
+            new ScheduledReport 
+            { 
+                Id = "monthly-overview", 
+                Name = "Monthly Overview", 
+                Schedule = "1st day of month",
+                IsActive = true,
+                ReportId = "system-performance"
+            }
+        };
+    }
+
+    private List<UserActivityItem> GetSampleUserActivityData()
+    {
+        // Generate sample user activity data
+        return new List<UserActivityItem>
+        {
+            new UserActivityItem 
+            { 
+                User = "admin@example.com", 
+                Action = "Login", 
+                DateTime = DateTime.Now.AddHours(-2).ToString("MMM d, yyyy h:mm tt"),
+                IPAddress = "192.168.1.100",
+                Status = "Success",
+                StatusClass = "bg-success"
+            },
+            new UserActivityItem 
+            { 
+                User = "user1@example.com", 
+                Action = "File Download", 
+                DateTime = DateTime.Now.AddHours(-3).ToString("MMM d, yyyy h:mm tt"),
+                IPAddress = "192.168.1.105",
+                Status = "Success",
+                StatusClass = "bg-success"
+            },
+            new UserActivityItem 
+            { 
+                User = "user2@example.com", 
+                Action = "Password Change", 
+                DateTime = DateTime.Now.AddHours(-5).ToString("MMM d, yyyy h:mm tt"),
+                IPAddress = "192.168.1.110",
+                Status = "Success",
+                StatusClass = "bg-success"
+            },
+            new UserActivityItem 
+            { 
+                User = "unknown@example.com", 
+                Action = "Login Attempt", 
+                DateTime = DateTime.Now.AddHours(-6).ToString("MMM d, yyyy h:mm tt"),
+                IPAddress = "203.0.113.45",
+                Status = "Failed",
+                StatusClass = "bg-danger"
+            },
+            new UserActivityItem 
+            { 
+                User = "user3@example.com", 
+                Action = "Profile Update", 
+                DateTime = DateTime.Now.AddHours(-8).ToString("MMM d, yyyy h:mm tt"),
+                IPAddress = "192.168.1.120",
+                Status = "Success",
+                StatusClass = "bg-success"
+            }
+        };
+    }
+
+    private void ShowCreateReportModal()
+    {
+        // Reset form fields
+        newReportName = string.Empty;
+        newReportType = string.Empty;
+        newReportDescription = string.Empty;
+        
+        // Show modal
+        showCreateReportModal = true;
+    }
+
+    private void ShowCreateScheduleModal()
+    {
+        // Reset form fields
+        newScheduleName = string.Empty;
+        newScheduleReportId = string.Empty;
+        newScheduleFrequency = "weekly";
+        newScheduleDayOfWeek = "1";
+        newScheduleTime = new DateTime(2000, 1, 1, 8, 0, 0);
+        newScheduleRecipients = string.Empty;
+        
+        // Show modal
+        showCreateScheduleModal = true;
+    }
+
+    private void CloseModals()
+    {
+        showCreateReportModal = false;
+        showCreateScheduleModal = false;
+    }
+
+    private void CreateReport()
+    {
+        // Validate form
+        if (string.IsNullOrWhiteSpace(newReportName) || string.IsNullOrWhiteSpace(newReportType))
+        {
+            ShowAlert("Error", "Please fill in all required fields.", "bg-danger");
+            return;
+        }
+
+        // Create new report
+        var newReport = new Report
+        {
+            Id = Guid.NewGuid().ToString().Substring(0, 8),
+            Name = newReportName,
+            Description = newReportDescription,
+            IconClass = GetIconClassForReportType(newReportType)
+        };
+
+        // Add to list
+        availableReports.Add(newReport);
+        
+        // Close modal
+        CloseModals();
+        
+        // Show success message
+        ShowAlert("Success", "Report created successfully.", "bg-success");
+    }
+
+    private string GetIconClassForReportType(string reportType)
+    {
+        return reportType switch
+        {
+            "user-activity" => "bi bi-people",
+            "system-performance" => "bi bi-speedometer",
+            "security-audit" => "bi bi-shield-check",
+            _ => "bi bi-file-earmark-text"
+        };
+    }
+
+    private void CreateSchedule()
+    {
+        // Validate form
+        if (string.IsNullOrWhiteSpace(newScheduleName) || string.IsNullOrWhiteSpace(newScheduleReportId))
+        {
+            ShowAlert("Error", "Please fill in all required fields.", "bg-danger");
+            return;
+        }
+
+        // Create schedule text
+        string scheduleText = newScheduleFrequency switch
+        {
+            "daily" => $"Daily at {newScheduleTime.ToString("h:mm tt")}",
+            "weekly" => $"Every {GetDayName(newScheduleDayOfWeek)} at {newScheduleTime.ToString("h:mm tt")}",
+            "monthly" => $"1st day of month at {newScheduleTime.ToString("h:mm tt")}",
+            _ => "Custom schedule"
+        };
+
+        // Create new schedule
+        var newSchedule = new ScheduledReport
+        {
+            Id = Guid.NewGuid().ToString().Substring(0, 8),
+            Name = newScheduleName,
+            Schedule = scheduleText,
+            IsActive = true,
+            ReportId = newScheduleReportId
+        };
+
+        // Add to list
+        scheduledReports.Add(newSchedule);
+        
+        // Close modal
+        CloseModals();
+        
+        // Show success message
+        ShowAlert("Success", "Schedule created successfully.", "bg-success");
+    }
+
+    private string GetDayName(string dayOfWeek)
+    {
+        return dayOfWeek switch
+        {
+            "0" => "Sunday",
+            "1" => "Monday",
+            "2" => "Tuesday",
+            "3" => "Wednesday",
+            "4" => "Thursday",
+            "5" => "Friday",
+            "6" => "Saturday",
+            _ => "Monday"
+        };
+    }
+
+    private void ApplySettings()
+    {
+        // Apply date range
+        if (selectedDateRange != "custom")
+        {
+            int days = int.Parse(selectedDateRange);
+            startDate = DateTime.Now.AddDays(-days);
+            endDate = DateTime.Now;
+        }
+        
+        // Show success message
+        ShowAlert("Success", "Report settings applied.", "bg-success");
+        
+        // If a report is currently being viewed, regenerate it
+        if (isGeneratingReport && currentReport != null)
+        {
+            GenerateReport(currentReport.Id);
+        }
+    }
+
+    private void ViewReport(string reportId)
+    {
+        // Find the report
+        var report = availableReports.FirstOrDefault(r => r.Id == reportId);
+        if (report == null) return;
+        
+        // Set current report
+        currentReport = report;
+        
+        // Generate report
+        GenerateReport(reportId);
+    }
+
+    private async Task GenerateReport(string reportId)
+    {
+        // Find the report
+        var report = availableReports.FirstOrDefault(r => r.Id == reportId);
+        if (report == null) return;
+        
+        // Set current report
+        currentReport = report;
+        
+        // Show loading state
+        isGeneratingReport = true;
+        isLoadingReport = true;
+        StateHasChanged();
+        
+        // Simulate report generation (would connect to a service in a real application)
+        await Task.Delay(1500);
+        
+        // Hide loading state
+        isLoadingReport = false;
+        StateHasChanged();
+    }
+
+    private async Task DownloadReport()
+    {
+        // Show loading message
+        ShowAlert("Generating", "Preparing your download...", "bg-info");
+        
+        // Simulate download generation
+        await Task.Delay(2000);
+        
+        // Show success message
+        ShowAlert("Success", $"Report downloaded as {currentReport.Name}.{selectedFormat}", "bg-success");
+        
+        // In a real application, we would use JSRuntime to trigger a file download
+        // await JSRuntime.InvokeVoidAsync("downloadFile", fileName, fileContent, contentType);
+    }
+
+    private void ToggleSchedule(string scheduleId)
+    {
+        // Find the schedule
+        var schedule = scheduledReports.FirstOrDefault(s => s.Id == scheduleId);
+        if (schedule == null) return;
+        
+        // Toggle active state
+        schedule.IsActive = !schedule.IsActive;
+        
+        // Show feedback
+        string status = schedule.IsActive ? "enabled" : "disabled";
+        ShowAlert("Schedule Updated", $"Schedule '{schedule.Name}' has been {status}.", "bg-success");
+    }
+
+    private string GetReportPeriodText()
+    {
+        if (selectedDateRange != "custom")
+        {
+            return $"Last {selectedDateRange} days ({startDate.ToString("MMM d, yyyy")} - {endDate.ToString("MMM d, yyyy")})";
+        }
+        else
+        {
+            return $"{startDate.ToString("MMM d, yyyy")} - {endDate.ToString("MMM d, yyyy")}";
+        }
+    }
+
+    private string GetSelectedFormatName()
+    {
+        return selectedFormat switch
+        {
+            "pdf" => "PDF",
+            "excel" => "Excel",
+            "csv" => "CSV",
+            _ => "Report"
+        };
+    }
+
+    private void ShowAlert(string title, string message, string cssClass)
+    {
+        alertTitle = title;
+        alertMessage = message;
+        alertClass = cssClass;
+        showAlert = true;
+        StateHasChanged();
+        
+        // Auto-hide after 3 seconds
+        Task.Delay(3000).ContinueWith(_ =>
+        {
+            showAlert = false;
+            StateHasChanged();
+        });
+    }
+}

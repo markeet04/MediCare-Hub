@@ -1,0 +1,477 @@
+@layout BlazorApp1.Components.Layout.AdminLayout
+@rendermode InteractiveServer
+@page "/admin/users"
+@inject Services.UserService UserService
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Manage Users</h4>
+        <p class="text-muted">Add, edit or remove system users</p>
+    </div>
+    <div>
+        <button class="btn btn-outline-primary rounded-pill shadow-sm px-3 me-2" @onclick="GenerateReport">
+            <i class="bi bi-file-earmark-text me-2"></i>Generate Report
+        </button>
+        <button class="btn btn-primary rounded-pill shadow-sm px-4" @onclick="() => { userModel = new User(); editing = false; }">
+            <i class="bi bi-person-plus me-2"></i>Add New User
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">User List</h5>
+        <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text bg-light border-end-0 text-muted">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-light border-start-0" placeholder="Search users...">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-4">User</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in users)
+                    {
+                        <tr class="user-row">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        @user.Username.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">@user.Username</h6>
+                                        <small class="text-muted">@(userDetails.ContainsKey(user.Id) ? userDetails[user.Id].PhoneNumber : "No phone")</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill @GetRoleBadgeClass(user.Role)">@user.Role</span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill bg-success">Active</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-primary me-1 action-btn" @onclick="() => EditUser(user)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger action-btn" @onclick="() => DeleteUser(user.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white py-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+@if (editing || userModel.Username != null)
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">@(editing ? "Edit User" : "Add New User")</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">First Name</label>
+                    <input class="form-control bg-light" placeholder="Enter first name" @bind="firstName" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Last Name</label>
+                    <input class="form-control bg-light" placeholder="Enter last name" @bind="lastName" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="phoneNumber" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">CNIC</label>
+                    <input class="form-control bg-light" placeholder="Enter CNIC number" @bind="cnic" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Address</label>
+                    <input class="form-control bg-light" placeholder="Enter address" @bind="address" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Role</label>
+                    <select class="form-select bg-light" @bind="userModel.Role">
+                        <option value="">-- Select Role --</option>
+                        <option>Admin</option>
+                        <option>Doctor</option>
+                        <option>Receptionist</option>
+                        <option>Patient</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Status</label>
+                    <select class="form-select bg-light">
+                        <option>Active</option>
+                        <option>Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-white py-3 d-flex justify-content-end">
+            @if (editing)
+            {
+                <button class="btn btn-outline-secondary me-2 rounded-pill" @onclick="CancelEdit">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </button>
+                <button class="btn btn-primary rounded-pill shadow-sm" @onclick="SaveUser">
+                    <i class="bi bi-check-lg me-2"></i>Update User
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-outline-secondary me-2 rounded-pill" @onclick="CancelEdit">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </button>
+                <button class="btn btn-primary rounded-pill shadow-sm" @onclick="SaveUser">
+                    <i class="bi bi-plus-lg me-2"></i>Add User
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@if (showPasswordModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">User Created Successfully</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="ClosePasswordModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <p class="mb-1"><strong>Username:</strong> @generatedUsername</p>
+                        <p class="mb-0"><strong>Password:</strong> @generatedPassword</p>
+                    </div>
+                    <p class="text-muted small">Please save or share these credentials with the user. The password cannot be recovered later.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary rounded-pill" @onclick="ClosePasswordModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showReportModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">User Report Generated</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseReportModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-file-earmark-text text-primary display-1"></i>
+                    </div>
+                    <p class="text-center">Users report has been generated successfully.</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary rounded-pill">
+                            <i class="bi bi-download me-2"></i>Download Report
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" @onclick="CloseReportModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .form-control, .form-select {
+        border: 1px solid #e0e0e0;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .action-btn {
+        transition: all 0.2s;
+        border-radius: 6px;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .user-row {
+        transition: all 0.3s;
+    }
+    
+    .user-row:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.85em;
+    }
+    
+    .avatar-wrapper {
+        transition: all 0.3s;
+    }
+    
+    .avatar-wrapper:hover {
+        transform: scale(1.05);
+    }
+    
+    .page-link {
+        color: var(--bs-primary);
+        border-radius: 0.25rem;
+        margin: 0 2px;
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .modal {
+        animation: fadeIn 0.3s;
+    }
+    
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .modal-content {
+        animation: slideIn 0.3s;
+        border-radius: 0.5rem;
+    }
+    
+    @@keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+@code {
+    private List<User> users = new();
+    private User userModel = new();
+    private bool editing = false;
+    
+    // New fields for user details
+    private string firstName = "";
+    private string lastName = "";
+    private string phoneNumber = "";
+    private string cnic = "";
+    private string address = "";
+    
+    // For storing user details
+    private Dictionary<int, UserDetail> userDetails = new();
+    
+    // For credentials modal
+    private bool showPasswordModal = false;
+    private string generatedUsername = "";
+    private string generatedPassword = "";
+    
+    // For report modal
+    private bool showReportModal = false;
+
+    protected override void OnInitialized()
+    {
+        users = UserService.GetAllUsers();
+        
+        // Initialize some example user details
+        userDetails[1] = new UserDetail { 
+            FirstName = "Admin", 
+            LastName = "User", 
+            PhoneNumber = "123-456-7890", 
+            CNIC = "12345-1234567-1", 
+            Address = "Admin Street, Admin City" 
+        };
+        
+        userDetails[2] = new UserDetail { 
+            FirstName = "John", 
+            LastName = "Doe", 
+            PhoneNumber = "987-654-3210", 
+            CNIC = "54321-7654321-2", 
+            Address = "123 Medical Avenue, Doctor City" 
+        };
+    }
+
+    private void SaveUser()
+    {
+        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(userModel.Role))
+        {
+            // Would show validation errors in real implementation
+            return;
+        }
+        
+        if (editing)
+        {
+            UserService.UpdateUser(userModel);
+            
+            // Update user details
+            if (userDetails.ContainsKey(userModel.Id))
+            {
+                userDetails[userModel.Id].FirstName = firstName;
+                userDetails[userModel.Id].LastName = lastName;
+                userDetails[userModel.Id].PhoneNumber = phoneNumber;
+                userDetails[userModel.Id].CNIC = cnic;
+                userDetails[userModel.Id].Address = address;
+            }
+        }
+        else
+        {
+            // Generate username (first initial + last name)
+            generatedUsername = (firstName.Substring(0, 1) + lastName).ToLower();
+            userModel.Username = generatedUsername;
+            
+            // Generate random password
+            generatedPassword = GenerateRandomPassword();
+            
+            // Add new user
+            UserService.AddUser(userModel);
+            
+            // Store additional user details
+            userDetails[userModel.Id] = new UserDetail
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                PhoneNumber = phoneNumber,
+                CNIC = cnic,
+                Address = address
+            };
+            
+            // Show password modal
+            showPasswordModal = true;
+        }
+
+        users = UserService.GetAllUsers();
+        ResetForm();
+    }
+
+    private void EditUser(User user)
+    {
+        userModel = new User
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Role = user.Role
+        };
+        
+        // Load additional user details if available
+        if (userDetails.ContainsKey(user.Id))
+        {
+            firstName = userDetails[user.Id].FirstName;
+            lastName = userDetails[user.Id].LastName;
+            phoneNumber = userDetails[user.Id].PhoneNumber;
+            cnic = userDetails[user.Id].CNIC;
+            address = userDetails[user.Id].Address;
+        }
+        
+        editing = true;
+    }
+
+    private void DeleteUser(int id)
+    {
+        UserService.DeleteUser(id);
+        userDetails.Remove(id);
+        users = UserService.GetAllUsers();
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+    }
+    
+    private void ResetForm()
+    {
+        userModel = new();
+        firstName = "";
+        lastName = "";
+        phoneNumber = "";
+        cnic = "";
+        address = "";
+        editing = false;
+    }
+    
+    private string GenerateRandomPassword()
+    {
+        // Simple password generator (in a real app, use a secure method)
+        Random random = new Random();
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+        return new string(Enumerable.Repeat(chars, 8)
+          .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+    
+    private void ClosePasswordModal()
+    {
+        showPasswordModal = false;
+    }
+    
+    private void GenerateReport()
+    {
+        // In a real implementation, this would generate and possibly download a report
+        showReportModal = true;
+    }
+    
+    private void CloseReportModal()
+    {
+        showReportModal = false;
+    }
+    
+    private string GetRoleBadgeClass(string role)
+    {
+        return role switch
+        {
+            "Admin" => "bg-danger bg-opacity-75",
+            "Doctor" => "bg-primary bg-opacity-75",
+            "Receptionist" => "bg-info bg-opacity-75",
+            "Patient" => "bg-success bg-opacity-75",
+            _ => "bg-secondary bg-opacity-75"
+        };
+    }
+    
+    // Class to store additional user details
+    private class UserDetail
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string PhoneNumber { get; set; } = "";
+        public string CNIC { get; set; } = "";
+        public string Address { get; set; } = "";
+    }
+}
