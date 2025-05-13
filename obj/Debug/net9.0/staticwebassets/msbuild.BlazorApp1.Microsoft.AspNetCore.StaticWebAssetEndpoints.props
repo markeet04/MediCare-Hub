@@ -576,6 +576,18 @@
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"notf2xhcfb"},{"Name":"integrity","Value":"sha256-\u002BUW802wgVfnjaSbdwyHLlU7AVplb0WToOlvN1CnzIac="},{"Name":"label","Value":"_content/BlazorApp1/lib/bootstrap/dist/js/bootstrap.js"}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"145401"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022\u002BUW802wgVfnjaSbdwyHLlU7AVplb0WToOlvN1CnzIac=\u0022"},{"Name":"Last-Modified","Value":"Wed, 30 Apr 2025 15:45:55 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/BlazorApp1/lib/bootstrap/dist/js/doctor.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\lib\bootstrap\dist\js\doctor.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-3KPpCl4\u002BjpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"7678"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00223KPpCl4\u002BjpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=\u0022"},{"Name":"Last-Modified","Value":"Sun, 11 May 2025 08:09:40 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/BlazorApp1/lib/bootstrap/dist/js/doctor.wt76n2jobw.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\lib\bootstrap\dist\js\doctor.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"wt76n2jobw"},{"Name":"integrity","Value":"sha256-3KPpCl4\u002BjpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s="},{"Name":"label","Value":"_content/BlazorApp1/lib/bootstrap/dist/js/doctor.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"7678"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00223KPpCl4\u002BjpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=\u0022"},{"Name":"Last-Modified","Value":"Sun, 11 May 2025 08:09:40 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/BlazorApp1/lib/bootstrap/dist/js/reportHelper.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\lib\bootstrap\dist\js\reportHelper.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>

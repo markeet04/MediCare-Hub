@@ -1,0 +1,201 @@
+@page "/doctor/patients"
+@layout BlazorApp1.Components.Layout.DoctorLayout
+@rendermode InteractiveServer
+
+<div class="patients-container animate-fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="text-teal mb-2">
+                <i class="bi bi-people me-2"></i>
+                Assigned Patients
+            </h3>
+            <p class="text-muted">Overview of patients under your care</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-teal rounded-pill">
+                <i class="bi bi-filter me-2"></i>
+                Filter
+            </button>
+            <button class="btn btn-teal rounded-pill">
+                <i class="bi bi-plus-lg me-2"></i>
+                Add Patient
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover patients-table mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3 px-4 text-muted">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th class="py-3 px-4 text-muted">Name</th>
+                            <th class="py-3 px-4 text-muted">Age</th>
+                            <th class="py-3 px-4 text-muted">Status</th>
+                            <th class="py-3 px-4 text-muted">Last Visit</th>
+                            <th class="py-3 px-4 text-muted text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="patient-row">
+                            <td class="py-3 px-4 align-middle">
+                                <input type="checkbox" class="form-check-input" id="patient1">
+                            </td>
+                            <td class="py-3 px-4 align-middle">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span class="text-teal fw-bold">JS</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">Jane Smith</div>
+                                        <small class="text-muted">jane.smith@example.com</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 align-middle">45</td>
+                            <td class="py-3 px-4 align-middle">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Stable</span>
+                            </td>
+                            <td class="py-3 px-4 align-middle">
+                                <small class="text-muted">May 10, 2025</small>
+                            </td>
+                            <td class="py-3 px-4 align-middle text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-clipboard-pulse me-2"></i>Treatment Plan</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Remove</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="patient-row">
+                            <td class="py-3 px-4 align-middle">
+                                <input type="checkbox" class="form-check-input" id="patient2">
+                            </td>
+                            <td class="py-3 px-4 align-middle">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span class="text-teal fw-bold">AR</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">Ali Raza</div>
+                                        <small class="text-muted">ali.raza@example.com</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 align-middle">55</td>
+                            <td class="py-3 px-4 align-middle">
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">Critical</span>
+                            </td>
+                            <td class="py-3 px-4 align-middle">
+                                <small class="text-muted">May 8, 2025</small>
+                            </td>
+                            <td class="py-3 px-4 align-middle text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-clipboard-pulse me-2"></i>Treatment Plan</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Remove</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <small class="text-muted">Showing 2 of 2 patients</small>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .patients-table tbody tr {
+        transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .patients-table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+        transform: translateY(-3px);
+    }
+
+    .patients-table .btn-light {
+        transition: all 0.2s;
+    }
+
+    .patients-table .btn-light:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+        transform: scale(1.1);
+    }
+
+    .dropdown-menu {
+        animation: dropdownFadeIn 0.3s ease-out;
+    }
+
+    @@keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-outline-teal, .btn-teal {
+        transition: all 0.2s;
+    }
+
+    .btn-outline-teal:hover, .btn-teal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const individualCheckboxes = document.querySelectorAll('.patients-table tbody input[type="checkbox"]:not(#selectAll)');
+
+        selectAllCheckbox.addEventListener('change', function() {
+            individualCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                checkbox.closest('tr').classList.toggle('table-active', selectAllCheckbox.checked);
+            });
+        });
+
+        individualCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.closest('tr').classList.toggle('table-active', this.checked);
+            });
+        });
+    });
+</script>

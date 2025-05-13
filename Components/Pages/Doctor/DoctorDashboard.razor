@@ -1,0 +1,555 @@
+@page "/"
+@page "/doctor/dashboard"
+@layout DoctorLayout
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Welcome back, Dr. Ahmed</h4>
+        <p class="text-muted">Here's your patient overview for today, @DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
+    </div>
+    <div>
+        <button class="btn btn-teal rounded-pill shadow-sm" @onclick="StartConsultation">
+            <i class="bi bi-camera-video me-2"></i>Start Consultation
+        </button>
+    </div>
+</div>
+
+<!-- Today's Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
+            <div class="position-absolute bg-teal bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-teal bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-calendar-check fs-4 text-teal"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Today's Appointments</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">8</h2>
+                <div class="mt-3 d-flex align-items-center text-info">
+                    <i class="bi bi-clock me-1"></i>
+                    <span>Next in 25 min</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToPatients">
+            <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-people fs-4 text-success"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Active Patients</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">42</h2>
+                <div class="mt-3 d-flex align-items-center text-success">
+                    <i class="bi bi-arrow-up me-1"></i>
+                    <span>3 new this week</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToLabOrders">
+            <div class="position-absolute bg-warning bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-flask fs-4 text-warning"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Pending Lab Results</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">7</h2>
+                <div class="mt-3 d-flex align-items-center text-warning">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    <span>2 urgent results</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAIPredictions">
+            <div class="position-absolute bg-primary bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-robot fs-4 text-primary"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">AI Insights</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">5</h2>
+                <div class="mt-3 d-flex align-items-center text-primary">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    <span>New predictions available</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content - Two Columns -->
+<div class="row">
+    <!-- Left Column - Patient Appointments -->
+    <div class="col-lg-8">
+        <!-- Today's Appointments -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                <h5 class="mb-0 fw-bold">Today's Schedule</h5>
+                <div class="d-flex align-items-center">
+                    <div class="me-3 d-flex align-items-center">
+                        <div class="me-2 rounded-circle bg-success" style="width: 8px; height: 8px;"></div>
+                        <span class="text-muted small">Confirmed</span>
+                    </div>
+                    <div class="me-3 d-flex align-items-center">
+                        <div class="me-2 rounded-circle bg-warning" style="width: 8px; height: 8px;"></div>
+                        <span class="text-muted small">Pending</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-teal rounded-pill px-3" @onclick="NavigateToAppointments">View All</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <!-- Appointment Item 1 -->
+                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(1)">
+                        <div class="me-3 position-relative">
+                            <div class="rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                                <span class="text-teal fw-bold">SJ</span>
+                            </div>
+                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">Sarah Johnson</h6>
+                                <span class="badge rounded-pill bg-teal-subtle text-teal">09:30 AM</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <p class="text-muted mb-0 small">Follow-up • Hypertension • 42 years</p>
+                                <span class="text-success small fw-medium d-none d-md-block">In 25 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointment Item 2 -->
+                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(2)">
+                        <div class="me-3 position-relative">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                                <span class="text-primary fw-bold">MT</span>
+                            </div>
+                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">Michael Torres</h6>
+                                <span class="badge rounded-pill bg-teal-subtle text-teal">10:15 AM</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <p class="text-muted mb-0 small">Post-surgery • Cardiac • 58 years</p>
+                                <span class="text-success small fw-medium d-none d-md-block">In 70 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointment Item 3 -->
+                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(3)">
+                        <div class="me-3 position-relative">
+                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                                <span class="text-info fw-bold">EL</span>
+                            </div>
+                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-warning" style="width: 12px; height: 12px;"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">Emily Liu</h6>
+                                <span class="badge rounded-pill bg-teal-subtle text-teal">11:00 AM</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <p class="text-muted mb-0 small">New Patient • Chest Pain • 34 years</p>
+                                <span class="text-warning small fw-medium d-none d-md-block">Pending confirmation</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointment Item 4 -->
+                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(4)">
+                        <div class="me-3 position-relative">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                                <span class="text-warning fw-bold">RD</span>
+                            </div>
+                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">Robert Davis</h6>
+                                <span class="badge rounded-pill bg-teal-subtle text-teal">02:30 PM</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <p class="text-muted mb-0 small">Follow-up • Diabetes Type 2 • 62 years</p>
+                                <span class="text-success small fw-medium d-none d-md-block">Confirmed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Patient Health Stats -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                <h5 class="mb-0 fw-bold">Patient Health Metrics</h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-teal rounded-start-pill" onclick="@(() => SwitchMetricsView("Weekly"))">Weekly</button>
+                    <button class="btn btn-sm btn-outline-teal rounded-end-pill" onclick="@(() => SwitchMetricsView("Monthly"))">Monthly</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px; position: relative;">
+                    <!-- Placeholder for the actual chart component -->
+                    <div class="placeholder-chart d-flex flex-column justify-content-center align-items-center h-100">
+                        <i class="bi bi-heart-pulse text-teal" style="font-size: 4rem;"></i>
+                        <p class="text-muted mt-3">Patient recovery rates by treatment plan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column - Patient Info & Actions -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToNewPatient">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-person-plus text-teal"></i>
+                            </div>
+                            <span>Add New Patient</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToCreatePrescription">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-file-earmark-medical text-teal"></i>
+                            </div>
+                            <span>Create Prescription</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToOrderLab">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-flask text-teal"></i>
+                            </div>
+                            <span>Order Lab Test</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Patient Activities -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Recent Updates</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item p-3 update-item" @onclick="() => ViewAlertDetails(1)">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Critical Lab Result</h6>
+                                <p class="text-muted small mb-1">Patient: Michael Torres</p>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-clock me-1"></i> 35 minutes ago
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item p-3 update-item" @onclick="() => ViewAlertDetails(2)">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Prescription Filled</h6>
+                                <p class="text-muted small mb-1">Patient: Sarah Johnson</p>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-clock me-1"></i> 2 hours ago
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item p-3 update-item" @onclick="() => ViewAlertDetails(3)">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">New AI Prediction</h6>
+                                <p class="text-muted small mb-1">Patient: Robert Davis</p>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-clock me-1"></i> 3 hours ago
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reminders -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Reminders</h5>
+                <button class="btn btn-sm btn-outline-teal rounded-circle">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item p-3 d-flex align-items-center">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="checkbox" value="" id="reminder1">
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Follow up with Patient #4872</h6>
+                            <p class="text-muted small mb-0">Today, 4:30 PM</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item p-3 d-flex align-items-center">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="checkbox" value="" id="reminder2">
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Review lab results for Sarah Johnson</h6>
+                            <p class="text-muted small mb-0">Today, 5:00 PM</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item p-3 d-flex align-items-center">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="checkbox" value="" id="reminder3">
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Department meeting</h6>
+                            <p class="text-muted small mb-0">Tomorrow, 10:00 AM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string MetricsView { get; set; } = "Weekly";
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize any JS-dependent components here
+            await JSRuntime.InvokeVoidAsync("eval", "try { var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]')); var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); }); } catch (e) { console.error(e); }");
+        }
+    }
+    
+    private void SwitchMetricsView(string view)
+    {
+        MetricsView = view;
+        // Here you would reload chart data based on the selected view
+    }
+    
+    private void ViewPatientDetails(int patientId)
+    {
+        Nav.NavigateTo($"/doctor/patients/{patientId}");
+    }
+    
+    private void ViewAlertDetails(int alertId)
+    {
+        Nav.NavigateTo($"/doctor/alerts/{alertId}");
+    }
+    
+    private void NavigateToPatients()
+    {
+        Nav.NavigateTo("/doctor/patients");
+    }
+    
+    private void NavigateToAppointments()
+    {
+        Nav.NavigateTo("/doctor/appointments");
+    }
+    
+    private void NavigateToLabOrders()
+    {
+        Nav.NavigateTo("/doctor/laborders");
+    }
+    
+    private void NavigateToAIPredictions()
+    {
+        Nav.NavigateTo("/doctor/aipredictions");
+    }
+    
+    private void NavigateToNewPatient()
+    {
+        Nav.NavigateTo("/doctor/patients/new");
+    }
+    
+    private void NavigateToCreatePrescription()
+    {
+        Nav.NavigateTo("/doctor/prescriptions/new");
+    }
+    
+    private void NavigateToOrderLab()
+    {
+        Nav.NavigateTo("/doctor/laborders/new");
+    }
+    
+    private void StartConsultation()
+    {
+        Nav.NavigateTo("/doctor/teleconsultation");
+    }
+}
+
+<style>
+    /* Custom teal colors (matching the doctor layout) */
+    .bg-teal {
+        background-color: var(--bs-teal) !important;
+    }
+    
+    .bg-teal-subtle {
+        background-color: rgba(var(--bs-teal-rgb), 0.1) !important;
+    }
+    
+    .text-teal {
+        color: var(--bs-teal) !important;
+    }
+    
+    .btn-teal {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+        color: white;
+    }
+    
+    .btn-teal:hover {
+        background-color: #1ba881;
+        border-color: #1ba881;
+        color: white;
+    }
+    
+    .btn-outline-teal {
+        color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+    
+    .btn-outline-teal:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+    
+    /* Dashboard specific styles */
+    .appointment-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .appointment-item:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.03);
+    }
+    
+    .update-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .update-item:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.03);
+    }
+    
+    .quick-action-btn {
+        transition: all 0.3s;
+    }
+    
+    .quick-action-btn:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+    
+    .quick-action-btn:hover .rounded-circle {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .quick-action-btn:hover i {
+        color: white !important;
+    }
+    
+    .counter {
+        animation: countup 2s ease-out;
+    }
+    
+    @@keyframes countup {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .stat-card {
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        top: -50%;
+        left: -50%;
+        background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+        transform: scale(0);
+        opacity: 0;
+        transition: transform 0.6s, opacity 0.6s;
+    }
+    
+    .stat-card:hover::after {
+        opacity: 1;
+        transform: scale(1);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+</style>

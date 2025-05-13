@@ -193,6 +193,10 @@
       "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
     },
     {
+      "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\doctor.js"
+    },
+    {
       "Id": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\reportHelper.js",
       "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\reportHelper.js"
     },

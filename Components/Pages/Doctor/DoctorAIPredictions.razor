@@ -1,0 +1,983 @@
+@page "/doctor/aipredictions"
+@layout BlazorApp1.Components.Layout.DoctorLayout
+@rendermode InteractiveServer
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">AI Predictions & Risk Analysis</h4>
+        <p class="text-muted mb-0">AI-powered clinical decision support and risk stratification</p>
+    </div>
+    <div class="d-flex">
+        <button class="btn btn-outline-secondary rounded-pill me-2">
+            <i class="bi bi-sliders me-1"></i> Filter
+        </button>
+        <button class="btn btn-teal rounded-pill">
+            <i class="bi bi-plus-lg me-1"></i> New Analysis
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- AI Risk Distribution Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h6 class="mb-0">Risk Distribution</h6>
+                <p class="text-muted small mb-0">Patient risk levels</p>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="mb-3 text-center">
+                    <div class="position-relative" style="height: 180px;">
+                        <!-- This would be a chart in a real implementation -->
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="mb-2">
+                                <span class="d-inline-block rounded-circle bg-success" style="width: 12px; height: 12px;"></span>
+                                <span class="ms-1 me-3">Low (25%)</span>
+                                <span class="d-inline-block rounded-circle bg-warning" style="width: 12px; height: 12px;"></span>
+                                <span class="ms-1 me-3">Medium (42%)</span>
+                            </div>
+                            <div>
+                                <span class="d-inline-block rounded-circle bg-danger" style="width: 12px; height: 12px;"></span>
+                                <span class="ms-1">High (33%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <span class="text-muted small">Based on 128 patients</span>
+                        <a href="#" class="text-teal text-decoration-none small">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Model Performance Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h6 class="mb-0">Model Performance</h6>
+                <p class="text-muted small mb-0">Accuracy metrics</p>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small">Sensitivity</span>
+                        <span class="small text-success">94%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 94%"></div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small">Specificity</span>
+                        <span class="small text-success">91%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 91%"></div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small">AUC Score</span>
+                        <span class="small text-success">0.89</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 89%"></div>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <span class="text-muted small">Last updated: May 8, 2025</span>
+                        <a href="#" class="text-teal text-decoration-none small">View Performance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Prediction Impact Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h6 class="mb-0">Clinical Impact</h6>
+                <p class="text-muted small mb-0">Outcomes improvement</p>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="text-center mb-3 mt-2">
+                    <h2 class="display-4 text-teal mb-0">24%</h2>
+                    <p class="text-muted">Readmission reduction</p>
+                </div>
+                <div class="d-flex justify-content-around text-center mb-3">
+                    <div>
+                        <h5 class="mb-0">12%</h5>
+                        <p class="text-muted small mb-0">Treatment<br>optimization</p>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">18%</h5>
+                        <p class="text-muted small mb-0">Cost<br>reduction</p>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <span class="text-muted small">Based on Q1 2025 data</span>
+                        <a href="#" class="text-teal text-decoration-none small">Full Report</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small">Risk Level</label>
+                <select class="form-select">
+                    <option selected>All Risk Levels</option>
+                    <option>High Risk</option>
+                    <option>Moderate Risk</option>
+                    <option>Low Risk</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Department</label>
+                <select class="form-select">
+                    <option selected>All Departments</option>
+                    <option>Cardiology</option>
+                    <option>Oncology</option>
+                    <option>Neurology</option>
+                    <option>General Medicine</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Date Range</label>
+                <select class="form-select">
+                    <option selected>Last 7 Days</option>
+                    <option>Last 30 Days</option>
+                    <option>Last 90 Days</option>
+                    <option>Custom Range</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Search Patient</label>
+                <div class="position-relative">
+                    <input type="text" class="form-control" placeholder="Search by name or ID">
+                    <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- High Risk Patients Table -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0">High Risk Patients</h6>
+            <p class="text-muted small mb-0">Patients requiring immediate attention</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-danger rounded-pill px-3 py-2">8 Patients</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col" class="border-0 ps-4">Patient</th>
+                        <th scope="col" class="border-0">Age</th>
+                        <th scope="col" class="border-0">Risk Score</th>
+                        <th scope="col" class="border-0">Primary Condition</th>
+                        <th scope="col" class="border-0">AI Recommendation</th>
+                        <th scope="col" class="border-0 text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                    <span class="text-danger fw-bold">AR</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Ali Raza</p>
+                                    <small class="text-muted">#PT-78924</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle">63</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="badge bg-danger">92%</span>
+                                </div>
+                                <i class="bi bi-arrow-up-right text-danger"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle">Acute Myocardial Infarction</td>
+                        <td class="align-middle">
+                            <span class="badge bg-light text-dark border">ICU Monitoring</span>
+                            <span class="badge bg-light text-dark border">Urgent Catheterization</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-teal rounded-pill">
+                                <i class="bi bi-lightning-charge"></i> Act
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                    <span class="text-danger fw-bold">MT</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Maria Torres</p>
+                                    <small class="text-muted">#PT-45621</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle">72</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="badge bg-danger">88%</span>
+                                </div>
+                                <i class="bi bi-arrow-up-right text-danger"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle">Sepsis</td>
+                        <td class="align-middle">
+                            <span class="badge bg-light text-dark border">Broad Spectrum Antibiotics</span>
+                            <span class="badge bg-light text-dark border">IV Fluids</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-teal rounded-pill">
+                                <i class="bi bi-lightning-charge"></i> Act
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                    <span class="text-danger fw-bold">JW</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">James Wilson</p>
+                                    <small class="text-muted">#PT-32145</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle">68</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="badge bg-danger">85%</span>
+                                </div>
+                                <i class="bi bi-arrow-up-right text-danger"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle">Pulmonary Embolism</td>
+                        <td class="align-middle">
+                            <span class="badge bg-light text-dark border">Anticoagulation</span>
+                            <span class="badge bg-light text-dark border">O2 Therapy</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-teal rounded-pill">
+                                <i class="bi bi-lightning-charge"></i> Act
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill">
+                <i class="bi bi-download me-1"></i> Export List
+            </button>
+            <a href="#" class="text-teal text-decoration-none">View All High Risk Patients</a>
+        </div>
+    </div>
+</div>
+
+<!-- Moderate Risk Patients Table -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0">Moderate Risk Patients</h6>
+            <p class="text-muted small mb-0">Patients requiring proactive intervention</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-warning rounded-pill px-3 py-2">12 Patients</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col" class="border-0 ps-4">Patient</th>
+                        <th scope="col" class="border-0">Age</th>
+                        <th scope="col" class="border-0">Risk Score</th>
+                        <th scope="col" class="border-0">Primary Condition</th>
+                        <th scope="col" class="border-0">AI Recommendation</th>
+                        <th scope="col" class="border-0 text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                    <span class="text-warning fw-bold">JS</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Jane Smith</p>
+                                    <small class="text-muted">#PT-65423</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle">45</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="badge bg-warning">68%</span>
+                                </div>
+                                <i class="bi bi-arrow-up-right text-warning"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle">Type 2 Diabetes, Uncontrolled</td>
+                        <td class="align-middle">
+                            <span class="badge bg-light text-dark border">Medication A</span>
+                            <span class="badge bg-light text-dark border">Therapy B</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-teal rounded-pill">
+                                <i class="bi bi-lightning-charge"></i> Act
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                    <span class="text-warning fw-bold">RP</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Raj Patel</p>
+                                    <small class="text-muted">#PT-19872</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle">51</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="badge bg-warning">65%</span>
+                                </div>
+                                <i class="bi bi-dash text-secondary"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle">Hypertension</td>
+                        <td class="align-middle">
+                            <span class="badge bg-light text-dark border">ACE Inhibitor</span>
+                            <span class="badge bg-light text-dark border">Dietary Changes</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-teal rounded-pill">
+                                <i class="bi bi-lightning-charge"></i> Act
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 42px; height: 42px;">
+                                    <span class="text-warning fw-bold">EJ</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Emily Johnson</p>
+                                    <small class="text-muted">#PT-54321</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle">38</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="badge bg-warning">62%</span>
+                                </div>
+                                <i class="bi bi-arrow-down-right text-success"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle">Asthma, Moderate</td>
+                        <td class="align-middle">
+                            <span class="badge bg-light text-dark border">Inhaled Corticosteroids</span>
+                            <span class="badge bg-light text-dark border">Trigger Avoidance</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-teal rounded-pill">
+                                <i class="bi bi-lightning-charge"></i> Act
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill">
+                <i class="bi bi-download me-1"></i> Export List
+            </button>
+            <a href="#" class="text-teal text-decoration-none">View All Moderate Risk Patients</a>
+        </div>
+    </div>
+</div>
+
+<!-- AI Prediction Models -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0">
+        <h6 class="mb-0">Available AI Models</h6>
+        <p class="text-muted small mb-0">Clinical decision support systems</p>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-wrapper rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="bi bi-heart-pulse fs-4 text-info"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Cardiovascular Risk</h6>
+                                <p class="text-muted small mb-0">v2.4 • 94% accuracy</p>
+                            </div>
+                        </div>
+                        <p class="small mb-3">Predicts 30-day readmission risk and complications for cardiac patients.</p>
+                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="bi bi-lungs fs-4 text-warning"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Respiratory Failure</h6>
+                                <p class="text-muted small mb-0">v1.8 • 91% accuracy</p>
+                            </div>
+                        </div>
+                        <p class="small mb-3">Predicts respiratory decompensation risk in the next 24-48 hours.</p>
+                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="bi bi-droplet-half fs-4 text-danger"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Sepsis Predictor</h6>
+                                <p class="text-muted small mb-0">v3.1 • 89% accuracy</p>
+                            </div>
+                        </div>
+                        <p class="small mb-3">Early detection of sepsis up to 6 hours before clinical manifestation.</p>
+                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="bi bi-activity fs-4 text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Stroke Risk</h6>
+                                <p class="text-muted small mb-0">v2.0 • 87% accuracy</p>
+                            </div>
+                        </div>
+                        <p class="small mb-3">Predicts stroke risk based on vitals, lab values, and patient history.</p>
+                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-wrapper rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="bi bi-capsule fs-4 text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Medication Response</h6>
+                                <p class="text-muted small mb-0">v1.5 • 85% accuracy</p>
+                            </div>
+                        </div>
+                        <p class="small mb-3">Predicts patient response to various medication protocols based on biomarkers.</p>
+                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100 bg-light">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center text-center p-4">
+                        <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-plus-lg fs-4 text-teal"></i>
+                        </div>
+                        <h6 class="mb-2">Request New Model</h6>
+                        <p class="small text-muted mb-3">Need a custom AI prediction model?</p>
+                        <button class="btn btn-sm btn-outline-teal">Contact AI Team</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Prediction History -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0">Recent AI Prediction History</h6>
+            <p class="text-muted small mb-0">Last 10 analyses performed</p>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill">
+                <i class="bi bi-filter me-1"></i> Filter
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col" class="border-0 ps-4">Date & Time</th>
+                        <th scope="col" class="border-0">Patient</th>
+                        <th scope="col" class="border-0">Model Used</th>
+                        <th scope="col" class="border-0">Risk Score</th>
+                        <th scope="col" class="border-0">Status</th>
+                        <th scope="col" class="border-0 text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4">May 11, 2025 09:42 AM</td>
+                        <td>Ali Raza</td>
+                        <td>Cardiovascular Risk</td>
+                        <td>
+                            <span class="badge bg-danger">92%</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Reviewed</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 10, 2025 03:18 PM</td>
+                        <td>Maria Torres</td>
+                        <td>Sepsis Predictor</td>
+                        <td>
+                            <span class="badge bg-danger">88%</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Reviewed</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 10, 2025 11:23 AM</td>
+                        <td>Jane Smith</td>
+                        <td>Medication Response</td>
+                        <td>
+                            <span class="badge bg-warning">68%</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Reviewed</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 9, 2025 04:35 PM</td>
+                        <td>Robert Chen</td>
+                        <td>Respiratory Failure</td>
+                        <td>
+                            <span class="badge bg-success">34%</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">Not Reviewed</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 9, 2025 01:12 PM</td>
+                        <td>Sarah Johnson</td>
+                        <td>Stroke Risk</td>
+                        <td>
+                            <span class="badge bg-warning">56%</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Reviewed</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Showing 5 of 28 records</span>
+            <nav aria-label="Prediction history pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- AI Insights Dashboard Link -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm bg-teal text-white">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5>AI Insights Dashboard</h5>
+                        <p class="mb-0">Access advanced analytics, model performance metrics, and hospital-wide AI impact analysis.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <button class="btn btn-light text-teal rounded-pill">
+                            <i class="bi bi-bar-chart me-2"></i> Open Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Prediction Details Modal -->
+<div class="modal fade" id="aiPredictionModal" tabindex="-1" aria-labelledby="aiPredictionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title" id="aiPredictionModalLabel">AI Prediction Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <span class="text-danger fw-bold">AR</span>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Ali Raza</h5>
+                                <p class="text-muted small mb-0">#PT-78924 • Male, 63 years</p>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="mb-2"><strong>Primary Diagnosis:</strong></div>
+                            <span class="badge bg-danger text-white py-2 px-3">Acute Myocardial Infarction</span>
+                        </div>
+                        <div class="mb-3">
+                            <div class="mb-2"><strong>Comorbidities:</strong></div>
+                            <span class="badge bg-light text-dark border me-1 mb-1">Hypertension</span>
+                            <span class="badge bg-light text-dark border me-1 mb-1">Type 2 Diabetes</span>
+                            <span class="badge bg-light text-dark border me-1 mb-1">Hyperlipidemia</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 bg-light border-0">
+                            <div class="card-body">
+                                <h6>Risk Assessment</h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 92%"></div>
+                                    </div>
+                                    <h4 class="mb-0 text-danger">92%</h4>
+                                </div>
+                                <p class="small mb-1"><strong>Model:</strong> Cardiovascular Risk v2.4</p>
+                                <p class="small mb-1"><strong>Analysis Date:</strong> May 11, 2025 09:42 AM</p>
+                                <p class="small mb-0"><strong>Reviewed By:</strong> Dr. Ahmed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Key Risk Factors</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Factor</th>
+                                        <th>Value</th>
+                                        <th>Reference Range</th>
+                                        <th>Contribution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Troponin I</td>
+                                        <td>2.3 ng/mL</td>
+                                        <td> 0.04 ng/mL</td>
+                                        <td><span class="text-danger">Very High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Blood Pressure</td>
+                                        <td>165/95 mmHg</td>
+                                        <td>120/80 mmHg </td>
+                                        <td><span class="text-danger">High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>LDL Cholesterol</td>
+                                        <td>158 mg/dL</td>
+                                        <td>100 mg/dL</td>
+                                        <td><span class="text-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>HbA1c</td>
+                                        <td>8.2%</td>
+                                        <td> 5.7%</td>
+                                        <td><span class="text-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ST Segment Changes</td>
+                                        <td>Present</td>
+                                        <td>Absent</td>
+                                        <td><span class="text-danger">Very High</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">AI Recommendations</h6>
+                        <div class="alert alert-danger bg-danger bg-opacity-10 border-start border-danger border-4">
+                            <h6><i class="bi bi-exclamation-triangle me-2"></i>High Priority Actions</h6>
+                            <ul class="mb-0">
+                                <li>Immediate ICU monitoring</li>
+                                <li>Urgent cardiac catheterization within 90 minutes</li>
+                                <li>Administer loading dose of dual antiplatelet therapy</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-warning bg-warning bg-opacity-10 border-start border-warning border-4">
+                            <h6><i class="bi bi-clock me-2"></i>Follow-up Recommendations</h6>
+                            <ul class="mb-0">
+                                <li>Assess for mechanical complications</li>
+                                <li>Initiate statin therapy</li>
+                                <li>Schedule cardiac rehabilitation evaluation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-3">Predicted Outcomes</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="card border h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-danger mb-2">78%</h6>
+                                        <p class="small mb-0">30-day mortality risk without intervention</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-warning mb-2">63%</h6>
+                                        <p class="small mb-0">Risk of heart failure within 1 year</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-success mb-2">85%</h6>
+                                        <p class="small mb-0">Recovery probability with recommended interventions</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-teal rounded-pill">
+                    <i class="bi bi-printer"></i> Print Report
+                </button>
+                <button type="button" class="btn btn-teal rounded-pill">
+                    <i class="bi bi-lightning-charge"></i> Implement Recommendations
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom style overrides for this page -->
+<style>
+    /* Custom button styles */
+    .btn-teal {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+        color: white;
+    }
+    
+    .btn-teal:hover, .btn-teal:focus {
+        background-color: #1ba382;
+        border-color: #1ba382;
+        color: white;
+    }
+    
+    .btn-outline-teal {
+        border-color: var(--bs-teal);
+        color: var(--bs-teal);
+    }
+    
+    .btn-outline-teal:hover, .btn-outline-teal:focus {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+    
+    /* Card hover animations */
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* Badge styles */
+    .badge {
+        font-weight: 500;
+    }
+    
+    /* Table row hover effect */
+    tbody tr {
+        transition: background-color 0.2s;
+    }
+    
+    tbody tr:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.05);
+    }
+    
+    /* Custom pagination */
+    .page-item.active .page-link {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+    
+    .page-link {
+        color: var(--bs-teal);
+    }
+    
+    .page-link:hover {
+        color: #1ba382;
+    }
+    
+    /* Modal animations */
+    .modal .modal-content {
+        animation: modalFadeIn 0.3s ease-out;
+    }
+    
+    @@keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsive adjustments */
+    @@media (max-width: 767.98px) {
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+    }
+</style>

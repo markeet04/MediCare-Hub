@@ -28,6 +28,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcQWRtaW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Layout/DoctorLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcRG9jdG9yTGF5b3V0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Admin/ActivityLogs.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBY3Rpdml0eUxvZ3MucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -46,6 +50,34 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Admin/AdminUsers.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pblVzZXJzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorAIPredictions.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yQUlQcmVkaWN0aW9ucy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorAppointments.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yQXBwb2ludG1lbnRzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yRGFzaGJvYXJkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorLabOrders.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yTGFiT3JkZXJzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorPatients.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yUGF0aWVudHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorProfile.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yUHJvZmlsZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Doctor/DoctorTreatments.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yVHJlYXRtZW50cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Qasim/Desktop/VP PRJ/BlazorApp1/Components/Pages/Error.razor]

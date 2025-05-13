@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "BNs6ymjZS15n4BIpVqpj3PMxYBYU8ovbN/F3vebJfj8=",
+  "Hash": "P1hThiRM7ELW1IFJSX1iB5BiPTPtzFXFJM8d1GOay5k=",
   "Source": "BlazorApp1",
   "BasePath": "_content/BlazorApp1",
   "Mode": "Default",
@@ -99,6 +99,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css"
+    },
+    {
+      "Identity": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\6b8ecfwbnj-wt76n2jobw.gz",
+      "SourceId": "BlazorApp1",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/BlazorApp1",
+      "RelativePath": "lib/bootstrap/dist/js/doctor#[.{fingerprint=wt76n2jobw}]?.js.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "4ps20j8pgi",
+      "Integrity": "OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js"
     },
     {
       "Identity": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\6ebo9pkv4m-c2oey78nd0.gz",
@@ -2052,6 +2073,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
+    },
+    {
+      "Identity": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js",
+      "SourceId": "BlazorApp1",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\",
+      "BasePath": "_content/BlazorApp1",
+      "RelativePath": "lib/bootstrap/dist/js/doctor#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "wt76n2jobw",
+      "Integrity": "3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js"
     },
     {
       "Identity": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\reportHelper.js",
@@ -16243,6 +16285,304 @@
         {
           "Name": "integrity",
           "Value": "sha256-6NzYRu+d/0puyGm6UFw/dwD9409WZbUx18xgnT/wQoQ="
+        }
+      ]
+    },
+    {
+      "Route": "lib/bootstrap/dist/js/doctor.js",
+      "AssetFile": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\6b8ecfwbnj-wt76n2jobw.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000467726848"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2137"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 11 May 2025 08:09:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s="
+        }
+      ]
+    },
+    {
+      "Route": "lib/bootstrap/dist/js/doctor.js",
+      "AssetFile": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "7678"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 11 May 2025 08:09:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s="
+        }
+      ]
+    },
+    {
+      "Route": "lib/bootstrap/dist/js/doctor.js.gz",
+      "AssetFile": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\6b8ecfwbnj-wt76n2jobw.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2137"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 11 May 2025 08:09:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U="
+        }
+      ]
+    },
+    {
+      "Route": "lib/bootstrap/dist/js/doctor.wt76n2jobw.js",
+      "AssetFile": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\6b8ecfwbnj-wt76n2jobw.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000467726848"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2137"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 11 May 2025 08:09:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "wt76n2jobw"
+        },
+        {
+          "Name": "label",
+          "Value": "lib/bootstrap/dist/js/doctor.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s="
+        }
+      ]
+    },
+    {
+      "Route": "lib/bootstrap/dist/js/doctor.wt76n2jobw.js",
+      "AssetFile": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\js\\doctor.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "7678"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 11 May 2025 08:09:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "wt76n2jobw"
+        },
+        {
+          "Name": "label",
+          "Value": "lib/bootstrap/dist/js/doctor.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-3KPpCl4+jpbmEFFnvGfYODdwD8AELZgCVdqgr8nqd/s="
+        }
+      ]
+    },
+    {
+      "Route": "lib/bootstrap/dist/js/doctor.wt76n2jobw.js.gz",
+      "AssetFile": "C:\\Users\\Qasim\\Desktop\\VP PRJ\\BlazorApp1\\obj\\Debug\\net9.0\\compressed\\6b8ecfwbnj-wt76n2jobw.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2137"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 11 May 2025 08:09:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "wt76n2jobw"
+        },
+        {
+          "Name": "label",
+          "Value": "lib/bootstrap/dist/js/doctor.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-OBZ/+U3VvHzkXi+3KRmXq+WF6avubxaE/g3dtVZmd+U="
         }
       ]
     },

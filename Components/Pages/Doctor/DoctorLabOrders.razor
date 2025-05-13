@@ -1,0 +1,13 @@
+@page "/doctor/laborders"
+@layout BlazorApp1.Components.Layout.DoctorLayout
+@rendermode InteractiveServer
+
+<h3>🧪 Lab Test Orders</h3>
+<p>Send lab test orders to Lab Technician.</p>
+<input class="form-control mb-2" placeholder="Patient Name" />
+<select class="form-select mb-2">
+  <option>Blood Test</option>
+  <option>Urine Test</option>
+  <option>X-Ray</option>
+</select>
+<button class="btn btn-secondary">Send Order</button>

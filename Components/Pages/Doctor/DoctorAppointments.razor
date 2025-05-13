@@ -1,0 +1,668 @@
+@page "/doctor/appointments"
+@layout BlazorApp1.Components.Layout.DoctorLayout
+@rendermode InteractiveServer
+@using System
+@using System.Collections.Generic
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-1">📅 Appointments</h3>
+        <p class="text-muted mb-0">Manage your patient schedule</p>
+    </div>
+    <div class="d-flex">
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-calendar-check text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Today's Appointments</p>
+                        <h4 class="mb-0">8</h4>
+                    </div>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                    <small class="text-muted">3 completed</small>
+                    <small class="text-muted">5 remaining</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-wrapper rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-check-circle text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Completed Today</p>
+                        <h4 class="mb-0">3</h4>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Latest: Sarah Johnson - 11:30 AM</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-hourglass-split text-warning fs-4"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Upcoming (Week)</p>
+                        <h4 class="mb-0">12</h4>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Next: Ali Raza - 10:30 AM</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-x-circle text-danger fs-4"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Canceled Today</p>
+                        <h4 class="mb-0">1</h4>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Michael Brown - 2:00 PM</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Appointments Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-calendar3 text-teal me-2"></i>
+            <h5 class="mb-0">Today's Schedule</h5>
+        </div>
+        <span class="fw-medium">Monday, May 11, 2025</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 12%">Time</th>
+                        <th style="width: 23%">Patient</th>
+                        <th style="width: 20%">Purpose</th>
+                        <th style="width: 15%">Status</th>
+                        <th style="width: 15%">Room</th>
+                        <th style="width: 15%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="align-middle">
+                        <td>9:00 AM</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                    <span class="text-info fw-bold">JS</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Jane Smith</p>
+                                    <small class="text-muted">42 years, Female</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Follow-up Consultation</td>
+                        <td><span class="badge bg-success">Completed</span></td>
+                        <td>Room 103</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-chat-dots"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="align-middle">
+                        <td>10:30 AM</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                    <span class="text-warning fw-bold">AR</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Ali Raza</p>
+                                    <small class="text-muted">35 years, Male</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Chest Pain Assessment</td>
+                        <td><span class="badge bg-primary">In Progress</span></td>
+                        <td>Room 115</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-chat-dots"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="align-middle">
+                        <td>1:00 PM</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                    <span class="text-danger fw-bold">SK</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Sara Khan</p>
+                                    <small class="text-muted">28 years, Female</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Annual Checkup</td>
+                        <td><span class="badge bg-secondary">Waiting</span></td>
+                        <td>Room 107</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-chat-dots"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="align-middle">
+                        <td>2:30 PM</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                    <span class="text-primary fw-bold">MT</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Mark Thompson</p>
+                                    <small class="text-muted">52 years, Male</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Blood Pressure Review</td>
+                        <td><span class="badge bg-secondary">Scheduled</span></td>
+                        <td>Room 110</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-chat-dots"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar View Section -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-calendar2-week text-teal me-2"></i>
+            <h5 class="mb-0">Calendar View</h5>
+        </div>
+        <div class="d-flex align-items-center">
+            <button class="btn btn-sm btn-light me-2">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="fw-medium">May 2025</span>
+            <button class="btn btn-sm btn-light ms-2">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Calendar Grid -->
+        <div class="calendar-grid">
+            <div class="calendar-header row text-center mb-2">
+                <div class="col">Mon</div>
+                <div class="col">Tue</div>
+                <div class="col">Wed</div>
+                <div class="col">Thu</div>
+                <div class="col">Fri</div>
+                <div class="col">Sat</div>
+                <div class="col">Sun</div>
+            </div>
+            <div class="calendar-days">
+                <div class="row g-2 mb-2">
+                    <div class="col">
+                        <div class="calendar-day text-muted">28</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day text-muted">29</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day text-muted">30</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">1</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">2</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">3</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">4</div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col">
+                        <div class="calendar-day">5</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">6</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">7</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">8</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">9</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">10</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day current-day" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">11</div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">12</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">13</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">14</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">15</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">16</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">17</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">18</div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col">
+                        <div class="calendar-day">19</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">20</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">21</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">22</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">23</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">24</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">25</div>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col">
+                        <div class="calendar-day">26</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">27</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">28</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">29</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">30</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day">31</div>
+                    </div>
+                    <div class="col">
+                        <div class="calendar-day text-muted">1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-center mt-3 text-muted">
+            <div class="d-flex align-items-center me-3">
+                <div class="calendar-day-indicator current-day-indicator me-1"></div>
+                <small>Today</small>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="calendar-day-indicator has-appointments-indicator me-1"></div>
+                <small>Has Appointments</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Day Appointments Modal -->
+<div class="modal fade" id="dayAppointmentsModal" tabindex="-1" aria-labelledby="dayAppointmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dayAppointmentsModalLabel">Appointments for May 12, 2025</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-item-time">08:30 AM</div>
+                        <div class="timeline-item-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Emma Wilson</h6>
+                                        <span class="badge bg-secondary">Scheduled</span>
+                                    </div>
+                                    <p class="text-muted mb-1 small">Follow-up after surgery</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Room 108</small>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-chat-dots"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-item-time">10:00 AM</div>
+                        <div class="timeline-item-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">James Li</h6>
+                                        <span class="badge bg-secondary">Scheduled</span>
+                                    </div>
+                                    <p class="text-muted mb-1 small">Initial consultation</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Room 105</small>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-chat-dots"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-item-time">1:15 PM</div>
+                        <div class="timeline-item-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Rachel Green</h6>
+                                        <span class="badge bg-secondary">Scheduled</span>
+                                    </div>
+                                    <p class="text-muted mb-1 small">Medication review</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Room 112</small>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-chat-dots"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Appointment Modal -->
+<div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="patientSelect" class="form-label">Patient</label>
+                        <select class="form-select" id="patientSelect">
+                            <option selected disabled>Select a patient</option>
+                            <option>Jane Smith</option>
+                            <option>Ali Raza</option>
+                            <option>Sara Khan</option>
+                            <option>Mark Thompson</option>
+                            <option>Emma Wilson</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="appointmentDate" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="appointmentDate">
+                        </div>
+                        <div class="col">
+                            <label for="appointmentTime" class="form-label">Time</label>
+                            <input type="time" class="form-control" id="appointmentTime">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentType" class="form-label">Appointment Type</label>
+                        <select class="form-select" id="appointmentType">
+                            <option selected disabled>Select type</option>
+                            <option>Initial Consultation</option>
+                            <option>Follow-up</option>
+                            <option>Annual Checkup</option>
+                            <option>Urgent Care</option>
+                            <option>Medication Review</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentRoom" class="form-label">Room</label>
+                        <select class="form-select" id="appointmentRoom">
+                            <option selected disabled>Select room</option>
+                            <option>Room 101</option>
+                            <option>Room 102</option>
+                            <option>Room 103</option>
+                            <option>Room 104</option>
+                            <option>Room 105</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="appointmentNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Calendar Custom Styles */
+    .calendar-header {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .calendar-day {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    
+    .calendar-day:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+    }
+    
+    .calendar-day.current-day {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+    
+    .calendar-day.has-appointments {
+        position: relative;
+    }
+    
+    .calendar-day.has-appointments::after {
+        content: '';
+        position: absolute;
+        bottom: 8px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+    }
+    
+    .calendar-day-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .current-day-indicator {
+        background-color: var(--bs-teal);
+    }
+    
+    .has-appointments-indicator {
+        background-color: var(--bs-primary);
+    }
+    
+    /* Timeline Styles */
+    .timeline {
+        position: relative;
+        padding-left: 90px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 85px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-item-time {
+        position: absolute;
+        left: -90px;
+        width: 75px;
+        text-align: right;
+        color: #6c757d;
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding-top: 0.5rem;
+    }
+    
+    .timeline-item-content {
+        position: relative;
+    }
+    
+    .timeline-item-content::before {
+        content: '';
+        position: absolute;
+        left: -17px;
+        top: 15px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--bs-teal);
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px #dee2e6;
+    }
+</style>

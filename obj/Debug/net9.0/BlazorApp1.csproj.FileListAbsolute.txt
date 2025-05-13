@@ -79,3 +79,4 @@ C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\psnyflj9j1-
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-uin0erjt0i.gz
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-uin0erjt0i.gz
 C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\bx461rgr7t-q6c21z2nuc.gz
+C:\Users\Qasim\Desktop\VP PRJ\BlazorApp1\obj\Debug\net9.0\compressed\6b8ecfwbnj-wt76n2jobw.gz

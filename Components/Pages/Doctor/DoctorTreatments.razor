@@ -1,0 +1,252 @@
+@page "/doctor/treatments"
+@layout BlazorApp1.Components.Layout.DoctorLayout
+@rendermode InteractiveServer
+
+<div class="treatments-container animate-fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="text-teal mb-2">
+                <i class="bi bi-clipboard2-pulse me-2"></i>
+                Treatment Plans
+            </h3>
+            <p class="text-muted">Manage and update patient treatment strategies</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-teal rounded-pill">
+                <i class="bi bi-filter me-2"></i>
+                Filter
+            </button>
+            <button class="btn btn-teal rounded-pill" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
+                <i class="bi bi-plus-lg me-2"></i>
+                New Treatment Plan
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover treatments-table mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3 px-4 text-muted">Patient</th>
+                            <th class="py-3 px-4 text-muted">Diagnosis</th>
+                            <th class="py-3 px-4 text-muted">Treatment</th>
+                            <th class="py-3 px-4 text-muted">Started On</th>
+                            <th class="py-3 px-4 text-muted">Status</th>
+                            <th class="py-3 px-4 text-muted text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="treatment-row">
+                            <td class="py-3 px-4 align-middle">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span class="text-teal fw-bold">JS</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">Jane Smith</div>
+                                        <small class="text-muted">Cardiology</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 align-middle">Hypertension</td>
+                            <td class="py-3 px-4 align-middle">Medication Management</td>
+                            <td class="py-3 px-4 align-middle">
+                                <small class="text-muted">May 1, 2025</small>
+                            </td>
+                            <td class="py-3 px-4 align-middle">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Ongoing</span>
+                            </td>
+                            <td class="py-3 px-4 align-middle text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit Plan</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Discontinue</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="treatment-row">
+                            <td class="py-3 px-4 align-middle">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span class="text-teal fw-bold">AR</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">Ali Raza</div>
+                                        <small class="text-muted">Neurology</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 align-middle">Migraine Disorder</td>
+                            <td class="py-3 px-4 align-middle">Preventive Therapy</td>
+                            <td class="py-3 px-4 align-middle">
+                                <small class="text-muted">April 15, 2025</small>
+                            </td>
+                            <td class="py-3 px-4 align-middle">
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">Monitoring</span>
+                            </td>
+                            <td class="py-3 px-4 align-middle text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow-sm">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit Plan</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Discontinue</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <small class="text-muted">Showing 2 of 2 treatment plans</small>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- New Treatment Plan Modal -->
+    <div class="modal fade" id="newTreatmentModal" tabindex="-1" aria-labelledby="newTreatmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-teal" id="newTreatmentModalLabel">
+                        <i class="bi bi-clipboard2-pulse me-2"></i>
+                        Create New Treatment Plan
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="patientSelect" class="form-label">Patient</label>
+                        <select class="form-select" id="patientSelect">
+                            <option selected>Select Patient</option>
+                            <option>Jane Smith</option>
+                            <option>Ali Raza</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="diagnosisInput" class="form-label">Diagnosis</label>
+                        <input type="text" class="form-control" id="diagnosisInput" placeholder="Enter diagnosis">
+                    </div>
+                    <div class="mb-3">
+                        <label for="treatmentDetails" class="form-label">Treatment Details</label>
+                        <textarea class="form-control" id="treatmentDetails" rows="4" placeholder="Describe treatment plan"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="treatmentStatus" class="form-label">Status</label>
+                            <select class="form-select" id="treatmentStatus">
+                                <option selected>Ongoing</option>
+                                <option>Monitoring</option>
+                                <option>Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-teal rounded-pill">Create Treatment Plan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .treatments-table tbody tr {
+        transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .treatments-table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+        transform: translateY(-3px);
+    }
+
+    .treatments-table .btn-light {
+        transition: all 0.2s;
+    }
+
+    .treatments-table .btn-light:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+        transform: scale(1.1);
+    }
+
+    .dropdown-menu {
+        animation: dropdownFadeIn 0.3s ease-out;
+    }
+
+    @@keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-outline-teal, .btn-teal {
+        transition: all 0.2s;
+    }
+
+    .btn-outline-teal:hover, .btn-teal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-header .btn-close {
+        background-color: rgba(32, 201, 151, 0.1);
+        border-radius: 50%;
+        opacity: 1;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Optional: Add any interactive scripts for the treatments page
+        const createTreatmentBtn = document.querySelector('#newTreatmentModal .btn-teal');
+        
+        createTreatmentBtn.addEventListener('click', function() {
+            // Placeholder for treatment creation logic
+            console.log('Creating new treatment plan');
+            // You would typically add validation and API call here
+            // For now, just close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newTreatmentModal'));
+            modal.hide();
+        });
+    });
+</script>
