@@ -9,117 +9,137 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = BlazorApp1
 build_property.RootNamespace = BlazorApp1
-build_property.ProjectDir = C:\Users\MTB\Desktop\Medicare prj\MediCare-Hub\
+build_property.ProjectDir = C:\Users\mbila\OneDrive\Desktop\New folder\MediCare-Hub\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\MTB\Desktop\Medicare prj\MediCare-Hub
+build_property.MSBuildProjectDirectory = C:\Users\mbila\OneDrive\Desktop\New folder\MediCare-Hub
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 9.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/App.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/App.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Layout/AdminLayout.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Layout/AdminLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcQWRtaW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Layout/DoctorLayout.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Layout/DoctorLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcRG9jdG9yTGF5b3V0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Layout/LabTechnicianLayout.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Layout/LabTechnicianLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTGFiVGVjaG5pY2lhbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Admin/ActivityLogs.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Layout/ReceptionistLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcUmVjZXB0aW9uaXN0TGF5b3V0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Admin/ActivityLogs.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBY3Rpdml0eUxvZ3MucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Admin/AdminDashboard.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Admin/AdminDashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pbkRhc2hib2FyZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Admin/AdminProfile.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Admin/AdminProfile.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pblByb2ZpbGUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Admin/AdminReports.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Admin/AdminReports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pblJlcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Admin/AdminUsers.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Admin/AdminUsers.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pblVzZXJzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorAIPredictions.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorAIPredictions.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yQUlQcmVkaWN0aW9ucy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorAppointments.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorAppointments.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yQXBwb2ludG1lbnRzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorDashboard.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorDashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yRGFzaGJvYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorLabOrders.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorLabOrders.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yTGFiT3JkZXJzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorPatients.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorPatients.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yUGF0aWVudHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorProfile.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorProfile.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yUHJvZmlsZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Doctor/DoctorTreatments.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Doctor/DoctorTreatments.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRG9jdG9yVHJlYXRtZW50cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Error.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/LabTechnician/SubmitLabReport.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/LabTechnician/SubmitLabReport.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMYWJUZWNobmljaWFuXFN1Ym1pdExhYlJlcG9ydC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/LabTechnician/TechnicianDashboard.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/LabTechnician/TechnicianDashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMYWJUZWNobmljaWFuXFRlY2huaWNpYW5EYXNoYm9hcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/LabTechnician/TechnicianProfile.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/LabTechnician/TechnicianProfile.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMYWJUZWNobmljaWFuXFRlY2huaWNpYW5Qcm9maWxlLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/LabTechnician/ViewAssignedTest.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/LabTechnician/ViewAssignedTest.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMYWJUZWNobmljaWFuXFZpZXdBc3NpZ25lZFRlc3QucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Pages/Weather.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Receptionist/ManageAppointment.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcTWFuYWdlQXBwb2ludG1lbnQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Receptionist/ReceptionistDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcUmVjZXB0aW9uaXN0RGFzaGJvYXJkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Receptionist/ReceptionistProfile.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcUmVjZXB0aW9uaXN0UHJvZmlsZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Receptionist/RegisterWalkin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcUmVnaXN0ZXJXYWxraW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Pages/Weather.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xXZWF0aGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Routes.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/_Imports.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Layout/MainLayout.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-j65y7q72mt
 
-[C:/Users/MTB/Desktop/Medicare prj/MediCare-Hub/Components/Layout/NavMenu.razor]
+[C:/Users/mbila/OneDrive/Desktop/New folder/MediCare-Hub/Components/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2TWVudS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-5bndfk4shp
