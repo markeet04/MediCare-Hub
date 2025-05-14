@@ -1,0 +1,963 @@
+@page "/receptionist/manage-appointments"
+@layout BlazorApp1.Components.Layout.ReceptionistLayout
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Manage Appointments</h4>
+        <p class="text-muted">Review, schedule, and manage patient appointments</p>
+    </div>
+    <div>
+        <button class="btn btn-primary rounded-pill px-4" @onclick="NavigateToBookAppointment">
+            <i class="bi bi-plus-lg me-2"></i> New Appointment
+        </button>
+    </div>
+</div>
+
+<!-- Filter and Search -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Date Range</label>
+                <div class="input-group">
+                    <input type="date" class="form-control" @bind="StartDate" />
+                    <span class="input-group-text">to</span>
+                    <input type="date" class="form-control" @bind="EndDate" />
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" @bind="StatusFilter">
+                    <option value="all">All Status</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Department</label>
+                <select class="form-select" @bind="DepartmentFilter">
+                    <option value="all">All Departments</option>
+                    <option value="cardiology">Cardiology</option>
+                    <option value="neurology">Neurology</option>
+                    <option value="orthopedics">Orthopedics</option>
+                    <option value="dermatology">Dermatology</option>
+                    <option value="pediatrics">Pediatrics</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Doctor</label>
+                <select class="form-select" @bind="DoctorFilter">
+                    <option value="all">All Doctors</option>
+                    <option value="dr-sarah-miller">Dr. Sarah Miller</option>
+                    <option value="dr-robert-williams">Dr. Robert Williams</option>
+                    <option value="dr-lisa-chen">Dr. Lisa Chen</option>
+                    <option value="dr-james-wilson">Dr. James Wilson</option>
+                    <option value="dr-maria-martinez">Dr. Maria Martinez</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Type</label>
+                <select class="form-select" @bind="TypeFilter">
+                    <option value="all">All Types</option>
+                    <option value="regular">Regular</option>
+                    <option value="follow-up">Follow-up</option>
+                    <option value="emergency">Emergency</option>
+                </select>
+            </div>
+        </div>
+        <hr />
+        <div class="row g-3">
+            <div class="col-md-5">
+                <div class="search-wrapper">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            class="form-control border-start-0 ps-0" 
+                            placeholder="Search patient name, ID, or phone..." 
+                            @bind="SearchQuery" 
+                            @bind:event="oninput" 
+                            @onkeyup="HandleSearch" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center mt-1">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="showCancelled" @bind="ShowCancelled">
+                        <label class="form-check-label" for="showCancelled">Include cancelled</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="showCompleted" @bind="ShowCompleted">
+                        <label class="form-check-label" for="showCompleted">Include completed</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-end">
+                <button class="btn btn-outline-secondary me-2" @onclick="ResetFilters">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </button>
+                <button class="btn btn-primary" @onclick="ApplyFilters">
+                    <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs for Different Views -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <button class="nav-link @(CurrentTab == "today" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("today")'>
+                    <i class="bi bi-calendar-day me-1"></i> Today
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(CurrentTab == "upcoming" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("upcoming")'>
+                    <i class="bi bi-calendar-week me-1"></i> Upcoming
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(CurrentTab == "weekly" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("weekly")'>
+                    <i class="bi bi-calendar3 me-1"></i> Weekly View
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(CurrentTab == "all" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("all")'>
+                    <i class="bi bi-list-ul me-1"></i> All Appointments
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        @if(CurrentTab == "weekly")
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered weekly-calendar mb-0">
+                    <thead>
+                        <tr class="bg-light">
+                            <th class="text-center" style="width: 8%">Time</th>
+                            <th class="text-center">Monday<br/><small class="text-muted">May 13</small></th>
+                            <th class="text-center">Tuesday<br/><small class="text-muted">May 14</small></th>
+                            <th class="text-center">Wednesday<br/><small class="text-muted">May 15</small></th>
+                            <th class="text-center">Thursday<br/><small class="text-muted">May 16</small></th>
+                            <th class="text-center">Friday<br/><small class="text-muted">May 17</small></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var timeSlot in GetTimeSlots())
+                        {
+                            <tr style="height: 80px;">
+                                <td class="align-middle text-center fw-bold text-muted">@timeSlot</td>
+                                @foreach (var day in GetWeekDays())
+                                {
+                                    <td class="position-relative">
+                                        @if (GetAppointmentForTimeAndDay(timeSlot, day).Any())
+                                        {
+                                            foreach (var appt in GetAppointmentForTimeAndDay(timeSlot, day))
+                                            {
+                                                <div class="appointment-item p-2 rounded-3 mb-1 @GetStatusClass(appt.Status)" @onclick="() => ViewAppointmentDetails(appt.Id)">
+                                                    <div class="fw-bold text-truncate">@appt.PatientName</div>
+                                                    <div class="small">@appt.Doctor</div>
+                                                </div>  
+                                            }
+                                        }
+                                        else 
+                                        {
+                                            <div class="add-appointment-link" @onclick="() => BookAppointmentAtTime(timeSlot, day)">
+                                                <i class="bi bi-plus-circle text-muted"></i>
+                                            </div>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll" @bind="SelectAll" @bind:event="oninput" @onchange="SelectAllAppointments">
+                                    <label class="form-check-label" for="selectAll">Patient</label>
+                                </div>
+                            </th>
+                            <th>Date & Time</th>
+                            <th>Doctor</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var appointment in GetAppointmentsForTab(CurrentTab))
+                        {
+                            <tr class="appointment-row @(appointment.IsSelected ? "selected-row" : "")" @onclick="() => ViewAppointmentDetails(appointment.Id)">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="form-check me-2">
+                                            <input 
+                                                class="form-check-input" 
+                                                type="checkbox" 
+                                                id="check-@appointment.Id" 
+                                                checked="@appointment.IsSelected" 
+                                                @onclick:stopPropagation="true" 
+                                                @onchange="e => ToggleAppointmentSelection(appointment.Id)" />
+                                        </div>
+                                        <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
+                                            <span class="text-primary fw-bold">@appointment.PatientInitials</span>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0">@appointment.PatientName</h6>
+                                            <small class="text-muted">@appointment.PatientId</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span>@appointment.Time</span><br/>
+                                    <small class="text-muted">@appointment.Date</small>
+                                </td>
+                                <td>
+                                    <span>@appointment.Doctor</span><br/>
+                                    <small class="text-muted">@appointment.Department</small>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-2 bg-light text-dark">@appointment.Type</span>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-2 @GetStatusBadgeClass(appointment.Status)">@appointment.Status</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton-@appointment.Id" data-bs-toggle="dropdown" aria-expanded="false" @onclick:stopPropagation="true">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton-@appointment.Id">
+                                            <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => ViewAppointmentDetails(appointment.Id)"><i class="bi bi-eye me-2"></i>View Details</button></li>
+                                            @if (appointment.Status == "Pending")
+                                            {
+                                                <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => ConfirmAppointment(appointment.Id)"><i class="bi bi-check-lg me-2"></i>Confirm</button></li>
+                                            }
+                                            @if (appointment.Status != "Cancelled" && appointment.Status != "Completed")
+                                            {
+                                                <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => CheckInPatient(appointment.Id)"><i class="bi bi-box-arrow-in-right me-2"></i>Check In</button></li>
+                                                <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => RescheduleAppointment(appointment.Id)"><i class="bi bi-calendar-check me-2"></i>Reschedule</button></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><button class="dropdown-item text-danger" @onclick:stopPropagation="true" @onclick="() => CancelAppointment(appointment.Id)"><i class="bi bi-x-lg me-2"></i>Cancel</button></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <!-- Bulk Actions Footer -->
+            @if (AnyAppointmentsSelected())
+            {
+                <div class="card-footer bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted">@GetSelectedAppointmentsCount() appointments selected</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="BulkConfirm">
+                                <i class="bi bi-check-lg me-1"></i> Confirm
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary me-2" @onclick="BulkSendReminder">
+                                <i class="bi bi-bell me-1"></i> Send Reminder
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="BulkCancel">
+                                <i class="bi bi-x-lg me-1"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (CurrentTab != "weekly" && TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="text-muted">
+            Showing <span class="fw-bold">@(((CurrentPage - 1) * PageSize) + 1)-@Math.Min(CurrentPage * PageSize, TotalAppointments)</span> of <span class="fw-bold">@TotalAppointments</span> appointments
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => NavigateToPage(CurrentPage - 1)" disabled="@(CurrentPage == 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                </li>
+                
+                @for (int i = StartPageNumber; i <= EndPageNumber; i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                        <button class="page-link" @onclick="() => NavigateToPage(pageNumber)">@pageNumber</button>
+                    </li>
+                }
+                
+                <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => NavigateToPage(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+
+
+@code {
+    private string CurrentTab { get; set; } = "today";
+    private string SearchQuery { get; set; } = "";
+    private DateTime StartDate { get; set; } = DateTime.Today;
+    private DateTime EndDate { get; set; } = DateTime.Today.AddDays(7);
+    private string StatusFilter { get; set; } = "all";
+    private string DepartmentFilter { get; set; } = "all";
+    private string DoctorFilter { get; set; } = "all";
+    private string TypeFilter { get; set; } = "all";
+    private bool ShowCancelled { get; set; } = false;
+    private bool ShowCompleted { get; set; } = false;
+    private bool SelectAll { get; set; } = false;
+    
+    // Pagination properties
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalAppointments => FilteredAppointments.Count;
+    private int TotalPages => (int)Math.Ceiling(TotalAppointments / (double)PageSize);
+    private int StartPageNumber => Math.Max(1, CurrentPage - 2);
+    private int EndPageNumber => Math.Min(TotalPages, StartPageNumber + 4);
+    
+    // Store filtered appointments separately
+    private List<AppointmentModel> FilteredAppointments { get; set; } = new List<AppointmentModel>();
+
+    // Sample appointments data
+    private List<AppointmentModel> Appointments { get; set; } = new List<AppointmentModel>();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        // Initialize sample data
+        InitializeSampleData();
+        
+        // Initialize filtered appointments
+        FilteredAppointments = Appointments.ToList();
+    }
+
+    private void InitializeSampleData()
+    {
+        // Today's appointments
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 1,
+            PatientName = "John Doe",
+            PatientId = "#PAT-20250512-001",
+            PatientInitials = "JD",
+            Time = "10:30 AM",
+            Date = "Today",
+            Doctor = "Dr. Sarah Miller",
+            Department = "Cardiology",
+            Type = "Regular",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 2,
+            PatientName = "Emily Chen",
+            PatientId = "#PAT-20250511-047",
+            PatientInitials = "EC",
+            Time = "11:00 AM",
+            Date = "Today",
+            Doctor = "Dr. Robert Williams",
+            Department = "Neurology",
+            Type = "Follow-up",
+            Status = "Pending",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 3,
+            PatientName = "Michael Johnson",
+            PatientId = "#PAT-20250510-089",
+            PatientInitials = "MJ",
+            Time = "11:30 AM",
+            Date = "Today",
+            Doctor = "Dr. Lisa Chen",
+            Department = "Orthopedics",
+            Type = "Regular",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 4,
+            PatientName = "Sarah Brown",
+            PatientId = "#PAT-20250509-122",
+            PatientInitials = "SB",
+            Time = "12:15 PM",
+            Date = "Today",
+            Doctor = "Dr. James Wilson",
+            Department = "Dermatology",
+            Type = "Emergency",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        // Tomorrow's appointments
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 5,
+            PatientName = "Robert Garcia",
+            PatientId = "#PAT-20250508-156",
+            PatientInitials = "RG",
+            Time = "09:15 AM",
+            Date = "May 14, 2025",
+            Doctor = "Dr. Maria Martinez",
+            Department = "Pediatrics",
+            Type = "Regular",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 6,
+            PatientName = "Jennifer Lewis",
+            PatientId = "#PAT-20250507-203",
+            PatientInitials = "JL",
+            Time = "10:00 AM",
+            Date = "May 14, 2025",
+            Doctor = "Dr. Sarah Miller",
+            Department = "Cardiology",
+            Type = "Follow-up",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 7,
+            PatientName = "David Wilson",
+            PatientId = "#PAT-20250506-278",
+            PatientInitials = "DW",
+            Time = "02:30 PM",
+            Date = "May 14, 2025",
+            Doctor = "Dr. Robert Williams",
+            Department = "Neurology",
+            Type = "Regular",
+            Status = "Pending",
+            IsSelected = false
+        });
+        
+        // Later this week
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 8,
+            PatientName = "Lisa Thompson",
+            PatientId = "#PAT-20250505-301",
+            PatientInitials = "LT",
+            Time = "11:45 AM",
+            Date = "May 15, 2025",
+            Doctor = "Dr. James Wilson",
+            Department = "Dermatology",
+            Type = "Regular",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 9,
+            PatientName = "Thomas Reed",
+            PatientId = "#PAT-20250504-412",
+            PatientInitials = "TR",
+            Time = "03:00 PM",
+            Date = "May 16, 2025",
+            Doctor = "Dr. Lisa Chen",
+            Department = "Orthopedics",
+            Type = "Follow-up",
+            Status = "Confirmed",
+            IsSelected = false
+        });
+        
+        Appointments.Add(new AppointmentModel
+        {
+            Id = 10,
+            PatientName = "Sophia Martinez",
+            PatientId = "#PAT-20250503-456",
+            PatientInitials = "SM",
+            Time = "09:30 AM",
+            Date = "May 17, 2025",
+            Doctor = "Dr. Maria Martinez",
+            Department = "Pediatrics",
+            Type = "Regular",
+            Status = "Pending",
+            IsSelected = false
+        });
+        
+        // Add more appointments to test pagination (up to 24)
+        for (int i = 11; i <= 24; i++)
+        {
+            Appointments.Add(new AppointmentModel
+            {
+                Id = i,
+                PatientName = $"Patient {i}",
+                PatientId = $"#PAT-2025050{i % 10}-{500 + i}",
+                PatientInitials = $"P{i}",
+                Time = $"{8 + (i % 8)}:{i % 2 * 30:D2} {(i % 8 < 4 ? "AM" : "PM")}",
+                Date = DateTime.Today.AddDays(i % 7).ToString("MMM dd, yyyy"),
+                Doctor = $"Dr. {(i % 5 == 0 ? "Sarah Miller" : i % 5 == 1 ? "Robert Williams" : i % 5 == 2 ? "Lisa Chen" : i % 5 == 3 ? "James Wilson" : "Maria Martinez")}",
+                Department = $"{(i % 5 == 0 ? "Cardiology" : i % 5 == 1 ? "Neurology" : i % 5 == 2 ? "Orthopedics" : i % 5 == 3 ? "Dermatology" : "Pediatrics")}",
+                Type = $"{(i % 3 == 0 ? "Regular" : i % 3 == 1 ? "Follow-up" : "Emergency")}",
+                Status = $"{(i % 4 == 0 ? "Confirmed" : i % 4 == 1 ? "Pending" : i % 4 == 2 ? "Completed" : "Cancelled")}",
+                IsSelected = false
+            });
+        }
+    }
+
+    private List<AppointmentModel> GetAppointmentsForTab(string tab)
+    {
+        // Filter appointments based on the selected tab
+        List<AppointmentModel> filteredList;
+        
+        switch (tab)
+        {
+            case "today":
+                filteredList = FilteredAppointments.Where(a => a.Date == "Today").ToList();
+                break;
+            case "upcoming":
+                filteredList = FilteredAppointments.Where(a => a.Date != "Today").ToList();
+                break;
+            case "all":
+            default:
+                filteredList = FilteredAppointments;
+                break;
+        }
+        
+        // Apply pagination
+        return filteredList
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    private List<string> GetTimeSlots()
+    {
+        // Generate time slots from 8 AM to 5 PM
+        return new List<string>
+        {
+            "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+            "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
+        };
+    }
+
+    private List<string> GetWeekDays()
+    {
+        // Get weekdays starting from Monday
+        return new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+    }
+
+    private List<AppointmentModel> GetAppointmentForTimeAndDay(string time, string day)
+    {
+        // This would normally query your appointments data
+        // For this example, return mock data
+        if (day == "Monday" && time == "10:00 AM")
+        {
+            return new List<AppointmentModel> 
+            {
+                new AppointmentModel 
+                { 
+                    Id = 1,
+                    PatientName = "John Doe",
+                    Doctor = "Dr. Sarah Miller",
+                    Status = "Confirmed"
+                }
+            };
+        }
+        
+        if (day == "Monday" && time == "11:00 AM")
+        {
+            return new List<AppointmentModel> 
+            {
+                new AppointmentModel 
+                { 
+                    Id = 2,
+                    PatientName = "Emily Chen",
+                    Doctor = "Dr. Robert Williams",
+                    Status = "Pending"
+                }
+            };
+        }
+        
+        if (day == "Tuesday" && time == "9:00 AM")
+        {
+            return new List<AppointmentModel> 
+            {
+                new AppointmentModel 
+                { 
+                    Id = 5,
+                    PatientName = "Robert Garcia",
+                    Doctor = "Dr. Maria Martinez",
+                    Status = "Confirmed"
+                }
+            };
+        }
+        
+        if (day == "Wednesday" && time == "11:00 AM")
+        {
+            return new List<AppointmentModel> 
+            {
+                new AppointmentModel 
+                { 
+                    Id = 8,
+                    PatientName = "Lisa Thompson",
+                    Doctor = "Dr. James Wilson",
+                    Status = "Confirmed"
+                }
+            };
+        }
+        
+        if (day == "Thursday" && time == "3:00 PM")
+        {
+            return new List<AppointmentModel> 
+            {
+                new AppointmentModel 
+                { 
+                    Id = 9,
+                    PatientName = "Thomas Reed",
+                    Doctor = "Dr. Lisa Chen",
+                    Status = "Confirmed"
+                }
+            };
+        }
+        
+        return new List<AppointmentModel>();
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "bg-success",
+            "Pending" => "bg-warning text-dark",
+            "Completed" => "bg-info text-dark",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Confirmed" => "bg-success bg-opacity-10 border border-success text-success",
+            "Pending" => "bg-warning bg-opacity-10 border border-warning text-warning",
+            "Completed" => "bg-info bg-opacity-10 border border-info text-info",
+            "Cancelled" => "bg-danger bg-opacity-10 border border-danger text-danger",
+            _ => "bg-secondary bg-opacity-10 border border-secondary text-secondary"
+        };
+    }
+
+    private void SetCurrentTab(string tab)
+    {
+        CurrentTab = tab;
+        // Reset pagination when changing tabs
+        CurrentPage = 1;
+    }
+
+    private void NavigateToBookAppointment()
+    {
+        Nav.NavigateTo("/reception/book-appointment");
+    }
+
+    private void ViewAppointmentDetails(int appointmentId)
+    {
+        Nav.NavigateTo($"/reception/appointments/{appointmentId}");
+    }
+
+    private void CheckInPatient(int appointmentId)
+    {
+        // Logic to check in a patient
+        var appointment = Appointments.FirstOrDefault(a => a.Id == appointmentId);
+        if (appointment != null)
+        {
+            appointment.Status = "Completed";
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmAppointment(int appointmentId)
+    {
+        // Logic to confirm appointment
+        var appointment = Appointments.FirstOrDefault(a => a.Id == appointmentId);
+        if (appointment != null)
+        {
+            appointment.Status = "Confirmed";
+            StateHasChanged();
+        }
+    }
+
+    private void RescheduleAppointment(int appointmentId)
+    {
+        // Navigate to reschedule page
+        Nav.NavigateTo($"/reception/reschedule-appointment/{appointmentId}");
+    }
+
+    private void CancelAppointment(int appointmentId)
+    {
+        // Logic to cancel appointment
+        var appointment = Appointments.FirstOrDefault(a => a.Id == appointmentId);
+        if (appointment != null)
+        {
+            appointment.Status = "Cancelled";
+            StateHasChanged();
+        }
+    }
+
+    private void BookAppointmentAtTime(string time, string day)
+    {
+        // Navigate to book appointment with prefilled time and day
+        Nav.NavigateTo($"/reception/book-appointment?time={time}&day={day}");
+    }
+
+    private void HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilters();
+        }
+    }
+
+    // Method to handle page navigation
+    private void NavigateToPage(int pageNumber)
+    {
+        if (pageNumber >= 1 && pageNumber <= TotalPages)
+        {
+            CurrentPage = pageNumber;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+{
+    // Filter the appointments based on criteria
+    FilteredAppointments = Appointments.Where(a => 
+    {
+        bool matchesSearch = string.IsNullOrWhiteSpace(SearchQuery) || 
+                             a.PatientName.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) || 
+                             a.PatientId.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase);
+        
+        bool matchesStatus = StatusFilter == "all" || 
+                            a.Status.Equals(StatusFilter, StringComparison.OrdinalIgnoreCase);
+        
+        bool matchesDepartment = DepartmentFilter == "all" || 
+                                a.Department.Equals(DepartmentFilter, StringComparison.OrdinalIgnoreCase);
+        
+        bool matchesDoctor = DoctorFilter == "all" || 
+                            a.Doctor.Contains(DoctorFilter, StringComparison.OrdinalIgnoreCase);
+        
+        bool matchesType = TypeFilter == "all" || 
+                          a.Type.Equals(TypeFilter, StringComparison.OrdinalIgnoreCase);
+        
+        bool includeStatus = (a.Status != "Cancelled" || ShowCancelled) && 
+                            (a.Status != "Completed" || ShowCompleted);
+        
+        // Parse dates and compare
+        DateTime appointmentDate = DateTime.Today; // Initialize with a default value
+        bool isValidDate = a.Date == "Today" || 
+                          DateTime.TryParse(a.Date, out appointmentDate);
+        
+        bool matchesDateRange = true;
+        if (isValidDate && a.Date != "Today")
+        {
+            matchesDateRange = appointmentDate >= StartDate && appointmentDate <= EndDate;
+        }
+        
+        return matchesSearch && matchesStatus && matchesDepartment && 
+               matchesDoctor && matchesType && includeStatus && matchesDateRange;
+    }).ToList();
+    
+    // Reset to first page after filtering
+    CurrentPage = 1;
+    StateHasChanged();
+}
+
+    private void ResetFilters()
+    {
+        SearchQuery = "";
+        StatusFilter = "all";
+        DepartmentFilter = "all";
+        DoctorFilter = "all";
+        TypeFilter = "all";
+        StartDate = DateTime.Today;
+        EndDate = DateTime.Today.AddDays(7);
+        ShowCancelled = false;
+        ShowCompleted = false;
+        
+        // Reset filtered appointments to all appointments
+        FilteredAppointments = Appointments.ToList();
+        
+        // Reset to first page
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ToggleAppointmentSelection(int appointmentId)
+    {
+        var appointment = Appointments.FirstOrDefault(a => a.Id == appointmentId);
+        if (appointment != null)
+        {
+            appointment.IsSelected = !appointment.IsSelected;
+            // Update SelectAll state if needed
+            SelectAll = Appointments.All(a => a.IsSelected);
+            StateHasChanged();
+        }
+    }
+
+    private void SelectAllAppointments()
+    {
+        foreach (var appointment in Appointments)
+        {
+            appointment.IsSelected = SelectAll;
+        }
+        StateHasChanged();
+    }
+
+    private bool AnyAppointmentsSelected()
+    {
+        return Appointments.Any(a => a.IsSelected);
+    }
+
+    private int GetSelectedAppointmentsCount()
+    {
+        return Appointments.Count(a => a.IsSelected);
+    }
+
+    private void BulkConfirm()
+    {
+        foreach (var appointment in Appointments.Where(a => a.IsSelected && a.Status == "Pending"))
+        {
+            appointment.Status = "Confirmed";
+        }
+        StateHasChanged();
+    }
+
+    private void BulkSendReminder()
+    {
+        // Logic to send reminders to selected appointments
+        // This would typically trigger notifications or emails
+        
+        // You could show a success message
+        JSRuntime.InvokeVoidAsync("alert", "Reminders sent to selected patients.");
+    }
+
+    private async Task BulkCancel()
+    {
+        // Show confirmation dialog before proceeding
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to cancel the selected appointments?");
+        
+        if (confirmed)
+        {
+            // Get selected appointments that are not already cancelled or completed
+            var appointmentsToBeCancelled = Appointments
+                .Where(a => a.IsSelected && a.Status != "Cancelled" && a.Status != "Completed")
+                .ToList();
+            
+            // Update status to Cancelled
+            foreach (var appointment in appointmentsToBeCancelled)
+            {
+                appointment.Status = "Cancelled";
+            }
+            
+            // Show notification
+            if (appointmentsToBeCancelled.Any())
+            {
+                await JSRuntime.InvokeVoidAsync(
+                    "alert", 
+                    $"{appointmentsToBeCancelled.Count} appointment(s) have been cancelled successfully."
+                );
+                
+                // Clear selection after operation
+                SelectAll = false;
+                SelectAllAppointments();
+            }
+            else 
+            {
+                await JSRuntime.InvokeVoidAsync(
+                    "alert", 
+                    "No eligible appointments selected for cancellation."
+                );
+            }
+            
+            StateHasChanged();
+        }
+    }
+
+    // AppointmentModel class definition
+    public class AppointmentModel
+    {
+        public int Id { get; set; }
+        public string PatientName { get; set; }
+        public string PatientId { get; set; }
+        public string PatientInitials { get; set; }
+        public string Time { get; set; }
+        public string Date { get; set; }
+        public string Doctor { get; set; }
+        public string Department { get; set; }
+        public string Type { get; set; }
+        public string Status { get; set; }
+        public bool IsSelected { get; set; }
+    }
+    
+    // Add custom CSS for better UI
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                // Add hover effect to appointment rows
+                document.querySelectorAll('.appointment-row').forEach(row => {
+                    row.addEventListener('mouseover', () => {
+                        if (!row.classList.contains('selected-row')) {
+                            row.classList.add('hover-row');
+                        }
+                    });
+                    row.addEventListener('mouseout', () => {
+                        row.classList.remove('hover-row');
+                    });
+                });
+                
+                // Initialize any Bootstrap tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=""tooltip""]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            ");
+        }
+    }
+}

@@ -1,0 +1,425 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="d-flex flex-column vh-100">
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-light bg-white shadow-sm sticky-top">
+        <div class="container-fluid justify-content-between">
+            <!-- Sidebar Toggle Button (visible on small screens) -->
+            <button id="sidebarToggleBtn" class="btn btn-light rounded-circle d-md-none me-2">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <!-- Brand Logo -->
+            <span class="navbar-brand fw-bold text-primary d-flex align-items-center">
+                <i class="bi bi-hospital fs-4 me-2"></i>
+                <span>HMS Reception</span>
+            </span>
+            
+            <!-- Search Box - Hidden on mobile -->
+            <div class="d-none d-md-block position-relative search-container">
+                <input type="search" class="form-control bg-light border-0 rounded-pill" placeholder="Search patients..." />
+                <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
+            </div>
+            
+            <!-- Right Side Nav Items -->
+            <div class="d-flex align-items-center">
+                <!-- Mobile Search Button -->
+                <button class="btn btn-light rounded-circle d-md-none me-2" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSearchCollapse" aria-expanded="false" aria-controls="mobileSearchCollapse">
+                    <i class="bi bi-search"></i>
+                </button>
+                
+                <!-- Notifications -->
+                <div class="dropdown">
+                    <button class="btn btn-light rounded-circle position-relative me-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            4
+                        </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-0" style="width: 320px;">
+                        <div class="p-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Notifications</h6>
+                                <a href="#" class="text-decoration-none small">Mark all as read</a>
+                            </div>
+                        </div>
+                        <div class="notification-list" style="max-height: 300px; overflow-y: auto;">
+                            <a href="#" class="dropdown-item p-3 border-bottom d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                        <i class="bi bi-calendar-check text-primary"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0 fw-bold">New appointment scheduled</p>
+                                    <p class="text-muted small mb-0">James Wilson - Dr. Roberts</p>
+                                    <p class="text-muted small mb-0">5 minutes ago</p>
+                                </div>
+                            </a>
+                            <a href="#" class="dropdown-item p-3 border-bottom d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                        <i class="bi bi-person-plus text-warning"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0 fw-bold">Walk-in patient arrived</p>
+                                    <p class="text-muted small mb-0">Emily Chen - Waiting area</p>
+                                    <p class="text-muted small mb-0">15 minutes ago</p>
+                                </div>
+                            </a>
+                            <a href="#" class="dropdown-item p-3 border-bottom d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-wrapper rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                        <i class="bi bi-clock-history text-info"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0 fw-bold">Appointment rescheduled</p>
+                                    <p class="text-muted small mb-0">Sarah Johnson - From 2:00PM to 4:30PM</p>
+                                    <p class="text-muted small mb-0">1 hour ago</p>
+                                </div>
+                            </a>
+                            <a href="#" class="dropdown-item p-3 d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-wrapper rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                        <i class="bi bi-chat-left-text text-success"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0 fw-bold">New message from Dr. Martinez</p>
+                                    <p class="text-muted small mb-0">Please confirm the laboratory results...</p>
+                                    <p class="text-muted small mb-0">2 hours ago</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="border-top p-2">
+                            <a href="/reception/notifications" class="btn btn-light btn-sm w-100">View all notifications</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Profile Dropdown -->
+                <div class="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                            <span class="text-primary fw-bold">R</span>
+                        </div>
+                        <span class="d-none d-md-inline">Receptionist</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                        <li class="px-3 py-2 d-flex align-items-center">
+                            <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <span class="text-primary fw-bold">R</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Emma Thompson</h6>
+                                <small class="text-muted">reception@hospital.com</small>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2" href="/reception/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                        <li><a class="dropdown-item py-2" href="/reception/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Search (shown when search button is clicked) -->
+    <div class="collapse" id="mobileSearchCollapse">
+        <div class="container-fluid py-2 bg-white border-bottom">
+            <div class="position-relative">
+                <input type="search" class="form-control bg-light border-0 rounded-pill" placeholder="Search patients..." />
+                <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content with Sidebar -->
+    <div class="flex-grow-1 d-flex overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-primary text-white shadow sidebar" data-mobile-status="closed">
+            <div class="p-3 border-bottom border-primary-subtle d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-reception-4 fs-4 me-3 text-white"></i>
+                    <h6 class="text-white mb-0">Reception Portal</h6>
+                </div>
+                <button id="closeSidebarBtn" class="btn text-white d-md-none">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="p-2 sidebar-content">
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/dashboard") ? "active bg-white text-primary" : "")" href="/receptionist/dashboard">
+                            <i class="bi bi-grid-1x2 me-3"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/walkin") ? "active bg-white text-primary" : "")" href="/receptionist/walkin">
+                            <i class="bi bi-person-plus me-3"></i>
+                            <span>Walk-in Registration</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/manage-appointments") ? "active bg-white text-primary" : "")" href="/receptionist/manage-appointments">
+                            <i class="bi bi-calendar-week me-3"></i>
+                            <span>Manage Appointments</span>
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/patients") ? "active bg-white text-primary" : "")" href="/receptionist/patients">
+                            <i class="bi bi-people me-3"></i>
+                            <span>Patient Directory</span>
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/profile") ? "active bg-white text-primary" : "")" href="/receptionist/profile">
+                            <i class="bi bi-person-circle me-3"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="mt-4 p-3">
+                    <div class="card bg-primary-subtle border-0 rounded-4 text-primary p-3">
+                        <div class="text-center mb-3">
+                            <i class="bi bi-headset display-5"></i>
+                        </div>
+                        <h6 class="text-center mb-2">Need Help?</h6>
+                        <p class="small text-center mb-3">Contact IT support team</p>
+                        <button class="btn btn-white text-primary shadow-sm w-100 rounded-pill">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-grow-1 overflow-auto bg-light">
+            <div class="container-fluid p-4">
+                @Body
+            </div>
+        </main>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebarOverlay" class="position-fixed top-0 start-0 h-100 w-100 bg-dark bg-opacity-50 d-none" style="z-index: 1029;"></div>
+
+    <!-- Footer -->
+    <footer class="py-3 text-center text-muted border-top">
+        <small>&copy; 2025 Hospital Management System</small>
+    </footer>
+</div>
+
+<!-- CSS for improved transitions and hover effects with responsive adjustments -->
+<style>
+    :root {
+        --bs-primary: #3a87ad; /* Light blue primary color */
+        --bs-primary-rgb: 58, 135, 173;
+        --bs-secondary: #6caed9; /* Lighter blue for secondary elements */
+        --bs-secondary-rgb: 108, 174, 217;
+        --bs-primary-subtle: #e8f4f9; /* Very light blue for backgrounds */
+        --sidebar-width: 260px;
+        --sidebar-width-collapsed: 0px;
+    }
+    
+    body {
+        font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+        overflow-x: hidden;
+    }
+    
+    /* Sidebar styles */
+    .sidebar {
+        width: var(--sidebar-width);
+        transition: all 0.3s ease;
+        z-index: 1030;
+    }
+    
+    .sidebar-content {
+        overflow-y: auto;
+        max-height: calc(100vh - 60px - 58px);
+    }
+    
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    button:not(.page-link) {
+        transition: all 0.2s;
+    }
+    
+    button:not(.page-link):hover {
+        transform: translateY(-1px);
+    }
+    
+    .sidebar-link {
+        transition: all 0.2s;
+    }
+    
+    .sidebar-link:not(.active):hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(3px);
+    }
+    
+    .nav-link.active {
+        font-weight: 500;
+    }
+    
+    .avatar-wrapper {
+        transition: all 0.2s;
+    }
+    
+    .avatar-wrapper:hover {
+        transform: scale(1.05);  
+    }
+    
+    .table-hover tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+    }
+    
+    /* Search container responsiveness */
+    .search-container {
+        width: 400px;
+    }
+    
+    /* Bootstrap overrides */
+    .btn-primary {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .bg-primary {
+        background-color: var(--bs-primary) !important;
+    }
+    
+    .text-primary {
+        color: var(--bs-primary) !important;
+    }
+    
+    .bg-primary-subtle {
+        background-color: var(--bs-primary-subtle) !important;
+    }
+    
+    /* Responsive styles */
+    @@media (max-width: 1199.98px) {
+        .search-container {
+            width: 300px;
+        }
+    }
+    
+    @@media (max-width: 991.98px) {
+        .search-container {
+            width: 250px;
+        }
+    }
+    
+    @@media (max-width: 767.98px) {
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: calc(-1 * var(--sidebar-width));
+            height: 100vh;
+            box-shadow: none;
+        }
+        
+        .sidebar[data-mobile-status="open"] {
+            left: 0;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .container-fluid.p-4 {
+            padding: 1rem !important;
+        }
+    }
+    
+    @@media (max-width: 575.98px) {
+        .navbar-brand span {
+            font-size: 0.9rem;
+        }
+        
+        .container-fluid.p-4 {
+            padding: 0.75rem !important;
+        }
+    }
+</style>
+
+<!-- Script for enabling tooltips and responsive sidebar -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enable tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        function openSidebar() {
+            sidebar.setAttribute('data-mobile-status', 'open');
+            sidebarOverlay.classList.remove('d-none');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            sidebar.setAttribute('data-mobile-status', 'closed');
+            sidebarOverlay.classList.add('d-none');
+            document.body.style.overflow = '';
+        }
+        
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener('click', function() {
+                openSidebar();
+            });
+        }
+        
+        if (closeSidebarBtn) {
+            closeSidebarBtn.addEventListener('click', function() {
+                closeSidebar();
+            });
+        }
+        
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                closeSidebar();
+            });
+        }
+        
+        // Close sidebar when clicking on a link (for mobile)
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    closeSidebar();
+                }
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                sidebar.style.left = '';
+                sidebarOverlay.classList.add('d-none');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+</script>
