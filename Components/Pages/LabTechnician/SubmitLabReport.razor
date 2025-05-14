@@ -1,0 +1,226 @@
+@page "/lab/completed-tests"
+@layout LabTechnicianLayout
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Submit Lab Report</h4>
+        <p class="text-muted">Enter test results for patient lab orders</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Form Section -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Test Result Entry</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Patient ID</label>
+                        <input type="text" class="form-control border-0 bg-light rounded-pill" placeholder="Enter Patient ID (e.g., #2845)" @bind="PatientId" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Test Type</label>
+                        <select class="form-select border-0 bg-light rounded-pill" @bind="TestType">
+                            <option value="">Select Test Type</option>
+                            <option value="Blood">Complete Blood Count</option>
+                            <option value="Urinalysis">Urinalysis</option>
+                            <option value="Lipid">Lipid Panel</option>
+                            <option value="Glucose">Glucose Test</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Test Results</label>
+                        <textarea class="form-control border-0 bg-light rounded-3" rows="5" placeholder="Enter detailed test results..." @bind="TestResults"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Date Performed</label>
+                        <input type="date" class="form-control border-0 bg-light rounded-pill" @bind="DatePerformed" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Technician Notes</label>
+                        <input type="text" class="form-control border-0 bg-light rounded-pill" placeholder="Optional notes" @bind="TechnicianNotes" />
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button class="btn btn-teal rounded-pill px-4" @onclick="SubmitReport">Submit Report</button>
+                        <button class="btn btn-outline-teal rounded-pill px-4 ms-2" @onclick="ClearForm">Clear Form</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview and Quick Actions -->
+    <div class="col-lg-4">
+        <!-- Preview Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Report Preview</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <h6 class="fw-bold">Patient ID</h6>
+                    <p class="text-muted mb-0">@(PatientId ?? "Not entered")</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Test Type</h6>
+                    <p class="text-muted mb-0">@(TestType ?? "Not selected")</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Test Results</h6>
+                    <p class="text-muted mb-0">@(TestResults ?? "No results entered")</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Date Performed</h6>
+                    <p class="text-muted mb-0">@(DatePerformed?.ToString("MMMM dd, yyyy") ?? "Not entered")</p>
+                </div>
+                <div>
+                    <h6 class="fw-bold">Technician Notes</h6>
+                    <p class="text-muted mb-0">@(TechnicianNotes ?? "No notes")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToPendingTests">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-hourglass-split text-teal"></i>
+                            </div>
+                            <span>View Pending Tests</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToCompletedTests">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-check2-circle text-teal"></i>
+                            </div>
+                            <span>View Completed Tests</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToGuidelines">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-question-circle text-teal"></i>
+                            </div>
+                            <span>Lab Guidelines</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string PatientId { get; set; }
+    private string TestType { get; set; }
+    private string TestResults { get; set; }
+    private DateTime? DatePerformed { get; set; }
+    private string TechnicianNotes { get; set; }
+
+    private async Task SubmitReport()
+    {
+        if (string.IsNullOrEmpty(PatientId) || string.IsNullOrEmpty(TestType) || string.IsNullOrEmpty(TestResults) || !DatePerformed.HasValue)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
+            return;
+        }
+
+        // Simulate report submission
+        await JSRuntime.InvokeVoidAsync("alert", "Report submitted successfully!");
+        ClearForm();
+    }
+
+    private void ClearForm()
+    {
+        PatientId = null;
+        TestType = null;
+        TestResults = null;
+        DatePerformed = null;
+        TechnicianNotes = null;
+    }
+
+    private void NavigateToPendingTests()
+    {
+        Nav.NavigateTo("/lab/pending-tests");
+    }
+
+    private void NavigateToCompletedTests()
+    {
+        Nav.NavigateTo("/lab/completed-tests");
+    }
+
+    private void NavigateToGuidelines()
+    {
+        Nav.NavigateTo("/lab/guidelines");
+    }
+}
+
+<style>
+    .form-control, .form-select {
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-teal-rgb), 0.25);
+        border-color: var(--bs-teal);
+    }
+
+    .quick-action-btn {
+        transition: all 0.3s;
+    }
+
+    .quick-action-btn:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+
+    .quick-action-btn:hover .rounded-circle {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .quick-action-btn:hover i {
+        color: white !important;
+    }
+
+    .btn-teal {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+        color: white;
+    }
+
+    .btn-teal:hover {
+        background-color: var(--bs-teal-dark);
+        border-color: var(--bs-teal-dark);
+    }
+
+    .btn-outline-teal {
+        color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+
+    .btn-outline-teal:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>

@@ -1,0 +1,381 @@
+@page "/"
+@page "/lab/dashboard"
+@layout LabTechnicianLayout
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Welcome back, Lab Technician</h4>
+        <p class="text-muted">Monitor and manage your lab operations</p>
+    </div>
+</div>
+
+<!-- Overview Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 lab-stat-card position-relative overflow-hidden" @onclick="NavigateToPendingTests">
+            <div class="position-absolute bg-teal bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-teal bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-hourglass-split fs-4 text-teal"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Pending Tests</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">28</h2>
+                <div class="mt-3 d-flex align-items-center text-teal">
+                    <i class="bi bi-arrow-up me-1"></i>
+                    <span>4 new tests</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 lab-stat-card position-relative overflow-hidden" @onclick="NavigateToCompletedTests">
+            <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-check2-circle fs-4 text-success"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Completed Tests</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">76</h2>
+                <div class="mt-3 d-flex align-items-center text-success">
+                    <i class="bi bi-arrow-up me-1"></i>
+                    <span>12% increase</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 lab-stat-card position-relative overflow-hidden" @onclick="NavigateToEquipment">
+            <div class="position-absolute bg-warning bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-gear-wide-connected fs-4 text-warning"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Equipment Status</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">95%</h2>
+                <div class="mt-3 d-flex align-items-center text-success">
+                    <i class="bi bi-check-circle me-1"></i>
+                    <span>Operational</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100 lab-stat-card position-relative overflow-hidden" @onclick="NavigateToMaterials">
+            <div class="position-absolute bg-danger bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-box-seam fs-4 text-danger"></i>
+                    </div>
+                    <h6 class="text-muted mb-0">Low Stock Alerts</h6>
+                </div>
+                <h2 class="mb-0 fw-bold counter">3</h2>
+                <div class="mt-3 d-flex align-items-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <span>Reagents low</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Test Activity -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                <h5 class="mb-0 fw-bold">Recent Test Activity</h5>
+                <button class="btn btn-sm btn-outline-teal rounded-pill px-3" @onclick="NavigateToAllTests">View All Tests</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewTestDetails(1)">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-teal text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
+                                <i class="bi bi-clipboard2-pulse"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">Blood Test Assigned</h6>
+                                <span class="badge bg-light text-dark rounded-pill">15m ago</span>
+                            </div>
+                            <p class="text-muted mb-0 small">Patient #2845 - Complete Blood Count</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewTestDetails(2)">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">Urinalysis Completed</h6>
+                                <span class="badge bg-light text-dark rounded-pill">1h ago</span>
+                            </div>
+                            <p class="text-muted mb-0 small">Patient #3102 - Results Submitted</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewTestDetails(3)">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
+                                <i class="bi bi-exclamation-circle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">Urgent Test Flagged</h6>
+                                <span class="badge bg-light text-dark rounded-pill">2h ago</span>
+                            </div>
+                            <p class="text-muted mb-0 small">Patient #2956 - Lipid Panel</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Volume Chart -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                <h5 class="mb-0 fw-bold">Test Volume Trends</h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-teal @(TestVolumeView == "Daily" ? "active" : "")" @onclick='() => SwitchTestVolumeView("Daily")'>Daily</button>
+                    <button class="btn btn-sm btn-outline-teal @(TestVolumeView == "Weekly" ? "active" : "")" @onclick='() => SwitchTestVolumeView("Weekly")'>Weekly</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px; position: relative;">
+                    <div class="placeholder-chart d-flex flex-column justify-content-center align-items-center h-100">
+                        <i class="bi bi-bar-chart-line text-teal" style="font-size: 4rem;"></i>
+                        <p class="text-muted mt-3">Test Volume Statistics (@TestVolumeView View)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Quick Lab Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToSubmitResults">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-file-earmark-medical text-teal"></i>
+                            </div>
+                            <span>Submit Test Results</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToCheckEquipment">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-gear-wide-connected text-teal"></i>
+                            </div>
+                            <span>Check Equipment</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToOrderSupplies">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-box-seam text-teal"></i>
+                            </div>
+                            <span>Order Supplies</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Equipment Maintenance Schedule -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Equipment Maintenance</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item p-3" @onclick="() => ViewEquipmentDetails(1)">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded bg-teal bg-opacity-10 text-teal fw-bold p-2 me-3 text-center" style="min-width: 45px;">
+                                <div class="small">MAY</div>
+                                <div>14</div>
+                            </div>
+                            <h6 class="mb-0">Centrifuge Calibration</h6>
+                        </div>
+                        <p class="text-muted small mb-0">10:00 AM - Lab Room 3</p>
+                    </div>
+                    <div class="list-group-item p-3" @onclick="() => ViewEquipmentDetails(2)">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded bg-teal bg-opacity-10 text-teal fw-bold p-2 me-3 text-center" style="min-width: 45px;">
+                                <div class="small">MAY</div>
+                                <div>16</div>
+                            </div>
+                            <h6 class="mb-0">Spectrophotometer Check</h6>
+                        </div>
+                        <p class="text-muted small mb-0">02:00 PM - Lab Room 1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string TestVolumeView { get; set; } = "Daily";
+
+    private void SwitchTestVolumeView(string view)
+    {
+        TestVolumeView = view;
+        // Logic to reload chart data based on view
+    }
+
+    private void ViewTestDetails(int testId)
+    {
+        Nav.NavigateTo($"/lab/tests/{testId}");
+    }
+
+    private void ViewEquipmentDetails(int equipmentId)
+    {
+        Nav.NavigateTo($"/lab/equipment/{equipmentId}");
+    }
+
+    private void NavigateToPendingTests()
+    {
+        Nav.NavigateTo("/lab/pending-tests");
+    }
+
+    private void NavigateToCompletedTests()
+    {
+        Nav.NavigateTo("/lab/completed-tests");
+    }
+
+    private void NavigateToEquipment()
+    {
+        Nav.NavigateTo("/lab/equipment");
+    }
+
+    private void NavigateToMaterials()
+    {
+        Nav.NavigateTo("/lab/materials");
+    }
+
+    private void NavigateToAllTests()
+    {
+        Nav.NavigateTo("/lab/tests");
+    }
+
+    private void NavigateToSubmitResults()
+    {
+        Nav.NavigateTo("/lab/submit-report");
+    }
+
+    private void NavigateToCheckEquipment()
+    {
+        Nav.NavigateTo("/lab/equipment");
+    }
+
+    private void NavigateToOrderSupplies()
+    {
+        Nav.NavigateTo("/lab/materials");
+    }
+}
+
+<style>
+    .activity-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .activity-item:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.03);
+    }
+
+    .quick-action-btn {
+        transition: all 0.3s;
+    }
+
+    .quick-action-btn:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+
+    .quick-action-btn:hover .rounded-circle {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .quick-action-btn:hover i {
+        color: white !important;
+    }
+
+    .counter {
+        animation: countup 2s ease-out;
+    }
+
+   
+
+    .lab-stat-card {
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .lab-stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .lab-stat-card::after {
+        content: '';
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        top: -50%;
+        left: -50%;
+        background: radial-gradient(ellipse at center, rgba(32, 201, 151, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+        transform: scale(0);
+        opacity: 0;
+        transition: transform 0.6s, opacity 0.6s;
+    }
+
+    .lab-stat-card:hover::after {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .list-group-item {
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .list-group-item:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.03);
+    }
+
+    .btn-outline-teal {
+        color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+
+    .btn-outline-teal:hover,
+    .btn-outline-teal.active {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+</style>

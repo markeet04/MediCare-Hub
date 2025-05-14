@@ -1,0 +1,245 @@
+@page "/lab/pending-tests"
+@layout LabTechnicianLayout
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Assigned Tests</h4>
+        <p class="text-muted">View and manage pending lab test assignments</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Test List Section -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Pending Test Orders</h5>
+                <div class="d-flex align-items-center">
+                    <input type="text" class="form-control border-0 bg-light rounded-pill me-2" style="width: 200px;" placeholder="Filter by Patient ID..." @bind="FilterText" @bind:event="oninput" />
+                    <select class="form-select border-0 bg-light rounded-pill" style="width: 150px;" @bind="FilterStatus">
+                        <option value="All">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3">Patient ID</th>
+                                <th class="px-4 py-3">Test Type</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Assigned Date</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var test in FilteredTests)
+                            {
+                                <tr class="test-row" @onclick="() => ViewTestDetails(test.Id)">
+                                    <td class="px-4 py-3">@test.PatientId</td>
+                                    <td class="px-4 py-3">@test.TestType</td>
+                                    <td class="px-4 py-3">
+                                        <span class="badge @(test.Status == "Urgent" ? "bg-danger" : test.Status == "In Progress" ? "bg-warning" : "bg-teal") text-white">
+                                            @test.Status
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">@test.AssignedDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="px-4 py-3">
+                                        <button class="btn btn-sm btn-outline-teal rounded-pill px-3" @onclick:stopPropagation="true" @onclick="() => StartTest(test.Id)">Start Test</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions and Summary -->
+    <div class="col-lg-4">
+        <!-- Summary Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Test Summary</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <h6 class="fw-bold">Total Assigned Tests</h6>
+                    <p class="text-muted mb-0">@Tests.Count</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">Urgent Tests</h6>
+                    <p class="text-muted mb-0">@Tests.Count(t => t.Status == "Urgent")</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="fw-bold">In Progress</h6>
+                    <p class="text-muted mb-0">@Tests.Count(t => t.Status == "In Progress")</p>
+                </div>
+                <div>
+                    <h6 class="fw-bold">Pending</h6>
+                    <p class="text-muted mb-0">@Tests.Count(t => t.Status == "Pending")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToSubmitResults">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-file-earmark-medical text-teal"></i>
+                            </div>
+                            <span>Submit Test Results</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToCompletedTests">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-check2-circle text-teal"></i>
+                            </div>
+                            <span>View Completed Tests</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToEquipment">
+                        <span class="d-flex align-items-center">
+                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-gear-wide-connected text-teal"></i>
+                            </div>
+                            <span>Check Equipment</span>
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string FilterText { get; set; } = "";
+    private string FilterStatus { get; set; } = "All";
+
+    private List<Test> Tests { get; set; } = new List<Test>
+    {
+        new Test { Id = 1, PatientId = "#2845", TestType = "Complete Blood Count", Status = "Pending", AssignedDate = DateTime.Now.AddHours(-2) },
+        new Test { Id = 2, PatientId = "#3102", TestType = "Urinalysis", Status = "In Progress", AssignedDate = DateTime.Now.AddHours(-5) },
+        new Test { Id = 3, PatientId = "#2956", TestType = "Lipid Panel", Status = "Urgent", AssignedDate = DateTime.Now.AddDays(-1) },
+        new Test { Id = 4, PatientId = "#3210", TestType = "Glucose Test", Status = "Pending", AssignedDate = DateTime.Now.AddHours(-10) }
+    };
+
+    private List<Test> FilteredTests => Tests
+        .Where(t => string.IsNullOrEmpty(FilterText) || t.PatientId.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
+        .Where(t => FilterStatus == "All" || t.Status == FilterStatus)
+        .ToList();
+
+    private class Test
+    {
+        public int Id { get; set; }
+        public string PatientId { get; set; }
+        public string TestType { get; set; }
+        public string Status { get; set; }
+        public DateTime AssignedDate { get; set; }
+    }
+
+    private void ViewTestDetails(int testId)
+    {
+        Nav.NavigateTo($"/lab/tests/{testId}");
+    }
+
+    private async Task StartTest(int testId)
+    {
+        var test = Tests.FirstOrDefault(t => t.Id == testId);
+        if (test != null)
+        {
+            test.Status = "In Progress";
+            await JSRuntime.InvokeVoidAsync("alert", $"Test {testId} marked as In Progress.");
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToSubmitResults()
+    {
+        Nav.NavigateTo("/lab/submit-report");
+    }
+
+    private void NavigateToCompletedTests()
+    {
+        Nav.NavigateTo("/lab/completed-tests");
+    }
+
+    private void NavigateToEquipment()
+    {
+        Nav.NavigateTo("/lab/equipment");
+    }
+}
+
+<style>
+    .test-row {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .test-row:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.05) !important;
+    }
+
+    .form-control, .form-select {
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-teal-rgb), 0.25);
+        border-color: var(--bs-teal);
+    }
+
+    .quick-action-btn {
+        transition: all 0.3s;
+    }
+
+    .quick-action-btn:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+
+    .quick-action-btn:hover .rounded-circle {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .quick-action-btn:hover i {
+        color: white !important;
+    }
+
+    .btn-outline-teal {
+        color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+
+    .btn-outline-teal:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+
+    .badge.bg-teal {
+        background-color: var(--bs-teal) !important;
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
