@@ -69,6 +69,7 @@
                                     </button>
                                     <ul class="dropdown-menu shadow-sm">
                                         <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                        <li><a class="dropdown-item view-history-btn" data-bs-toggle="modal" data-bs-target="#patientHistoryModal" data-patient-id="1" data-patient-name="Jane Smith"><i class="bi bi-clock-history me-2"></i>View History</a></li>
                                         <li><a class="dropdown-item" href="#"><i class="bi bi-clipboard-pulse me-2"></i>Treatment Plan</a></li>
                                         <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Remove</a></li>
                                     </ul>
@@ -104,6 +105,7 @@
                                     </button>
                                     <ul class="dropdown-menu shadow-sm">
                                         <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
+                                        <li><a class="dropdown-item view-history-btn" data-bs-toggle="modal" data-bs-target="#patientHistoryModal" data-patient-id="2" data-patient-name="Ali Raza"><i class="bi bi-clock-history me-2"></i>View History</a></li>
                                         <li><a class="dropdown-item" href="#"><i class="bi bi-clipboard-pulse me-2"></i>Treatment Plan</a></li>
                                         <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Remove</a></li>
                                     </ul>
@@ -129,6 +131,81 @@
                     </li>
                 </ul>
             </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Patient History Modal -->
+<div class="modal fade" id="patientHistoryModal" tabindex="-1" aria-labelledby="patientHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-teal bg-opacity-10 border-0">
+                <div>
+                    <h5 class="modal-title text-teal fw-bold" id="patientHistoryModalLabel">Patient History</h5>
+                    <p class="text-muted mb-0"><small id="patientNameDisplay"></small></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <ul class="nav nav-tabs mb-4" id="historyTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits" type="button" role="tab" aria-controls="visits" aria-selected="true">
+                            <i class="bi bi-calendar-check me-2"></i>Visits
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="medications-tab" data-bs-toggle="tab" data-bs-target="#medications" type="button" role="tab" aria-controls="medications" aria-selected="false">
+                            <i class="bi bi-capsule me-2"></i>Medications
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lab-results-tab" data-bs-toggle="tab" data-bs-target="#lab-results" type="button" role="tab" aria-controls="lab-results" aria-selected="false">
+                            <i class="bi bi-clipboard2-pulse me-2"></i>Lab Results
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">
+                            <i class="bi bi-journal-text me-2"></i>Notes
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="historyTabContent">
+                    <!-- Visits Tab -->
+                    <div class="tab-pane fade show active" id="visits" role="tabpanel" aria-labelledby="visits-tab">
+                        <div class="visits-timeline">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Medications Tab -->
+                    <div class="tab-pane fade" id="medications" role="tabpanel" aria-labelledby="medications-tab">
+                        <div class="medications-list">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Lab Results Tab -->
+                    <div class="tab-pane fade" id="lab-results" role="tabpanel" aria-labelledby="lab-results-tab">
+                        <div class="lab-results-list">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Notes Tab -->
+                    <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                        <div class="notes-list">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-teal rounded-pill">
+                    <i class="bi bi-printer me-2"></i>Print History
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -178,24 +255,338 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
     }
+
+    /* Modal Animations */
+    .modal.fade .modal-dialog {
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+
+    .modal.show .modal-dialog {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    /* Timeline Styling */
+    .visits-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .visits-timeline::before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e2e8f0;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+        padding-left: 1rem;
+    }
+
+    .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: -22px;
+        top: 5px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: rgba(32, 201, 151, 0.5);
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 0 2px rgba(32, 201, 151, 0.2);
+        z-index: 1;
+    }
+
+    .medication-item {
+        border-left: 3px solid rgba(32, 201, 151, 0.5);
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .medication-item:hover {
+        border-left-color: rgb(32, 201, 151);
+        background-color: rgba(32, 201, 151, 0.05);
+        transform: translateX(5px);
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #64748b;
+        padding: 0.75rem 1rem;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: rgba(32, 201, 151, 0.3);
+        background-color: transparent;
+    }
+
+    .nav-tabs .nav-link.active {
+        border-bottom-color: rgb(32, 201, 151);
+        color: rgb(32, 201, 151);
+        font-weight: 600;
+        background-color: transparent;
+    }
+
+    /* Lab Results Chart Styling */
+    .lab-result-chart {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: #f8fafc;
+        transition: all 0.2s;
+    }
+
+    .lab-result-chart:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+        transform: translateY(-3px);
+    }
+
+    .note-item {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: #f8fafc;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .note-item:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+        transform: translateY(-3px);
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const selectAllCheckbox = document.getElementById('selectAll');
-        const individualCheckboxes = document.querySelectorAll('.patients-table tbody input[type="checkbox"]:not(#selectAll)');
+    // Select all checkboxes functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const individualCheckboxes = document.querySelectorAll('.patients-table tbody input[type="checkbox"]:not(#selectAll)');
 
+    if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
             individualCheckboxes.forEach(checkbox => {
                 checkbox.checked = selectAllCheckbox.checked;
                 checkbox.closest('tr').classList.toggle('table-active', selectAllCheckbox.checked);
             });
         });
+    }
 
-        individualCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                this.closest('tr').classList.toggle('table-active', this.checked);
-            });
+    individualCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            this.closest('tr').classList.toggle('table-active', this.checked);
         });
     });
+
+    // Patient History Modal Functionality - using event delegation for dynamic elements
+    document.addEventListener('click', function(event) {
+        // Check if the clicked element has the view-history-btn class
+        if (event.target.classList.contains('view-history-btn') || 
+            event.target.closest('.view-history-btn')) {
+            
+            const button = event.target.classList.contains('view-history-btn') ? 
+                event.target : event.target.closest('.view-history-btn');
+            
+            const patientId = button.getAttribute('data-patient-id');
+            populatePatientHistoryModal(patientId);
+        }
+    });
+
+    // Sample patient data for demonstration
+    const patientData = {
+        '1': { // Jane Smith
+            name: 'Jane Smith',
+            visits: [
+                { date: 'May 10, 2025', doctor: 'Dr. Marcus Chen', reason: 'Annual checkup', diagnosis: 'Hypertension', notes: 'Blood pressure levels elevated, prescribed medication and lifestyle changes' },
+                { date: 'February 15, 2025', doctor: 'Dr. Marcus Chen', reason: 'Follow-up', diagnosis: 'Hypertension', notes: 'Blood pressure still high, adjusted medication dosage' },
+                { date: 'October 5, 2024', doctor: 'Dr. Sophia Lee', reason: 'Acute visit', diagnosis: 'Upper respiratory infection', notes: 'Prescribed antibiotics for 7 days' }
+            ],
+            medications: [
+                { name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', startDate: 'May 10, 2025', endDate: 'Ongoing', prescribedBy: 'Dr. Marcus Chen' },
+                { name: 'Hydrochlorothiazide', dosage: '12.5mg', frequency: 'Once daily', startDate: 'February 15, 2025', endDate: 'May 10, 2025', prescribedBy: 'Dr. Marcus Chen' },
+                { name: 'Amoxicillin', dosage: '500mg', frequency: 'Three times daily', startDate: 'October 5, 2024', endDate: 'October 12, 2024', prescribedBy: 'Dr. Sophia Lee' }
+            ],
+            labResults: [
+                { date: 'May 10, 2025', type: 'Complete Blood Count', results: [
+                    { test: 'WBC', value: '7.8', unit: 'x10^9/L', normal: '4.0-11.0' },
+                    { test: 'RBC', value: '4.78', unit: 'x10^12/L', normal: '4.2-5.4' },
+                    { test: 'Hemoglobin', value: '14.2', unit: 'g/dL', normal: '12.0-16.0' }
+                ]},
+                { date: 'February 15, 2025', type: 'Lipid Panel', results: [
+                    { test: 'Total Cholesterol', value: '210', unit: 'mg/dL', normal: '<200', flag: 'H' },
+                    { test: 'LDL', value: '130', unit: 'mg/dL', normal: '<100', flag: 'H' },
+                    { test: 'HDL', value: '45', unit: 'mg/dL', normal: '>40' }
+                ]}
+            ],
+            notes: [
+                { date: 'May 10, 2025', author: 'Dr. Marcus Chen', text: 'Patient reports feeling better after medication adjustment. Sleep quality has improved but still experiences occasional headaches in the morning. Recommended to monitor blood pressure daily and return in 3 months.' },
+                { date: 'February 15, 2025', author: 'Dr. Marcus Chen', text: 'Patient complains of dizziness and headaches. Blood pressure readings consistently high at home. Lifestyle modification discussed - emphasized importance of reduced sodium intake and regular physical activity.' }
+            ]
+        },
+        '2': { // Ali Raza
+            name: 'Ali Raza',
+            visits: [
+                { date: 'May 8, 2025', doctor: 'Dr. Marcus Chen', reason: 'Emergency', diagnosis: 'Acute Myocardial Infarction', notes: 'Patient presented with chest pain and shortness of breath. ECG showed ST elevation. Immediate cardiac catheterization performed.' },
+                { date: 'April 15, 2025', doctor: 'Dr. Marcus Chen', reason: 'Follow-up', diagnosis: 'Coronary Artery Disease', notes: 'Patient reported increasing chest discomfort. Stress test ordered.' },
+                { date: 'January 22, 2025', doctor: 'Dr. Marcus Chen', reason: 'Annual checkup', diagnosis: 'Coronary Artery Disease, Type 2 Diabetes', notes: 'Stable condition, medication continued.' }
+            ],
+            medications: [
+                { name: 'Aspirin', dosage: '81mg', frequency: 'Once daily', startDate: 'May 8, 2025', endDate: 'Ongoing', prescribedBy: 'Dr. Marcus Chen' },
+                { name: 'Atorvastatin', dosage: '40mg', frequency: 'Once daily', startDate: 'May 8, 2025', endDate: 'Ongoing', prescribedBy: 'Dr. Marcus Chen' },
+                { name: 'Metoprolol', dosage: '25mg', frequency: 'Twice daily', startDate: 'May 8, 2025', endDate: 'Ongoing', prescribedBy: 'Dr. Marcus Chen' },
+                { name: 'Metformin', dosage: '1000mg', frequency: 'Twice daily', startDate: 'January 22, 2025', endDate: 'Ongoing', prescribedBy: 'Dr. Marcus Chen' }
+            ],
+            labResults: [
+                { date: 'May 8, 2025', type: 'Cardiac Enzymes', results: [
+                    { test: 'Troponin I', value: '2.5', unit: 'ng/mL', normal: '<0.04', flag: 'H' },
+                    { test: 'CK-MB', value: '28', unit: 'ng/mL', normal: '<5.0', flag: 'H' }
+                ]},
+                { date: 'May 8, 2025', type: 'Complete Blood Count', results: [
+                    { test: 'WBC', value: '12.3', unit: 'x10^9/L', normal: '4.0-11.0', flag: 'H' },
+                    { test: 'RBC', value: '4.9', unit: 'x10^12/L', normal: '4.2-5.4' },
+                    { test: 'Hemoglobin', value: '15.1', unit: 'g/dL', normal: '12.0-16.0' }
+                ]},
+                { date: 'January 22, 2025', type: 'HbA1c', results: [
+                    { test: 'HbA1c', value: '7.2', unit: '%', normal: '<5.7', flag: 'H' }
+                ]}
+            ],
+            notes: [
+                { date: 'May 8, 2025', author: 'Dr. Marcus Chen', text: 'Patient transferred from ER after confirmed MI. Single vessel disease found on angiography. Successful PCI with stent placement to LAD. Patient to be monitored closely in cardiac ward for 48hrs. Dual antiplatelet therapy initiated.' },
+                { date: 'April 15, 2025', author: 'Dr. Marcus Chen', text: 'Patient reports increased frequency of chest pain, particularly with exertion. Pain radiates to left arm. Stress test shows significant ST depression. Referred for cardiac catheterization.' },
+                { date: 'January 22, 2025', author: 'Dr. Marcus Chen', text: 'Stable CAD. Diabetic control fair with HbA1c of 7.2%. Patient compliant with medications but admits to dietary indiscretions. Reinforced importance of lifestyle modifications.' }
+            ]
+        }
+    };
+
+    // Function to populate modal data based on patient ID
+    function populatePatientHistoryModal(patientId) {
+        const patient = patientData[patientId];
+        if (!patient) {
+            console.error('Patient data not found for ID:', patientId);
+            return;
+        }
+        
+        // Set patient name in modal header
+        const patientNameDisplay = document.getElementById('patientNameDisplay');
+        if (patientNameDisplay) {
+            patientNameDisplay.textContent = patient.name;
+        }
+        
+        // Populate Visits Tab
+        const visitsContainer = document.querySelector('.visits-timeline');
+        if (visitsContainer) {
+            visitsContainer.innerHTML = '';
+            patient.visits.forEach(visit => {
+                visitsContainer.innerHTML += `
+                    <div class="timeline-item">
+                        <h6 class="fw-bold">${visit.date} - ${visit.reason}</h6>
+                        <div class="mb-1"><span class="text-muted">Doctor:</span> ${visit.doctor}</div>
+                        <div class="mb-1"><span class="text-muted">Diagnosis:</span> ${visit.diagnosis}</div>
+                        <div><span class="text-muted">Notes:</span> ${visit.notes}</div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Populate Medications Tab
+        const medicationsContainer = document.querySelector('.medications-list');
+        if (medicationsContainer) {
+            medicationsContainer.innerHTML = '';
+            patient.medications.forEach(med => {
+                const isActive = med.endDate === 'Ongoing';
+                medicationsContainer.innerHTML += `
+                    <div class="medication-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="fw-bold mb-1">${med.name} ${med.dosage}</h6>
+                                <div class="mb-1"><span class="text-muted">Frequency:</span> ${med.frequency}</div>
+                                <div class="mb-1"><span class="text-muted">Prescribed by:</span> ${med.prescribedBy}</div>
+                                <div><span class="text-muted">Duration:</span> ${med.startDate} to ${med.endDate}</div>
+                            </div>
+                            <span class="badge ${isActive ? 'bg-success' : 'bg-secondary'} bg-opacity-10 ${isActive ? 'text-success' : 'text-secondary'} rounded-pill">
+                                ${isActive ? 'Active' : 'Completed'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Populate Lab Results Tab
+        const labResultsContainer = document.querySelector('.lab-results-list');
+        if (labResultsContainer) {
+            labResultsContainer.innerHTML = '';
+            patient.labResults.forEach(labResult => {
+                let labHTML = `
+                    <div class="lab-result-chart mb-4">
+                        <h6 class="fw-bold mb-3">${labResult.date} - ${labResult.type}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Test</th>
+                                        <th>Result</th>
+                                        <th>Unit</th>
+                                        <th>Reference Range</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                labResult.results.forEach(test => {
+                    const hasFlag = test.flag ? true : false;
+                    labHTML += `
+                        <tr>
+                            <td>${test.test}</td>
+                            <td class="${hasFlag ? 'text-danger fw-bold' : ''}">${test.value} ${hasFlag ? `<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill">${test.flag}</span>` : ''}</td>
+                            <td>${test.unit}</td>
+                            <td>${test.normal}</td>
+                        </tr>
+                    `;
+                });
+                
+                labHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                labResultsContainer.innerHTML += labHTML;
+            });
+        }
+        
+        // Populate Notes Tab
+        const notesContainer = document.querySelector('.notes-list');
+        if (notesContainer) {
+            notesContainer.innerHTML = '';
+            patient.notes.forEach(note => {
+                notesContainer.innerHTML += `
+                    <div class="note-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0">${note.date}</h6>
+                            <span class="text-muted">${note.author}</span>
+                        </div>
+                        <p class="mb-0">${note.text}</p>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    // Initialize Bootstrap tooltips if needed
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
 </script>
