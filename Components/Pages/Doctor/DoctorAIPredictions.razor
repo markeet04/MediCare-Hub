@@ -4,8 +4,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-1">AI Predictions & Risk Analysis</h4>
-        <p class="text-muted mb-0">AI-powered clinical decision support and risk stratification</p>
+        <h4 class="mb-1">Patient Risk Analysis & Treatment Recommendations</h4>
+        <p class="text-muted mb-0">AI-powered clinical decision support based on patient history</p>
     </div>
     <div class="d-flex">
         <button class="btn btn-outline-secondary rounded-pill me-2">
@@ -23,7 +23,7 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 pt-4 pb-0">
                 <h6 class="mb-0">Risk Distribution</h6>
-                <p class="text-muted small mb-0">Patient risk levels</p>
+                <p class="text-muted small mb-0">Patient risk levels based on historical data</p>
             </div>
             <div class="card-body d-flex flex-column">
                 <div class="mb-3 text-center">
@@ -57,8 +57,8 @@
     <div class="col-md-4 mb-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h6 class="mb-0">Model Performance</h6>
-                <p class="text-muted small mb-0">Accuracy metrics</p>
+                <h6 class="mb-0">Analysis Accuracy</h6>
+                <p class="text-muted small mb-0">Risk prediction metrics</p>
             </div>
             <div class="card-body d-flex flex-column">
                 <div class="mb-4">
@@ -98,12 +98,12 @@
         </div>
     </div>
     
-    <!-- AI Prediction Impact Card -->
+    <!-- Treatment Efficacy Card -->
     <div class="col-md-4 mb-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h6 class="mb-0">Clinical Impact</h6>
-                <p class="text-muted small mb-0">Outcomes improvement</p>
+                <h6 class="mb-0">Treatment Efficacy</h6>
+                <p class="text-muted small mb-0">Recommended treatments outcomes</p>
             </div>
             <div class="card-body d-flex flex-column">
                 <div class="text-center mb-3 mt-2">
@@ -179,7 +179,7 @@
     <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
         <div>
             <h6 class="mb-0">High Risk Patients</h6>
-            <p class="text-muted small mb-0">Patients requiring immediate attention</p>
+            <p class="text-muted small mb-0">Patients requiring immediate attention based on history</p>
         </div>
         <div class="text-end">
             <span class="badge bg-danger rounded-pill px-3 py-2">8 Patients</span>
@@ -194,7 +194,7 @@
                         <th scope="col" class="border-0">Age</th>
                         <th scope="col" class="border-0">Risk Score</th>
                         <th scope="col" class="border-0">Primary Condition</th>
-                        <th scope="col" class="border-0">AI Recommendation</th>
+                        <th scope="col" class="border-0">Recommended Treatment</th>
                         <th scope="col" class="border-0 text-end pe-4">Actions</th>
                     </tr>
                 </thead>
@@ -226,6 +226,9 @@
                             <span class="badge bg-light text-dark border">Urgent Catheterization</span>
                         </td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" data-bs-toggle="modal" data-bs-target="#patientHistoryModal">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -261,6 +264,9 @@
                             <span class="badge bg-light text-dark border">IV Fluids</span>
                         </td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" data-bs-toggle="modal" data-bs-target="#patientHistoryModal">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -296,6 +302,9 @@
                             <span class="badge bg-light text-dark border">O2 Therapy</span>
                         </td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" data-bs-toggle="modal" data-bs-target="#patientHistoryModal">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -323,7 +332,7 @@
     <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
         <div>
             <h6 class="mb-0">Moderate Risk Patients</h6>
-            <p class="text-muted small mb-0">Patients requiring proactive intervention</p>
+            <p class="text-muted small mb-0">Patients requiring proactive intervention based on history</p>
         </div>
         <div class="text-end">
             <span class="badge bg-warning rounded-pill px-3 py-2">12 Patients</span>
@@ -338,7 +347,7 @@
                         <th scope="col" class="border-0">Age</th>
                         <th scope="col" class="border-0">Risk Score</th>
                         <th scope="col" class="border-0">Primary Condition</th>
-                        <th scope="col" class="border-0">AI Recommendation</th>
+                        <th scope="col" class="border-0">Recommended Treatment</th>
                         <th scope="col" class="border-0 text-end pe-4">Actions</th>
                     </tr>
                 </thead>
@@ -366,10 +375,13 @@
                         </td>
                         <td class="align-middle">Type 2 Diabetes, Uncontrolled</td>
                         <td class="align-middle">
-                            <span class="badge bg-light text-dark border">Medication A</span>
-                            <span class="badge bg-light text-dark border">Therapy B</span>
+                            <span class="badge bg-light text-dark border">Metformin Adjustment</span>
+                            <span class="badge bg-light text-dark border">Dietary Consult</span>
                         </td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" data-bs-toggle="modal" data-bs-target="#patientHistoryModal">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -405,6 +417,9 @@
                             <span class="badge bg-light text-dark border">Dietary Changes</span>
                         </td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" data-bs-toggle="modal" data-bs-target="#patientHistoryModal">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -440,6 +455,9 @@
                             <span class="badge bg-light text-dark border">Trigger Avoidance</span>
                         </td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" data-bs-toggle="modal" data-bs-target="#patientHistoryModal">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -462,121 +480,12 @@
     </div>
 </div>
 
-<!-- AI Prediction Models -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-0 pt-4 pb-0">
-        <h6 class="mb-0">Available AI Models</h6>
-        <p class="text-muted small mb-0">Clinical decision support systems</p>
-    </div>
-    <div class="card-body">
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-                <div class="card border h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-wrapper rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <i class="bi bi-heart-pulse fs-4 text-info"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Cardiovascular Risk</h6>
-                                <p class="text-muted small mb-0">v2.4 • 94% accuracy</p>
-                            </div>
-                        </div>
-                        <p class="small mb-3">Predicts 30-day readmission risk and complications for cardiac patients.</p>
-                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card border h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <i class="bi bi-lungs fs-4 text-warning"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Respiratory Failure</h6>
-                                <p class="text-muted small mb-0">v1.8 • 91% accuracy</p>
-                            </div>
-                        </div>
-                        <p class="small mb-3">Predicts respiratory decompensation risk in the next 24-48 hours.</p>
-                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card border h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <i class="bi bi-droplet-half fs-4 text-danger"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Sepsis Predictor</h6>
-                                <p class="text-muted small mb-0">v3.1 • 89% accuracy</p>
-                            </div>
-                        </div>
-                        <p class="small mb-3">Early detection of sepsis up to 6 hours before clinical manifestation.</p>
-                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card border h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <i class="bi bi-activity fs-4 text-primary"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Stroke Risk</h6>
-                                <p class="text-muted small mb-0">v2.0 • 87% accuracy</p>
-                            </div>
-                        </div>
-                        <p class="small mb-3">Predicts stroke risk based on vitals, lab values, and patient history.</p>
-                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card border h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-wrapper rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <i class="bi bi-capsule fs-4 text-success"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">Medication Response</h6>
-                                <p class="text-muted small mb-0">v1.5 • 85% accuracy</p>
-                            </div>
-                        </div>
-                        <p class="small mb-3">Predicts patient response to various medication protocols based on biomarkers.</p>
-                        <button class="btn btn-sm btn-outline-teal w-100">Run Analysis</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card border h-100 bg-light">
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center text-center p-4">
-                        <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
-                            <i class="bi bi-plus-lg fs-4 text-teal"></i>
-                        </div>
-                        <h6 class="mb-2">Request New Model</h6>
-                        <p class="small text-muted mb-3">Need a custom AI prediction model?</p>
-                        <button class="btn btn-sm btn-outline-teal">Contact AI Team</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- AI Prediction History -->
+<!-- Historical Analysis Summary -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
         <div>
-            <h6 class="mb-0">Recent AI Prediction History</h6>
-            <p class="text-muted small mb-0">Last 10 analyses performed</p>
+            <h6 class="mb-0">Patient History Analysis</h6>
+            <p class="text-muted small mb-0">Risk factors identified from historical data</p>
         </div>
         <div>
             <button class="btn btn-sm btn-outline-secondary rounded-pill">
@@ -589,93 +498,83 @@
             <table class="table mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th scope="col" class="border-0 ps-4">Date & Time</th>
-                        <th scope="col" class="border-0">Patient</th>
-                        <th scope="col" class="border-0">Model Used</th>
-                        <th scope="col" class="border-0">Risk Score</th>
-                        <th scope="col" class="border-0">Status</th>
-                        <th scope="col" class="border-0 text-end pe-4">Actions</th>
+                        <th scope="col" class="border-0 ps-4">Risk Factor</th>
+                        <th scope="col" class="border-0">Patient Count</th>
+                        <th scope="col" class="border-0">Impact Level</th>
+                        <th scope="col" class="border-0">Trend</th>
+                        <th scope="col" class="border-0">Common Treatment</th>
+                        <th scope="col" class="border-0 text-end pe-4">Efficacy</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="ps-4">May 11, 2025 09:42 AM</td>
-                        <td>Ali Raza</td>
-                        <td>Cardiovascular Risk</td>
+                        <td class="ps-4">Uncontrolled Hypertension</td>
+                        <td>42</td>
                         <td>
-                            <span class="badge bg-danger">92%</span>
+                            <span class="badge bg-danger">High</span>
                         </td>
                         <td>
-                            <span class="badge bg-success">Reviewed</span>
+                            <i class="bi bi-arrow-up-right text-danger"></i> +12% from previous month
                         </td>
+                        <td>ACE Inhibitors + Dietary Changes</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
-                                <i class="bi bi-eye"></i> View
-                            </button>
+                            <span class="badge bg-success">87% effective</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="ps-4">May 10, 2025 03:18 PM</td>
-                        <td>Maria Torres</td>
-                        <td>Sepsis Predictor</td>
+                        <td class="ps-4">Medication Non-adherence</td>
+                        <td>36</td>
                         <td>
-                            <span class="badge bg-danger">88%</span>
+                            <span class="badge bg-danger">High</span>
                         </td>
                         <td>
-                            <span class="badge bg-success">Reviewed</span>
+                            <i class="bi bi-dash text-secondary"></i> No change
                         </td>
+                        <td>Simplified Regimen + Follow-up Calls</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
-                                <i class="bi bi-eye"></i> View
-                            </button>
+                            <span class="badge bg-success">73% effective</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="ps-4">May 10, 2025 11:23 AM</td>
-                        <td>Jane Smith</td>
-                        <td>Medication Response</td>
+                        <td class="ps-4">Uncontrolled Diabetes</td>
+                        <td>29</td>
                         <td>
-                            <span class="badge bg-warning">68%</span>
+                            <span class="badge bg-warning">Medium</span>
                         </td>
                         <td>
-                            <span class="badge bg-success">Reviewed</span>
+                            <i class="bi bi-arrow-down-right text-success"></i> -5% from previous month
                         </td>
+                        <td>Medication Adjustment + Nutrition Education</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
-                                <i class="bi bi-eye"></i> View
-                            </button>
+                            <span class="badge bg-success">82% effective</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="ps-4">May 9, 2025 04:35 PM</td>
-                        <td>Robert Chen</td>
-                        <td>Respiratory Failure</td>
+                        <td class="ps-4">Recurrent Respiratory Infections</td>
+                        <td>24</td>
                         <td>
-                            <span class="badge bg-success">34%</span>
+                            <span class="badge bg-warning">Medium</span>
                         </td>
                         <td>
-                            <span class="badge bg-secondary">Not Reviewed</span>
+                            <i class="bi bi-arrow-up-right text-danger"></i> +8% from previous month
                         </td>
+                        <td>Preventive Antibiotics + Vaccination</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
-                                <i class="bi bi-eye"></i> View
-                            </button>
+                            <span class="badge bg-warning">68% effective</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="ps-4">May 9, 2025 01:12 PM</td>
-                        <td>Sarah Johnson</td>
-                        <td>Stroke Risk</td>
+                        <td class="ps-4">Cardiac Arrhythmias</td>
+                        <td>18</td>
                         <td>
-                            <span class="badge bg-warning">56%</span>
+                            <span class="badge bg-warning">Medium</span>
                         </td>
                         <td>
-                            <span class="badge bg-success">Reviewed</span>
+                            <i class="bi bi-arrow-down-right text-success"></i> -3% from previous month
                         </td>
+                        <td>Antiarrhythmic Medication + Monitoring</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#aiPredictionModal">
-                                <i class="bi bi-eye"></i> View
-                            </button>
+                            <span class="badge bg-success">79% effective</span>
                         </td>
                     </tr>
                 </tbody>
@@ -684,198 +583,232 @@
     </div>
     <div class="card-footer bg-white border-0 py-3">
         <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted small">Showing 5 of 28 records</span>
-            <nav aria-label="Prediction history pagination">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    <li class="page-item active" aria-current="page">
-                        <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
+            <span class="text-muted small">Based on analysis of patient histories from the past 90 days</span>
+            <a href="#" class="text-teal text-decoration-none">View Complete Risk Analysis</a>
         </div>
     </div>
 </div>
 
-<!-- AI Insights Dashboard Link -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-0 shadow-sm bg-teal text-white">
-            <div class="card-body p-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h5>AI Insights Dashboard</h5>
-                        <p class="mb-0">Access advanced analytics, model performance metrics, and hospital-wide AI impact analysis.</p>
-                    </div>
-                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <button class="btn btn-light text-teal rounded-pill">
-                            <i class="bi bi-bar-chart me-2"></i> Open Dashboard
-                        </button>
-                    </div>
+<!-- Treatment Recommendation History -->
+<div class="card border-0 shadow-sm mb-4">
+<div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0">Treatment Recommendation History</h6>
+            <p class="text-muted small mb-0">AI-generated recommendations and their outcomes</p>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill">
+                <i class="bi bi-calendar3 me-1"></i> Date Range
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col" class="border-0 ps-4">Date</th>
+                        <th scope="col" class="border-0">Condition</th>
+                        <th scope="col" class="border-0">Recommendation</th>
+                        <th scope="col" class="border-0">Doctor</th>
+                        <th scope="col" class="border-0">Adopted</th>
+                        <th scope="col" class="border-0 text-end pe-4">Outcome</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4">May 15, 2025</td>
+                        <td>Acute Myocardial Infarction</td>
+                        <td>Urgent Catheterization + Dual Antiplatelet Therapy</td>
+                        <td>Dr. Sarah Chen</td>
+                        <td><span class="badge bg-success">Yes</span></td>
+                        <td class="text-end pe-4">
+                            <span class="badge bg-success">Successful</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 12, 2025</td>
+                        <td>Uncontrolled Type 2 Diabetes</td>
+                        <td>Increase Metformin + Add GLP-1 Agonist</td>
+                        <td>Dr. James Wilson</td>
+                        <td><span class="badge bg-success">Yes</span></td>
+                        <td class="text-end pe-4">
+                            <span class="badge bg-success">Successful</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 10, 2025</td>
+                        <td>Community Acquired Pneumonia</td>
+                        <td>Broad Spectrum Antibiotics + Pulmonary Rehab</td>
+                        <td>Dr. Maria Lopez</td>
+                        <td><span class="badge bg-warning">Partially</span></td>
+                        <td class="text-end pe-4">
+                            <span class="badge bg-warning">Moderate</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 8, 2025</td>
+                        <td>Deep Vein Thrombosis</td>
+                        <td>Anticoagulation + Compression Stockings</td>
+                        <td>Dr. David Kim</td>
+                        <td><span class="badge bg-success">Yes</span></td>
+                        <td class="text-end pe-4">
+                            <span class="badge bg-success">Successful</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4">May 5, 2025</td>
+                        <td>Severe Asthma Exacerbation</td>
+                        <td>Short-term Steroids + Bronchodilators</td>
+                        <td>Dr. Lisa Johnson</td>
+                        <td><span class="badge bg-danger">No</span></td>
+                        <td class="text-end pe-4">
+                            <span class="badge bg-danger">Readmitted</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Showing 5 of 24 recent recommendations</span>
+            <a href="#" class="text-teal text-decoration-none">View All Recommendations</a>
+        </div>
+    </div>
+</div>
+
+<!-- AI Insights -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0">
+        <h6 class="mb-0">AI Clinical Insights</h6>
+        <p class="text-muted small mb-0">Key patterns and recommendations based on your patient population</p>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-light border-start border-4 border-teal mb-4">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="bi bi-lightbulb text-teal fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">Hypertension Management Gap</h6>
+                    <p class="mb-0">33% of hypertensive patients are not meeting blood pressure targets despite medication. Consider screening for secondary causes and medication adherence issues.</p>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-light border-start border-4 border-teal mb-4">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="bi bi-lightbulb text-teal fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">Diabetes Medication Effectiveness</h6>
+                    <p class="mb-0">GLP-1 agonists show 24% better glycemic control than DPP-4 inhibitors in your patient population with similar adherence rates.</p>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-light border-start border-4 border-teal mb-0">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="bi bi-lightbulb text-teal fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">Post-Discharge Follow-up Impact</h6>
+                    <p class="mb-0">Patients receiving follow-up calls within 48 hours of discharge show 18% lower readmission rates across all departments.</p>
                 </div>
             </div>
         </div>
     </div>
+    <div class="card-footer bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Updated daily based on your clinical data</span>
+            <a href="#" class="text-teal text-decoration-none">View All Insights</a>
+        </div>
+    </div>
 </div>
 
-<!-- AI Prediction Details Modal -->
-<div class="modal fade" id="aiPredictionModal" tabindex="-1" aria-labelledby="aiPredictionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+<!-- Patient History Modal -->
+<div class="modal fade" id="patientHistoryModal" tabindex="-1" aria-labelledby="patientHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header border-0 bg-light">
-                <h5 class="modal-title" id="aiPredictionModalLabel">AI Prediction Details</h5>
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="patientHistoryModalLabel">Patient History Timeline</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                <span class="text-danger fw-bold">AR</span>
-                            </div>
-                            <div>
-                                <h5 class="mb-0">Ali Raza</h5>
-                                <p class="text-muted small mb-0">#PT-78924 • Male, 63 years</p>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="mb-2"><strong>Primary Diagnosis:</strong></div>
-                            <span class="badge bg-danger text-white py-2 px-3">Acute Myocardial Infarction</span>
-                        </div>
-                        <div class="mb-3">
-                            <div class="mb-2"><strong>Comorbidities:</strong></div>
-                            <span class="badge bg-light text-dark border me-1 mb-1">Hypertension</span>
-                            <span class="badge bg-light text-dark border me-1 mb-1">Type 2 Diabetes</span>
-                            <span class="badge bg-light text-dark border me-1 mb-1">Hyperlipidemia</span>
-                        </div>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <span class="text-danger fw-bold">AR</span>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 bg-light border-0">
-                            <div class="card-body">
-                                <h6>Risk Assessment</h6>
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="progress flex-grow-1 me-3" style="height: 8px;">
-                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 92%"></div>
-                                    </div>
-                                    <h4 class="mb-0 text-danger">92%</h4>
-                                </div>
-                                <p class="small mb-1"><strong>Model:</strong> Cardiovascular Risk v2.4</p>
-                                <p class="small mb-1"><strong>Analysis Date:</strong> May 11, 2025 09:42 AM</p>
-                                <p class="small mb-0"><strong>Reviewed By:</strong> Dr. Ahmed</p>
-                            </div>
-                        </div>
+                    <div>
+                        <h6 class="mb-1">Ali Raza</h6>
+                        <p class="text-muted mb-0">#PT-78924 | 63 years old | Male</p>
+                    </div>
+                    <div class="ms-auto">
+                        <span class="badge bg-danger rounded-pill px-3 py-2">High Risk (92%)</span>
                     </div>
                 </div>
                 
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h6 class="mb-3">Key Risk Factors</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Factor</th>
-                                        <th>Value</th>
-                                        <th>Reference Range</th>
-                                        <th>Contribution</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Troponin I</td>
-                                        <td>2.3 ng/mL</td>
-                                        <td> 0.04 ng/mL</td>
-                                        <td><span class="text-danger">Very High</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Blood Pressure</td>
-                                        <td>165/95 mmHg</td>
-                                        <td>120/80 mmHg </td>
-                                        <td><span class="text-danger">High</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>LDL Cholesterol</td>
-                                        <td>158 mg/dL</td>
-                                        <td>100 mg/dL</td>
-                                        <td><span class="text-warning">Medium</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>HbA1c</td>
-                                        <td>8.2%</td>
-                                        <td> 5.7%</td>
-                                        <td><span class="text-warning">Medium</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ST Segment Changes</td>
-                                        <td>Present</td>
-                                        <td>Absent</td>
-                                        <td><span class="text-danger">Very High</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h6 class="mb-3">AI Recommendations</h6>
-                        <div class="alert alert-danger bg-danger bg-opacity-10 border-start border-danger border-4">
-                            <h6><i class="bi bi-exclamation-triangle me-2"></i>High Priority Actions</h6>
-                            <ul class="mb-0">
-                                <li>Immediate ICU monitoring</li>
-                                <li>Urgent cardiac catheterization within 90 minutes</li>
-                                <li>Administer loading dose of dual antiplatelet therapy</li>
-                            </ul>
-                        </div>
-                        <div class="alert alert-warning bg-warning bg-opacity-10 border-start border-warning border-4">
-                            <h6><i class="bi bi-clock me-2"></i>Follow-up Recommendations</h6>
-                            <ul class="mb-0">
-                                <li>Assess for mechanical complications</li>
-                                <li>Initiate statin therapy</li>
-                                <li>Schedule cardiac rehabilitation evaluation</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-12">
-                        <h6 class="mb-3">Predicted Outcomes</h6>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <div class="card border h-100">
-                                    <div class="card-body text-center">
-                                        <h6 class="text-danger mb-2">78%</h6>
-                                        <p class="small mb-0">30-day mortality risk without intervention</p>
+                <div class="timeline-wrapper">
+                    <div class="timeline-item pb-4">
+                        <div class="timeline-marker bg-danger"></div>
+                        <div class="timeline-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Hospitalization - Acute Myocardial Infarction</h6>
+                                        <span class="badge bg-danger">Critical</span>
                                     </div>
+                                    <p class="text-muted mb-2">May 2, 2025 - May 6, 2025</p>
+                                    <p class="mb-0">Patient presented with severe chest pain and ST elevation on ECG. Underwent emergency catheterization with stent placement. Discharged on dual antiplatelet therapy.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card border h-100">
-                                    <div class="card-body text-center">
-                                        <h6 class="text-warning mb-2">63%</h6>
-                                        <p class="small mb-0">Risk of heart failure within 1 year</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pb-4">
+                        <div class="timeline-marker bg-warning"></div>
+                        <div class="timeline-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Emergency Department Visit - Chest Pain</h6>
+                                        <span class="badge bg-warning">Moderate</span>
                                     </div>
+                                    <p class="text-muted mb-2">April 18, 2025</p>
+                                    <p class="mb-0">Patient presented with atypical chest pain. ECG showed non-specific changes. Troponin slightly elevated. Patient discharged with follow-up appointment.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card border h-100">
-                                    <div class="card-body text-center">
-                                        <h6 class="text-success mb-2">85%</h6>
-                                        <p class="small mb-0">Recovery probability with recommended interventions</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pb-4">
+                        <div class="timeline-marker bg-secondary"></div>
+                        <div class="timeline-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Outpatient Visit - Hypertension Follow-up</h6>
+                                        <span class="badge bg-secondary">Routine</span>
                                     </div>
+                                    <p class="text-muted mb-2">March 15, 2025</p>
+                                    <p class="mb-0">Blood pressure elevated at 156/94. Medication adherence reported as inconsistent. ACE inhibitor dosage increased and patient counseled on importance of adherence.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-secondary"></div>
+                        <div class="timeline-content">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Laboratory Results</h6>
+                                        <span class="badge bg-secondary">Routine</span>
+                                    </div>
+                                    <p class="text-muted mb-2">March 10, 2025</p>
+                                    <p class="mb-0">LDL cholesterol: 142 mg/dL (High), Triglycerides: 210 mg/dL (High), Hemoglobin A1c: 6.4% (Prediabetic). Statin therapy recommended.</p>
                                 </div>
                             </div>
                         </div>
@@ -883,101 +816,73 @@
                 </div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-outline-teal rounded-pill">
-                    <i class="bi bi-printer"></i> Print Report
-                </button>
-                <button type="button" class="btn btn-teal rounded-pill">
-                    <i class="bi bi-lightning-charge"></i> Implement Recommendations
-                </button>
+                <button type="button" class="btn btn-outline-secondary rounded-pill me-2" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-teal rounded-pill">View Complete History</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Custom style overrides for this page -->
 <style>
-    /* Custom button styles */
+    /* Custom teal color */
     .btn-teal {
-        background-color: var(--bs-teal);
-        border-color: var(--bs-teal);
+        background-color: #20c997;
+        border-color: #20c997;
         color: white;
     }
     
-    .btn-teal:hover, .btn-teal:focus {
-        background-color: #1ba382;
-        border-color: #1ba382;
+    .btn-teal:hover {
+        background-color: #1ba87e;
+        border-color: #1ba87e;
         color: white;
     }
     
-    .btn-outline-teal {
-        border-color: var(--bs-teal);
-        color: var(--bs-teal);
+    .text-teal {
+        color: #20c997;
     }
     
-    .btn-outline-teal:hover, .btn-outline-teal:focus {
-        background-color: var(--bs-teal);
-        color: white;
+    /* Timeline styling */
+    .timeline-wrapper {
+        position: relative;
+        padding-left: 30px;
     }
     
-    /* Card hover animations */
+    .timeline-wrapper:before {
+        content: "";
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #e9ecef;
+    }
+    
+    .timeline-content {
+        padding-bottom: 10px;
+    }
+    
+    /* Table styling enhancements */
+    .table > :not(caption) > * > * {
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Card hover effect */
     .card {
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
     
     .card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-    }
-    
-    /* Badge styles */
-    .badge {
-        font-weight: 500;
-    }
-    
-    /* Table row hover effect */
-    tbody tr {
-        transition: background-color 0.2s;
-    }
-    
-    tbody tr:hover {
-        background-color: rgba(var(--bs-teal-rgb), 0.05);
-    }
-    
-    /* Custom pagination */
-    .page-item.active .page-link {
-        background-color: var(--bs-teal);
-        border-color: var(--bs-teal);
-    }
-    
-    .page-link {
-        color: var(--bs-teal);
-    }
-    
-    .page-link:hover {
-        color: #1ba382;
-    }
-    
-    /* Modal animations */
-    .modal .modal-content {
-        animation: modalFadeIn 0.3s ease-out;
-    }
-    
-    @@keyframes modalFadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Responsive adjustments */
-    @@media (max-width: 767.98px) {
-        .modal-dialog {
-            margin: 0.5rem;
-        }
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
     }
 </style>
