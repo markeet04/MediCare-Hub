@@ -1,13 +1,248 @@
 @page "/doctor/laborders"
-@layout BlazorApp1.Components.Layout.DoctorLayout
+@layout DoctorLayout
 @rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
 
-<h3>🧪 Lab Test Orders</h3>
-<p>Send lab test orders to Lab Technician.</p>
-<input class="form-control mb-2" placeholder="Patient Name" />
-<select class="form-select mb-2">
-  <option>Blood Test</option>
-  <option>Urine Test</option>
-  <option>X-Ray</option>
-</select>
-<button class="btn btn-secondary">Send Order</button>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1 fw-bold">Lab Orders</h4>
+        <p class="text-muted">Manage and track lab orders for your patients, @DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
+    </div>
+    <div>
+        <button class="btn btn-teal rounded-pill shadow-sm" @onclick="NavigateToNewLabOrder">
+            <i class="bi bi-plus-circle me-2"></i>New Lab Order
+        </button>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+        <h5 class="mb-0 fw-bold">Filter Lab Orders</h5>
+        <div class="d-flex align-items-center">
+            <select class="form-select form-select-sm me-2 rounded-pill" @onchange="ChangeFilterStatus">
+                <option value="All">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Urgent">Urgent</option>
+            </select>
+            <div class="position-relative">
+                <input type="search" class="form-control bg-light border-0 rounded-pill" placeholder="Search lab orders..." @oninput="SearchLabOrders" />
+                <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lab Orders List -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+        <h5 class="mb-0 fw-bold">Lab Orders</h5>
+        <div class="d-flex align-items-center">
+            <div class="me-3 d-flex align-items-center">
+                <div class="me-2 rounded-circle bg-success" style="width: 8px; height: 8px;"></div>
+                <span class="text-muted small">Completed</span>
+            </div>
+            <div class="me-3 d-flex align-items-center">
+                <div class="me-2 rounded-circle bg-warning" style="width: 8px; height: 8px;"></div>
+                <span class="text-muted small">Pending</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="me-2 rounded-circle bg-danger" style="width: 8px; height: 8px;"></div>
+                <span class="text-muted small">Urgent</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            <!-- Lab Order Item 1 -->
+            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(1)">
+                <div class="me-3 position-relative">
+                    <div class="rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <span class="text-teal fw-bold">SJ</span>
+                    </div>
+                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0">Sarah Johnson</h6>
+                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3921</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-muted mb-0 small">Blood Panel • Ordered: May 17, 2025</p>
+                        <span class="text-success small fw-medium">Completed</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Lab Order Item 2 -->
+            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(2)">
+                <div class="me-3 position-relative">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <span class="text-primary fw-bold">MT</span>
+                    </div>
+                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-warning" style="width: 12px; height: 12px;"></div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0">Michael Torres</h6>
+                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3922</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-muted mb-0 small">Cardiac Biomarkers • Ordered: May 18, 2025</p>
+                        <span class="text-warning small fw-medium">Pending</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Lab Order Item 3 -->
+            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(3)">
+                <div class="me-3 position-relative">
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <span class="text-danger fw-bold">EL</span>
+                    </div>
+                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-danger" style="width: 12px; height: 12px;"></div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0">Emily Liu</h6>
+                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3923</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-muted mb-0 small">Urgent: Electrolyte Panel • Ordered: May 19, 2025</p>
+                        <span class="text-danger small fw-medium">Urgent</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Lab Order Item 4 -->
+            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(4)">
+                <div class="me-3 position-relative">
+                    <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <span class="text-info fw-bold">RD</span>
+                    </div>
+                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0">Robert Davis</h6>
+                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3924</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-muted mb-0 small">Glucose Test • Ordered: May 16, 2025</p>
+                        <span class="text-success small fw-medium">Completed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string FilterStatus { get; set; } = "All";
+    private string SearchQuery { get; set; } = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize tooltips
+            await JSRuntime.InvokeVoidAsync("eval", "try { var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]')); var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); }); } catch (e) { console.error(e); }");
+        }
+    }
+
+    private void ChangeFilterStatus(ChangeEventArgs e)
+    {
+        FilterStatus = e.Value?.ToString() ?? "All";
+        // Apply filtering logic here (e.g., fetch filtered data)
+    }
+
+    private void SearchLabOrders(ChangeEventArgs e)
+    {
+        SearchQuery = e.Value?.ToString() ?? "";
+        // Apply search logic here (e.g., filter list based on search query)
+    }
+
+    private void ViewLabOrderDetails(int orderId)
+    {
+        Nav.NavigateTo($"/doctor/laborders/{orderId}");
+    }
+
+    private void NavigateToNewLabOrder()
+    {
+        Nav.NavigateTo("/doctor/laborders/new");
+    }
+}
+
+<style>
+    /* Reusing teal colors from DoctorLayout */
+    .bg-teal {
+        background-color: var(--bs-teal) !important;
+    }
+
+    .bg-teal-subtle {
+        background-color: rgba(vermilion(--bs-teal-rgb), 0.1) !important;
+    }
+
+    .text-teal {
+        color: var(--bs-teal) !important;
+    }
+
+    .btn-teal {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+        color: white;
+    }
+
+    .btn-teal:hover {
+        background-color: #1ba881;
+        border-color: #1ba881;
+        color: white;
+    }
+
+    .btn-outline-teal {
+        color: var(--bs-teal);
+        border-color: var(--bs-teal);
+    }
+
+    .btn-outline-teal:hover {
+        background-color: var(--bs-teal);
+        color: white;
+    }
+
+    /* Lab order specific styles */
+    .lab-order-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .lab-order-item:hover {
+        background-color: rgba(var(--bs-teal-rgb), 0.03);
+    }
+
+    /* Form select styling */
+    .form-select {
+        border-color: rgba(var(--bs-teal-rgb), 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+        border-color: var(--bs-teal);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-teal-rgb), 0.25);
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 767.98px) {
+        .card-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .card-header .d-flex > div {
+            margin-top: 0.5rem;
+        }
+
+        .form-select {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
