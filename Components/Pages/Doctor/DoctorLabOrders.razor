@@ -4,7 +4,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="animate-fade-in d-flex justify-content-between align-items-center mb-4 ">
     <div>
         <h4 class="mb-1 fw-bold">Lab Orders</h4>
         <p class="text-muted">Manage and track lab orders for your patients, @DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
@@ -17,7 +17,7 @@
 </div>
 
 <!-- Filters and Search -->
-<div class="card border-0 shadow-sm mb-4">
+<div class="card border-0 shadow-sm mb-4 animate-fade-in">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
         <h5 class="mb-0 fw-bold">Filter Lab Orders</h5>
         <div class="d-flex align-items-center">
@@ -36,7 +36,7 @@
 </div>
 
 <!-- Lab Orders List -->
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm animate-fade-in">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
         <h5 class="mb-0 fw-bold">Lab Orders</h5>
         <div class="d-flex align-items-center">
@@ -55,7 +55,7 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="list-group list-group-flush">
+        <div class="list-group list-group-flush animate-fade-in">
             <!-- Lab Order Item 1 -->
             <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(1)">
                 <div class="me-3 position-relative">
@@ -173,6 +173,9 @@
 }
 
 <style>
+.animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
     /* Reusing teal colors from DoctorLayout */
     .bg-teal {
         background-color: var(--bs-teal) !important;

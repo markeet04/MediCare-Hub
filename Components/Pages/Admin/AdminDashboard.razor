@@ -1,290 +1,386 @@
-@* @page "/" *@
+@page "/"
 @page "/admin/dashboard"
 @layout BlazorApp1.Components.Layout.AdminLayout
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject BlazorApp1.Services.Interfaces.IAdminService AdminService
+@inject BlazorApp1.Services.Interfaces.IUserService UserService
+@using BlazorApp1.Models.DTOs
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="mb-1 fw-bold">Welcome back, Admin</h4>
         <p class="text-muted">Here's what's happening with your hospital today</p>
     </div>
- 
 </div>
 
-<!-- Overview Stats -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToUsers">
-            <div class="position-absolute bg-primary bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-people fs-4 text-primary"></i>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @errorMessage
+    </div>
+}
+else
+{
+    <!-- Overview Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToUsers">
+                <div class="position-absolute bg-primary bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-people fs-4 text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Total Users</h6>
                     </div>
-                    <h6 class="text-muted mb-0">Total Users</h6>
+                    <h2 class="mb-0 fw-bold counter">@GetTotalUsers()</h2>
+                    <div class="mt-3 d-flex align-items-center text-success">
+                        <i class="bi bi-arrow-up me-1"></i>
+                        <span>Active system</span>
+                    </div>
                 </div>
-                <h2 class="mb-0 fw-bold counter">132</h2>
-                <div class="mt-3 d-flex align-items-center text-success">
-                    <i class="bi bi-arrow-up me-1"></i>
-                    <span>12% increase</span>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
+                <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-calendar-check fs-4 text-success"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Pending Appointments</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold counter">@(globalStats?.PendingAppointments ?? 0)</h2>
+                    <div class="mt-3 d-flex align-items-center text-success">
+                        <i class="bi bi-clock me-1"></i>
+                        <span>Awaiting approval</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToDepartments">
+                <div class="position-absolute bg-info bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-hospital fs-4 text-info"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Doctors</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold counter">@(globalStats?.TotalDoctors ?? 0)</h2>
+                    <div class="mt-3 d-flex align-items-center text-info">
+                        <i class="bi bi-person-badge me-1"></i>
+                        <span>Active staff</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToTasks">
+                <div class="position-absolute bg-warning bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-alarm fs-4 text-warning"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Lab Orders</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold counter">@(globalStats?.PendingLabOrders ?? 0)</h2>
+                    <div class="mt-3 d-flex align-items-center text-warning">
+                        <i class="bi bi-flask me-1"></i>
+                        <span>Pending tests</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
-            <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-calendar-check fs-4 text-success"></i>
-                    </div>
-                    <h6 class="text-muted mb-0">Active Appointments</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">42</h2>
-                <div class="mt-3 d-flex align-items-center text-success">
-                    <i class="bi bi-arrow-up me-1"></i>
-                    <span>5% increase</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToDepartments">
-            <div class="position-absolute bg-info bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-hospital fs-4 text-info"></i>
-                    </div>
-                    <h6 class="text-muted mb-0">Departments</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">8</h2>
-                <div class="mt-3 d-flex align-items-center text-info">
-                    <i class="bi bi-arrow-right me-1"></i>
-                    <span>No change</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToTasks">
-            <div class="position-absolute bg-warning bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-alarm fs-4 text-warning"></i>
-                    </div>
-                    <h6 class="text-muted mb-0">Pending Tasks</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">17</h2>
-                <div class="mt-3 d-flex align-items-center text-danger">
-                    <i class="bi bi-arrow-up me-1"></i>
-                    <span>3 new tasks</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Activity Timeline -->
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
-                <h5 class="mb-0 fw-bold">Recent Activity</h5>
-                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="NavigateToActivities">View All</button>
+    <!-- Activity Timeline -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                    <h5 class="mb-0 fw-bold">Recent Activity</h5>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="NavigateToActivities">View All</button>
+                </div>
+                <div class="card-body p-0">
+                    @if (activityLogs?.Any() == true)
+                    {
+                        <div class="list-group list-group-flush">
+  @foreach (var activityLog in activityLogs.Take(4))
+{
+    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewActivityDetails(activityLog.LogId)">
+        <div class="me-3">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
+                <i class="bi @GetActivityIcon(activityLog.Action)"></i>
             </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewActivityDetails(1)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-person-plus"></i>
-                            </div>
+        </div>
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-1">@activityLog.Action</h6>
+                <span class="badge bg-light text-dark rounded-pill">@GetTimeAgo(activityLog.CreatedAt)</span>
+            </div>
+            @if (!string.IsNullOrEmpty(activityLog.Details))
+            {
+                <p class="text-muted mb-0 small">@activityLog.Details</p>
+            }
+            <small class="text-muted">by @activityLog.AdminName</small>
+        </div>
+    </div>
+}
                         </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">New user registered</h6>
-                                <span class="badge bg-light text-dark rounded-pill">25m ago</span>
-                            </div>
-                            <p class="text-muted mb-0 small">Dr. Sarah Johnson created a new account in the system</p>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-activity fs-1 mb-3"></i>
+                            <p>No recent activity to display</p>
                         </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Chart Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                    <h5 class="mb-0 fw-bold">Hospital Statistics</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary">Weekly</button>
+                        <button class="btn btn-sm btn-outline-primary">Monthly</button>
                     </div>
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewActivityDetails(2)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-calendar-plus"></i>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px; position: relative;">
+                        <div class="row h-100">
+                            <div class="col-6 d-flex flex-column justify-content-center">
+                                <div class="text-center mb-3">
+                                    <h6 class="text-muted">Appointment Status</h6>
+                                    <div class="d-flex justify-content-around mt-2">
+                                        <div class="text-center">
+                                            <div class="fw-bold text-success">@(globalStats?.ApprovedAppointments ?? 0)</div>
+                                            <small class="text-muted">Approved</small>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="fw-bold text-warning">@(globalStats?.PendingAppointments ?? 0)</div>
+                                            <small class="text-muted">Pending</small>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="fw-bold text-primary">@(globalStats?.CompletedAppointments ?? 0)</div>
+                                            <small class="text-muted">Completed</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">New appointment scheduled</h6>
-                                <span class="badge bg-light text-dark rounded-pill">1h ago</span>
+                            <div class="col-6 d-flex flex-column justify-content-center">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Lab Orders Status</h6>
+                                    <div class="d-flex justify-content-around mt-2">
+                                        <div class="text-center">
+                                            <div class="fw-bold text-info">@(globalStats?.InProgressLabOrders ?? 0)</div>
+                                            <small class="text-muted">In Progress</small>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="fw-bold text-success">@(globalStats?.CompletedLabOrders ?? 0)</div>
+                                            <small class="text-muted">Completed</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="text-muted mb-0 small">Patient consultation with Dr. Robert Williams in Cardiology</p>
-                        </div>
-                    </div>
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewActivityDetails(3)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-gear"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">System settings updated</h6>
-                                <span class="badge bg-light text-dark rounded-pill">2h ago</span>
-                            </div>
-                            <p class="text-muted mb-0 small">Security settings were updated by the administrator</p>
-                        </div>
-                    </div>
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewActivityDetails(4)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-exclamation-triangle"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">System alert detected</h6>
-                                <span class="badge bg-light text-dark rounded-pill">3h ago</span>
-                            </div>
-                            <p class="text-muted mb-0 small">Database backup scheduled for tonight at 2:00 AM</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Chart Card -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
-                <h5 class="mb-0 fw-bold">Hospital Statistics</h5>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary ">Weekly</button>
-                    <button class="btn btn-sm btn-outline-primary">Monthly</button>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToNewUser">
+                            <span class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="bi bi-person-plus text-primary"></i>
+                                </div>
+                                <span>Add New User</span>
+                            </span>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToScheduleAppointment">
+                            <span class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="bi bi-calendar-plus text-primary"></i>
+                                </div>
+                                <span>Schedule Appointment</span>
+                            </span>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToGenerateReport">
+                            <span class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="bi bi-file-earmark-text text-primary"></i>
+                                </div>
+                                <span>Generate Report</span>
+                            </span>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px; position: relative;">
-                    <!-- This would be replaced with your actual chart component -->
-                    <div class="placeholder-chart d-flex flex-column justify-content-center align-items-center h-100">
-                        <i class="bi bi-bar-chart-line text-primary" style="font-size: 4rem;"></i>
-                        <p class="text-muted mt-3">Patient Admission Statistics ( View)</p>
+            
+            <!-- System Summary -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold">System Summary</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-person-badge text-primary me-2"></i>
+                                    <span>Doctors</span>
+                                </span>
+                                <span class="badge bg-primary rounded-pill">@(globalStats?.TotalDoctors ?? 0)</span>
+                            </div>
+                        </div>
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-people text-info me-2"></i>
+                                    <span>Patients</span>
+                                </span>
+                                <span class="badge bg-info rounded-pill">@(globalStats?.TotalPatients ?? 0)</span>
+                            </div>
+                        </div>
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-person-workspace text-success me-2"></i>
+                                    <span>Receptionists</span>
+                                </span>
+                                <span class="badge bg-success rounded-pill">@(globalStats?.TotalReceptionists ?? 0)</span>
+                            </div>
+                        </div>
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-flask text-warning me-2"></i>
+                                    <span>Lab Technicians</span>
+                                </span>
+                                <span class="badge bg-warning rounded-pill">@(globalStats?.TotalLabTechnicians ?? 0)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-3">
-                    <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToNewUser">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-person-plus text-primary"></i>
-                            </div>
-                            <span>Add New User</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToScheduleAppointment">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-calendar-plus text-primary"></i>
-                            </div>
-                            <span>Schedule Appointment</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToGenerateReport">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-file-earmark-text text-primary"></i>
-                            </div>
-                            <span>Generate Report</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Upcoming Events -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Upcoming Events</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item p-3" @onclick="() => ViewEventDetails(1)">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="rounded bg-primary bg-opacity-10 text-primary fw-bold p-2 me-3 text-center" style="min-width: 45px;">
-                                <div class="small">MAY</div>
-                                <div>12</div>
-                            </div>
-                            <h6 class="mb-0">Staff Meeting</h6>
-                        </div>
-                        <p class="text-muted small mb-0">09:00 AM - Conference Room A</p>
-                    </div>
-                    <div class="list-group-item p-3" @onclick="() => ViewEventDetails(2)">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="rounded bg-primary bg-opacity-10 text-primary fw-bold p-2 me-3 text-center" style="min-width: 45px;">
-                                <div class="small">MAY</div>
-                                <div>15</div>
-                            </div>
-                            <h6 class="mb-0">Budget Review</h6>
-                        </div>
-                        <p class="text-muted small mb-0">02:00 PM - Finance Department</p>
-                    </div>
-                    <div class="list-group-item p-3" @onclick="() => ViewEventDetails(3)">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="rounded bg-primary bg-opacity-10 text-primary fw-bold p-2 me-3 text-center" style="min-width: 45px;">
-                                <div class="small">MAY</div>
-                                <div>18</div>
-                            </div>
-                            <h6 class="mb-0">Health Camp</h6>
-                        </div>
-                        <p class="text-muted small mb-0">10:00 AM - Community Center</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+}
 
 @code {
-    private string StatisticsView { get; set; } = "Weekly";
-    
- 
-    
-    private void SwitchStatisticsView(string view)
+    private bool isLoading = true;
+    private string? errorMessage;
+    private GlobalStatsDto? globalStats;
+    private IEnumerable<ActivityLogDto>? activityLogs;
+    private List<UserDto> allUsers = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        StatisticsView = view;
-        // Here you would typically reload chart data based on the selected view
+        try
+        {
+            isLoading = true;
+            
+            // Load global statistics
+            globalStats = await AdminService.GetGlobalStatsAsync();
+            
+            // Load recent activity logs
+            activityLogs = await AdminService.GetActivityLogsAsync();
+            
+            // Load all users for total count calculation
+            var doctors = await UserService.GetAllByRoleAsync("Doctor");
+            var patients = await UserService.GetAllByRoleAsync("Patient");
+            var receptionists = await UserService.GetAllByRoleAsync("Receptionist");
+            var labTechs = await UserService.GetAllByRoleAsync("LabTechnician");
+            var admins = await UserService.GetAllByRoleAsync("Admin");
+            
+            allUsers.AddRange(doctors);
+            allUsers.AddRange(patients);
+            allUsers.AddRange(receptionists);
+            allUsers.AddRange(labTechs);
+            allUsers.AddRange(admins);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading dashboard data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
     
-    private void ViewActivityDetails(int activityId)
+    private int GetTotalUsers()
     {
-        Nav.NavigateTo($"/admin/activities/{activityId}");
+        if (globalStats == null) return 0;
+        return globalStats.TotalAdmins + globalStats.TotalDoctors + 
+               globalStats.TotalPatients + globalStats.TotalReceptionists + 
+               globalStats.TotalLabTechnicians;
     }
     
-    private void ViewEventDetails(int eventId)
+  private string GetActivityIcon(string action)
+{
+    return action?.ToLower() switch
     {
-        Nav.NavigateTo($"/admin/events/{eventId}");
+        var a when a.Contains("create") || a.Contains("add") => "bi-person-plus",
+        var a when a.Contains("appointment") => "bi-calendar-plus",
+        var a when a.Contains("update") || a.Contains("edit") => "bi-pencil",
+        var a when a.Contains("delete") || a.Contains("remove") => "bi-trash",
+        var a when a.Contains("login") || a.Contains("access") => "bi-box-arrow-in-right",
+        var a when a.Contains("system") => "bi-gear",
+        var a when a.Contains("lab") => "bi-flask",
+        _ => "bi-activity"
+    };
+}
+    
+    private string GetTimeAgo(DateTime timestamp)
+    {
+        var timeSpan = DateTime.Now - timestamp;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return timestamp.ToString("MMM dd");
     }
     
+  private void ViewActivityDetails(int activityId)
+{
+    Nav.NavigateTo($"/admin/activities/{activityId}");
+}
     private void NavigateToUsers()
     {
         Nav.NavigateTo("/admin/users");
@@ -312,7 +408,7 @@
     
     private void NavigateToNewUser()
     {
-        Nav.NavigateTo("/admin/users");
+        Nav.NavigateTo("/admin/users/create");
     }
     
     private void NavigateToScheduleAppointment()
@@ -326,82 +422,4 @@
     }
 }
 
-<style>
-    .activity-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .activity-item:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.03);
-    }
-    
-    .quick-action-btn {
-        transition: all 0.3s;
-    }
-    
-    .quick-action-btn:hover {
-        background-color: var(--bs-primary);
-        color: white;
-    }
-    
-    .quick-action-btn:hover .rounded-circle {
-        background-color: rgba(255, 255, 255, 0.2) !important;
-    }
-    
-    .quick-action-btn:hover i {
-        color: white !important;
-    }
-    
-    .counter {
-        animation: countup 2s ease-out;
-    }
-    
-    @@keyframes countup {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .stat-card {
-        overflow: hidden;
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
-    
-    .stat-card::after {
-        content: '';
-        position: absolute;
-        width: 200%;
-        height: 200%;
-        top: -50%;
-        left: -50%;
-        background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-        transform: scale(0);
-        opacity: 0;
-        transition: transform 0.6s, opacity 0.6s;
-    }
-    
-    .stat-card:hover::after {
-        opacity: 1;
-        transform: scale(1);
-    }
-    
-    .list-group-item {
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    
-    .list-group-item:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.03);
-    }
-</style>
+<link rel="stylesheet" href="AdminDashboard.css">

@@ -1,5 +1,8 @@
 using BlazorApp1.Components;
-using BlazorApp1.Services;
+using BlazorApp1.Models.DTOs;
+using BlazorApp1.Services.Interfaces;
+using BlazorApp1.Services.Implementations;
+using Microsoft.Data.SqlClient;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,8 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<ReportService>();
+
+builder.Services.AddTransient<SqlConnection>(sp =>
+    new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+builder.Services.AddControllers();
+
+// Register services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddSingleton<IWebHostEnvironment>(builder.Environment);
 
 
 
@@ -26,7 +38,7 @@ app.UseHttpsRedirection();
 
 
 app.UseAntiforgery();
-
+app.MapControllers();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

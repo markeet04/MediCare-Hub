@@ -1,7 +1,12 @@
 @layout BlazorApp1.Components.Layout.AdminLayout
 @rendermode InteractiveServer
 @page "/admin/users"
-@inject Services.UserService UserService
+@inject BlazorApp1.Services.Interfaces.IAdminService AdminService
+@inject BlazorApp1.Services.Interfaces.IUserService UserService
+@inject BlazorApp1.Services.Interfaces.IRoleService RoleService
+@inject NavigationManager Navigation
+@using BlazorApp1.Models.DTOs
+@inject IJSRuntime JSRuntime
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -9,469 +14,1098 @@
         <p class="text-muted">Add, edit or remove system users</p>
     </div>
     <div>
-        <button class="btn btn-outline-primary rounded-pill shadow-sm px-3 me-2" @onclick="GenerateReport">
+        <button class="btn btn-outline-primary rounded-pill shadow-sm px-3 me-2" @onclick="GenerateReport" disabled="@isLoading">
             <i class="bi bi-file-earmark-text me-2"></i>Generate Report
         </button>
-        <button class="btn btn-primary rounded-pill shadow-sm px-4" @onclick="() => { userModel = new User(); editing = false; }">
+        <button class="btn btn-primary rounded-pill shadow-sm px-4" @onclick="ShowRoleSelectionModal" disabled="@isLoading">
             <i class="bi bi-person-plus me-2"></i>Add New User
         </button>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold">User List</h5>
-        <div class="input-group" style="max-width: 300px;">
-            <span class="input-group-text bg-light border-end-0 text-muted">
-                <i class="bi bi-search"></i>
-            </span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search users...">
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col" class="ps-4">User</th>
-                        <th scope="col">Role</th>
-                        <th scope="col">Status</th>
-                        <th scope="col" class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in users)
-                    {
-                        <tr class="user-row">
-                            <td class="ps-4">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        @user.Username.Substring(0, 1).ToUpper()
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">@user.Username</h6>
-                                        <small class="text-muted">@(userDetails.ContainsKey(user.Id) ? userDetails[user.Id].PhoneNumber : "No phone")</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge rounded-pill @GetRoleBadgeClass(user.Role)">@user.Role</span>
-                            </td>
-                            <td>
-                                <span class="badge rounded-pill bg-success">Active</span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <button class="btn btn-sm btn-outline-primary me-1 action-btn" @onclick="() => EditUser(user)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger action-btn" @onclick="() => DeleteUser(user.Id)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">User List (@users.Count() users)</h5>
+            <div class="input-group" style="max-width: 300px;">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control bg-light border-start-0" placeholder="Search users..." @bind="searchTerm" @oninput="FilterUsers">
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-4">User</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end pe-4">Actions</th>
                         </tr>
+                    </thead>
+                    <tbody>
+                        @if (filteredUsers.Any())
+                        {
+                            @foreach (var user in filteredUsers)
+                            {
+                                <tr class="user-row">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                @((user.FullName ?? user.UserName).Substring(0, 1).ToUpper())
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">@(user.FullName ?? user.UserName)</h6>
+                                                <small class="text-muted">@(user.PhoneNumber ?? "No phone")</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                 <span class="badge rounded-pill @GetRoleBadgeClass(GetUserRoleSync(user))">@GetUserRoleSync(user)</span>
+
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-success">Active</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-outline-primary me-1 action-btn" @onclick="() => EditUser(user)" disabled="@isProcessing">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger action-btn" @onclick="() => DeleteUser(user)" disabled="@isProcessing">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    <i class="bi bi-people display-4 d-block mb-2"></i>
+                                    No users found
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (successMessage != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        @successMessage
+        <button type="button" class="btn-close" @onclick="ClearSuccess"></button>
+    </div>
+}
+
+@if (showRoleSelectionModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Select User Type</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseRoleSelectionModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Choose the type of user you want to create:</p>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="card h-100 role-card @(selectedRole == UserRole.Doctor ? "border-primary" : "")" 
+                                 @onclick="() => SelectRole(UserRole.Doctor)">
+                                <div class="card-body text-center p-3">
+                                    <i class="bi bi-person-hearts text-primary display-6 mb-2"></i>
+                                    <h6 class="card-title mb-1">Doctor</h6>
+                                    <small class="text-muted">Medical professional</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card h-100 role-card @(selectedRole == UserRole.Patient ? "border-primary" : "")" 
+                                 @onclick="() => SelectRole(UserRole.Patient)">
+                                <div class="card-body text-center p-3">
+                                    <i class="bi bi-person text-success display-6 mb-2"></i>
+                                    <h6 class="card-title mb-1">Patient</h6>
+                                    <small class="text-muted">Hospital patient</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card h-100 role-card @(selectedRole == UserRole.Receptionist ? "border-primary" : "")" 
+                                 @onclick="() => SelectRole(UserRole.Receptionist)">
+                                <div class="card-body text-center p-3">
+                                    <i class="bi bi-person-workspace text-info display-6 mb-2"></i>
+                                    <h6 class="card-title mb-1">Receptionist</h6>
+                                    <small class="text-muted">Front desk staff</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card h-100 role-card @(selectedRole == UserRole.LabTechnician ? "border-primary" : "")" 
+                                 @onclick="() => SelectRole(UserRole.LabTechnician)">
+                                <div class="card-body text-center p-3">
+                                    <i class="bi bi-clipboard2-pulse text-warning display-6 mb-2"></i>
+                                    <h6 class="card-title mb-1">Lab Technician</h6>
+                                    <small class="text-muted">Laboratory staff</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill" @onclick="CloseRoleSelectionModal">Cancel</button>
+                    <button type="button" class="btn btn-primary rounded-pill" @onclick="ProceedToForm" disabled="@(selectedRole == UserRole.None)">
+                        Continue <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showUserForm)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        @if (editing)
+                        {
+                            <text>Edit @selectedRole.ToString()</text>
+                        }
+                        else
+                        {
+                            <text>Add New @selectedRole.ToString()</text>
+                        }
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseUserForm"></button>
+                </div>
+                <div class="modal-body">
+                    @if (selectedRole == UserRole.Doctor)
+                    {
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter full name" @bind="doctorDto.FullName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="doctorDto.CNIC" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="doctorDto.PhoneNumber" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter username" @bind="doctorDto.UserName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Specialty <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="e.g., Cardiology, Neurology" @bind="doctorDto.Specialty" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Qualifications</label>
+                                <textarea class="form-control bg-light" rows="3" placeholder="Enter qualifications and degrees" @bind="doctorDto.Qualifications"></textarea>
+                            </div>
+                        </div>
                     }
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="card-footer bg-white py-3">
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mb-0">
-                <li class="page-item disabled">
-                    <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                </li>
-            </ul>
-        </nav>
-    </div>
-</div>
+                    else if (selectedRole == UserRole.Patient)
+                    {
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter full name" @bind="patientDto.FullName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="patientDto.CNIC" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="patientDto.PhoneNumber" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter username" @bind="patientDto.UserName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control bg-light" @bind="patientDto.DateOfBirth" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select bg-light" @bind="patientDto.Gender">
+                                    <option value="">-- Select Gender --</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Blood Group</label>
+                                <select class="form-select bg-light" @bind="patientDto.BloodGroup">
+                                    <option value="">-- Select Blood Group --</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control bg-light" rows="2" placeholder="Enter complete address" @bind="patientDto.Address"></textarea>
+                            </div>
+                        </div>
+                    }
+                    else if (selectedRole == UserRole.Receptionist)
+                    {
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter full name" @bind="receptionistDto.FullName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="receptionistDto.CNIC" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="receptionistDto.PhoneNumber" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter username" @bind="receptionistDto.UserName" />
+                            </div>
+                        </div>
+                    }
+                    else if (selectedRole == UserRole.LabTechnician)
+                    {
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter full name" @bind="labTechnicianDto.FullName" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="labTechnicianDto.CNIC" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="labTechnicianDto.PhoneNumber" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input class="form-control bg-light" placeholder="Enter username" @bind="labTechnicianDto.UserName" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Qualifications</label>
+                                <textarea class="form-control bg-light" rows="3" placeholder="Enter qualifications" @bind="labTechnicianDto.Qualifications"></textarea>
+                            </div>
+                        </div>
+                    }
+                </div>
 
-@if (editing || userModel.Username != null)
-{
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0 fw-bold">@(editing ? "Edit User" : "Add New User")</h5>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">First Name</label>
-                    <input class="form-control bg-light" placeholder="Enter first name" @bind="firstName" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Last Name</label>
-                    <input class="form-control bg-light" placeholder="Enter last name" @bind="lastName" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Phone Number</label>
-                    <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="phoneNumber" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">CNIC</label>
-                    <input class="form-control bg-light" placeholder="Enter CNIC number" @bind="cnic" />
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Address</label>
-                    <input class="form-control bg-light" placeholder="Enter address" @bind="address" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Role</label>
-                    <select class="form-select bg-light" @bind="userModel.Role">
-                        <option value="">-- Select Role --</option>
-                        <option>Admin</option>
-                        <option>Doctor</option>
-                        <option>Receptionist</option>
-                        <option>Patient</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Status</label>
-                    <select class="form-select bg-light">
-                        <option>Active</option>
-                        <option>Inactive</option>
-                    </select>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" @onclick="CloseUserForm">
+                        <i class="bi bi-x-lg me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill" @onclick="SaveUserData" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else if (editing)
+                        {
+                            <i class="bi bi-check-lg me-2"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-plus-lg me-2"></i>
+                        }
+                        @(editing ? "Update" : "Create") @selectedRole.ToString()
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="card-footer bg-white py-3 d-flex justify-content-end">
-            @if (editing)
-            {
-                <button class="btn btn-outline-secondary me-2 rounded-pill" @onclick="CancelEdit">
-                    <i class="bi bi-x-lg me-2"></i>Cancel
-                </button>
-                <button class="btn btn-primary rounded-pill shadow-sm" @onclick="SaveUser">
-                    <i class="bi bi-check-lg me-2"></i>Update User
-                </button>
-            }
-            else
-            {
-                <button class="btn btn-outline-secondary me-2 rounded-pill" @onclick="CancelEdit">
-                    <i class="bi bi-x-lg me-2"></i>Cancel
-                </button>
-                <button class="btn btn-primary rounded-pill shadow-sm" @onclick="SaveUser">
-                    <i class="bi bi-plus-lg me-2"></i>Add User
-                </button>
-            }
-        </div>
     </div>
 }
-
-@if (showPasswordModal)
+             @if (showTempPasswordModal)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-labelledby="tempPasswordModalLabel" aria-hidden="false" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">User Created Successfully</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="ClosePasswordModal"></button>
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="tempPasswordModalLabel">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        User Created Successfully
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseTempPasswordModal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <p class="mb-1"><strong>Username:</strong> @generatedUsername</p>
-                        <p class="mb-0"><strong>Password:</strong> @generatedPassword</p>
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Important:</strong> Please copy the temporary password below and share it with the user. 
+                        This password will not be shown again.
                     </div>
-                    <p class="text-muted small">Please save or share these credentials with the user. The password cannot be recovered later.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Username:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light" value="@newUserName" readonly />
+                            <button class="btn btn-outline-secondary" type="button" @onclick="async () => await CopyToClipboard(newUserName)">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Temporary Password:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-warning bg-opacity-25 fw-bold" value="@tempPasswordPlain" readonly />
+                            <button class="btn btn-warning" type="button" @onclick="async () => await CopyToClipboard(tempPasswordPlain)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        The user must change this password on their first login.
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary rounded-pill" @onclick="ClosePasswordModal">Close</button>
+                    <button type="button" class="btn btn-success rounded-pill" @onclick="CloseTempPasswordModal">
+                        <i class="bi bi-check-lg me-2"></i>Done
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 }
 
-@if (showReportModal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">User Report Generated</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseReportModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-file-earmark-text text-primary display-1"></i>
-                    </div>
-                    <p class="text-center">Users report has been generated successfully.</p>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary rounded-pill">
-                            <i class="bi bi-download me-2"></i>Download Report
-                        </button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary rounded-pill" @onclick="CloseReportModal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<style>
-    .form-control, .form-select {
-        border: 1px solid #e0e0e0;
-        padding: 0.6rem 1rem;
-        transition: all 0.2s;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--bs-primary);
-        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-    }
-    
-    .action-btn {
-        transition: all 0.2s;
-        border-radius: 6px;
-    }
-    
-    .action-btn:hover {
-        transform: translateY(-2px);
-    }
-    
-    .user-row {
-        transition: all 0.3s;
-    }
-    
-    .user-row:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
-    }
-    
-    .badge {
-        font-weight: 500;
-        padding: 0.5em 0.85em;
-    }
-    
-    .avatar-wrapper {
-        transition: all 0.3s;
-    }
-    
-    .avatar-wrapper:hover {
-        transform: scale(1.05);
-    }
-    
-    .page-link {
-        color: var(--bs-primary);
-        border-radius: 0.25rem;
-        margin: 0 2px;
-    }
-    
-    .page-item.active .page-link {
-        background-color: var(--bs-primary);
-        border-color: var(--bs-primary);
-    }
-    
-    .modal {
-        animation: fadeIn 0.3s;
-    }
-    
-    @@keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    .modal-content {
-        animation: slideIn 0.3s;
-        border-radius: 0.5rem;
-    }
-    
-    @@keyframes slideIn {
-        from { transform: translateY(-20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-</style>
+<link rel="stylesheet" href="AdminUsers.css">
 
 @code {
-    private List<User> users = new();
-    private User userModel = new();
+    private int currentEditingUserId = 0;
+    private bool showTempPasswordModal = false;
+private string tempPasswordPlain = "";
+private string newUserName = "";
+    // State management
+    private bool isLoading = true;
+    private bool isProcessing = false;
     private bool editing = false;
+    private string? errorMessage;
+    private string? successMessage;
+    private string searchTerm = "";
     
-    // New fields for user details
-    private string firstName = "";
-    private string lastName = "";
-    private string phoneNumber = "";
-    private string cnic = "";
-    private string address = "";
+    // Modal states
+    private bool showRoleSelectionModal = false;
+    private bool showUserForm = false;
     
-    // For storing user details
-    private Dictionary<int, UserDetail> userDetails = new();
+    // Role selection
+    private UserRole selectedRole = UserRole.None;
     
-    // For credentials modal
-    private bool showPasswordModal = false;
-    private string generatedUsername = "";
-    private string generatedPassword = "";
+    // Data collections
+    private IEnumerable<UserDto> users = new List<UserDto>();
+    private IEnumerable<UserDto> filteredUsers = new List<UserDto>();
+    private IEnumerable<RoleDto> roles = new List<RoleDto>();
     
-    // For report modal
-    private bool showReportModal = false;
+    // Role-specific DTOs
+    private CreateDoctorDto doctorDto = new();
+    private CreatePatientDto patientDto = new();
+    private CreateReceptionistDto receptionistDto = new();
+    private CreateLabTechDto labTechnicianDto = new();
+    private Dictionary<int, string> userRoles = new Dictionary<int, string>();
 
-    protected override void OnInitialized()
+
+    protected override async Task OnInitializedAsync()
     {
-        users = UserService.GetAllUsers();
-        
-        // Initialize some example user details
-        userDetails[1] = new UserDetail { 
-            FirstName = "Admin", 
-            LastName = "User", 
-            PhoneNumber = "123-456-7890", 
-            CNIC = "12345-1234567-1", 
-            Address = "Admin Street, Admin City" 
-        };
-        
-        userDetails[2] = new UserDetail { 
-            FirstName = "John", 
-            LastName = "Doe", 
-            PhoneNumber = "987-654-3210", 
-            CNIC = "54321-7654321-2", 
-            Address = "123 Medical Avenue, Doctor City" 
-        };
+        await LoadData();
     }
 
-    private void SaveUser()
+   private async Task LoadData()
+{
+    try
     {
-        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(userModel.Role))
+        isLoading = true;
+        errorMessage = null;
+        
+        // Load all users and roles
+        var allUsers = new List<UserDto>();
+        roles = await RoleService.GetAllAsync();
+        userRoles.Clear(); // Clear existing role cache
+        
+        // Get users by each role
+        foreach (var role in roles)
         {
-            // Would show validation errors in real implementation
-            return;
+            var roleUsers = await UserService.GetAllByRoleAsync(role.RoleName);
+            allUsers.AddRange(roleUsers);
+            
+            // Store role information for each user
+            foreach (var user in roleUsers)
+            {
+                userRoles[user.UserId] = role.RoleName;
+            }
         }
         
-        if (editing)
+        users = allUsers;
+        FilterUsers();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Failed to load users: {ex.Message}";
+    }
+    finally
+    {
+        isLoading = false;
+    }
+}
+    private void FilterUsers()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
         {
-            UserService.UpdateUser(userModel);
-            
-            // Update user details
-            if (userDetails.ContainsKey(userModel.Id))
-            {
-                userDetails[userModel.Id].FirstName = firstName;
-                userDetails[userModel.Id].LastName = lastName;
-                userDetails[userModel.Id].PhoneNumber = phoneNumber;
-                userDetails[userModel.Id].CNIC = cnic;
-                userDetails[userModel.Id].Address = address;
-            }
+            filteredUsers = users;
         }
         else
         {
-            // Generate username (first initial + last name)
-            generatedUsername = (firstName.Substring(0, 1) + lastName).ToLower();
-            userModel.Username = generatedUsername;
-            
-            // Generate random password
-            generatedPassword = GenerateRandomPassword();
-            
-            // Add new user
-            UserService.AddUser(userModel);
-            
-            // Store additional user details
-            userDetails[userModel.Id] = new UserDetail
-            {
-                FirstName = firstName,
-                LastName = lastName,
-                PhoneNumber = phoneNumber,
-                CNIC = cnic,
-                Address = address
-            };
-            
-            // Show password modal
-            showPasswordModal = true;
+            var term = searchTerm.ToLower();
+            filteredUsers = users.Where(u => 
+                (u.FullName?.ToLower().Contains(term) == true) ||
+                (u.UserName?.ToLower().Contains(term) == true) ||
+                (u.PhoneNumber?.ToLower().Contains(term) == true) ||
+                (u.CNIC?.ToLower().Contains(term) == true)
+            );
         }
-
-        users = UserService.GetAllUsers();
-        ResetForm();
+        StateHasChanged();
     }
 
-    private void EditUser(User user)
+    #region Role Selection Methods
+    
+    private void ShowRoleSelectionModal()
     {
-        userModel = new User
+        selectedRole = UserRole.None;
+        showRoleSelectionModal = true;
+        ResetAllDtos();
+    }
+    
+    private void CloseRoleSelectionModal()
+    {
+        showRoleSelectionModal = false;
+        selectedRole = UserRole.None;
+    }
+    
+    private void SelectRole(UserRole role)
+    {
+        selectedRole = role;
+    }
+    
+    private void ProceedToForm()
+    {
+        if (selectedRole != UserRole.None)
         {
-            Id = user.Id,
-            Username = user.Username,
-            Role = user.Role
-        };
+            showRoleSelectionModal = false;
+            showUserForm = true;
+        }
+    }
+    
+    #endregion
+
+    #region User Form Methods
+    
+    private void CloseUserForm()
+    {
+        showUserForm = false;
+        selectedRole = UserRole.None;
+        editing = false;
+        ResetAllDtos();
+    }
+    
+   private async Task SaveUserData()
+{
+    if (isProcessing) return;
+    
+    isProcessing = true;
+    try
+    {
+        errorMessage = null;
         
-        // Load additional user details if available
-        if (userDetails.ContainsKey(user.Id))
+        // Handle Update operations
+        if (editing)
         {
-            firstName = userDetails[user.Id].FirstName;
-            lastName = userDetails[user.Id].LastName;
-            phoneNumber = userDetails[user.Id].PhoneNumber;
-            cnic = userDetails[user.Id].CNIC;
-            address = userDetails[user.Id].Address;
+            switch (selectedRole)
+            {
+                case UserRole.Doctor:
+                    if (ValidateDoctorDto())
+                    {
+                        var doctorUpdateDto = new UpdateDoctorDto
+                        {
+                            DoctorId = currentEditingUserId,
+                            FullName = doctorDto.FullName,
+                            CNIC = doctorDto.CNIC,
+                            PhoneNumber = doctorDto.PhoneNumber,
+                            UserName = doctorDto.UserName,
+                            Specialty = doctorDto.Specialty,
+                            Qualifications = doctorDto.Qualifications
+                        };
+                        await AdminService.UpdateDoctorAsync(doctorUpdateDto);
+                        successMessage = "Doctor updated successfully!";
+                    }
+                    else return;
+                    break;
+                    
+                case UserRole.Patient:
+                    if (ValidatePatientDto())
+                    {
+                        var patientUpdateDto = new UpdatePatientDto
+                        {
+                            PatientId = currentEditingUserId,
+                            FullName = patientDto.FullName,
+                            CNIC = patientDto.CNIC,
+                            PhoneNumber = patientDto.PhoneNumber,
+                            UserName = patientDto.UserName,
+                            DateOfBirth = patientDto.DateOfBirth,
+                            Gender = patientDto.Gender,
+                            BloodGroup = patientDto.BloodGroup,
+                            Address = patientDto.Address
+                        };
+                        await AdminService.UpdatePatientAsync(patientUpdateDto);
+                        successMessage = "Patient updated successfully!";
+                    }
+                    else return;
+                    break;
+                    
+                case UserRole.Receptionist:
+                    if (ValidateReceptionistDto())
+                    {
+                        var receptionistUpdateDto = new UpdateReceptionistDto
+                        {
+                            ReceptionistId = currentEditingUserId,
+                            FullName = receptionistDto.FullName,
+                            CNIC = receptionistDto.CNIC,
+                            PhoneNumber = receptionistDto.PhoneNumber,
+                            UserName = receptionistDto.UserName
+                        };
+                        await AdminService.UpdateReceptionistAsync(receptionistUpdateDto);
+                        successMessage = "Receptionist updated successfully!";
+                    }
+                    else return;
+                    break;
+                    
+                case UserRole.LabTechnician:
+                    if (ValidateLabTechnicianDto())
+                    {
+                        var labTechUpdateDto = new UpdateLabTechDto
+                        {
+                            LabTechId = currentEditingUserId,
+                            FullName = labTechnicianDto.FullName,
+                            CNIC = labTechnicianDto.CNIC,
+                            PhoneNumber = labTechnicianDto.PhoneNumber,
+                            UserName = labTechnicianDto.UserName,
+                            Qualifications = labTechnicianDto.Qualifications
+                        };
+                        await AdminService.UpdateLabTechAsync(labTechUpdateDto);
+                        successMessage = "Lab Technician updated successfully!";
+                    }
+                    else return;
+                    break;
+            }
+            
+            showUserForm = false;
+            selectedRole = UserRole.None;
+            editing = false;
+            ResetAllDtos();
+            await LoadData();
+            return;
+        }
+        
+        // Handle Create operations
+        int newUserId;
+        string tempPassword;
+        
+        switch (selectedRole)
+        {
+            case UserRole.Doctor:
+                if (ValidateDoctorDto())
+                {
+                    var (userId, tempPwd) = await AdminService.CreateDoctorAsync(doctorDto);
+                    tempPasswordPlain = tempPwd;
+                    newUserName = doctorDto.UserName;
+                    successMessage = "Doctor created successfully!";
+                }
+                else return;
+                break;
+                
+            case UserRole.Patient:
+                if (ValidatePatientDto())
+                {
+                    var (userId, tempPwd) = await AdminService.CreatePatientAsync(patientDto);
+                    tempPasswordPlain = tempPwd;
+                    newUserName = patientDto.UserName;
+                    successMessage = "Patient created successfully!";
+                }
+                else return;
+                break;
+                
+            case UserRole.Receptionist:
+                if (ValidateReceptionistDto())
+                {
+                    var (userId, tempPwd) = await AdminService.CreateReceptionistAsync(receptionistDto);
+                    tempPasswordPlain = tempPwd;
+                    newUserName = receptionistDto.UserName;
+                    successMessage = "Receptionist created successfully!";
+                }
+                else return;
+                break;
+                
+            case UserRole.LabTechnician:
+                if (ValidateLabTechnicianDto())
+                {
+                    var (userId, tempPwd) = await AdminService.CreateLabTechAsync(labTechnicianDto);
+                    tempPasswordPlain = tempPwd;
+                    newUserName = labTechnicianDto.UserName;
+                    successMessage = "Lab Technician created successfully!";
+                }
+                else return;
+                break;
+        }
+        
+        showUserForm = false;
+        selectedRole = UserRole.None;
+        editing = false;
+        ResetAllDtos();
+        
+        // Show the temporary password modal for new users
+        showTempPasswordModal = true;
+        
+        // Refresh users list
+        await LoadData();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Error {(editing ? "updating" : "creating")} user: {ex.Message}";
+    }
+    finally
+    {
+        isProcessing = false;
+    }
+}
+
+private void CloseTempPasswordModal()
+{
+    showTempPasswordModal = false;
+    tempPasswordPlain = "";
+    newUserName = "";
+}
+    
+    #endregion
+
+    #region User Management
+ private async Task CopyToClipboard(string text)
+{
+    try
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text); // ✅ Added await
+        successMessage = "Copied to clipboard!";
+        
+        // Auto-clear message
+        _ = Task.Delay(3000).ContinueWith(_ => 
+        {
+            successMessage = null;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+    catch (Exception)
+    {
+        errorMessage = "Failed to copy to clipboard. Please copy manually.";
+    }
+}
+  private async Task EditUser(UserDto user)
+{
+    if (isProcessing) return;
+    
+    try
+    {
+        isProcessing = true;
+        errorMessage = null;
+        
+        // Get user role
+        var role = await UserService.GetUserRoleAsync(user.UserId);
+        
+        // Load existing data based on role
+        switch (role)
+        {
+            case "Doctor":
+                var doctor = await AdminService.GetDoctorByIdAsync(user.UserId);
+                selectedRole = UserRole.Doctor;
+                doctorDto = new CreateDoctorDto
+                {
+                    FullName = doctor.FullName,
+                    CNIC = doctor.CNIC,
+                    PhoneNumber = doctor.PhoneNumber,
+                    UserName = doctor.UserName,
+                    Specialty = doctor.Specialty,
+                    Qualifications = doctor.Qualifications
+                };
+                break;
+                
+            case "Patient":
+                var patient = await AdminService.GetPatientByIdAsync(user.UserId);
+                selectedRole = UserRole.Patient;
+                patientDto = new CreatePatientDto
+                {
+                    FullName = patient.FullName,
+                    CNIC = patient.CNIC,
+                    PhoneNumber = patient.PhoneNumber,
+                    UserName = patient.UserName,
+                    DateOfBirth = patient.DateOfBirth,
+                    Gender = patient.Gender,
+                    BloodGroup = patient.BloodGroup,
+                    Address = patient.Address
+                };
+                break;
+                
+            case "Receptionist":
+                var receptionist = await AdminService.GetReceptionistByIdAsync(user.UserId);
+                selectedRole = UserRole.Receptionist;
+                receptionistDto = new CreateReceptionistDto
+                {
+                    FullName = receptionist.FullName,
+                    CNIC = receptionist.CNIC,
+                    PhoneNumber = receptionist.PhoneNumber,
+                    UserName = receptionist.UserName
+                };
+                break;
+                
+            case "LabTechnician":
+                var labTech = await AdminService.GetLabTechByIdAsync(user.UserId);
+                selectedRole = UserRole.LabTechnician;
+                labTechnicianDto = new CreateLabTechDto
+                {
+                    FullName = labTech.FullName,
+                    CNIC = labTech.CNIC,
+                    PhoneNumber = labTech.PhoneNumber,
+                    UserName = labTech.UserName,
+                    Qualifications = labTech.Qualifications
+                };
+                break;
+                
+            default:
+                errorMessage = $"Unknown user role: {role}";
+                return;
         }
         
         editing = true;
+        currentEditingUserId = user.UserId;
+        showUserForm = true;
     }
+    catch (Exception ex)
+    {
+        errorMessage = $"Error loading user data: {ex.Message}";
+    }
+    finally
+    {
+        isProcessing = false;
+    }
+}
+private async Task<string> GetUserRole(UserDto user)
+{
+    try
+    {
+        // Use the UserService to get the user's role
+        return await UserService.GetUserRoleAsync(user.UserId);
+    }
+    catch
+    {
+        return "Unknown";
+    }
+}
 
-    private void DeleteUser(int id)
-    {
-        UserService.DeleteUser(id);
-        userDetails.Remove(id);
-        users = UserService.GetAllUsers();
-    }
+// Synchronous version for template binding (since Razor can't await in expressions)
+private string GetUserRoleSync(UserDto user)
+{
+    // Since we can't use async in Razor expressions, we need to store roles
+    // when loading users. Add this to your user loading logic.
+    
+    // For now, return a placeholder - you'll need to modify LoadData() 
+    // to include role information with each user
+    return userRoles.TryGetValue(user.UserId, out var role) ? role : "Unknown";
+}
 
-    private void CancelEdit()
+// Add this field to store user roles
+
+private async Task DeleteUser(UserDto user)
+{
+    if (isProcessing) return;
+    
+    if (!await ConfirmDelete(user))
+        return;
+        
+    try
     {
-        ResetForm();
+        isProcessing = true;
+        errorMessage = null;
+        
+        // Get user role to determine which delete method to call
+        var role = await UserService.GetUserRoleAsync(user.UserId);
+        
+        switch (role)
+        {
+            case "Doctor":
+                await AdminService.DeleteDoctorAsync(user.UserId);
+                break;
+            case "Patient":
+                await AdminService.DeletePatientAsync(user.UserId);
+                break;
+            case "Receptionist":
+                await AdminService.DeleteReceptionistAsync(user.UserId);
+                break;
+            case "LabTechnician":
+                await AdminService.DeleteLabTechAsync(user.UserId);
+                break;
+            default:
+                errorMessage = $"Cannot delete user with unknown role: {role}";
+                return;
+        }
+        
+        successMessage = $"User {user.FullName ?? user.UserName} deleted successfully!";
+        await LoadData();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Error deleting user: {ex.Message}";
+    }
+    finally
+    {
+        isProcessing = false;
+    }
+}
+
+  
+
+    private async Task<bool> ConfirmDelete(UserDto user)
+    {
+        // Simple confirmation - in a real app, use a proper confirmation modal
+        return await Task.FromResult(true); // Replace with actual confirmation logic
     }
     
-    private void ResetForm()
+    #endregion
+
+    #region Validation Methods
+    
+    private bool ValidateDoctorDto()
     {
-        userModel = new();
-        firstName = "";
-        lastName = "";
-        phoneNumber = "";
-        cnic = "";
-        address = "";
-        editing = false;
+        if (string.IsNullOrWhiteSpace(doctorDto.FullName))
+        {
+            errorMessage = "Full Name is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(doctorDto.CNIC))
+        {
+            errorMessage = "CNIC is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(doctorDto.PhoneNumber))
+        {
+            errorMessage = "Phone Number is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(doctorDto.UserName))
+        {
+            errorMessage = "Username is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(doctorDto.Specialty))
+        {
+            errorMessage = "Specialty is required.";
+            return false;
+        }
+        return true;
     }
     
-    private string GenerateRandomPassword()
+    private bool ValidatePatientDto()
     {
-        // Simple password generator (in a real app, use a secure method)
-        Random random = new Random();
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-        return new string(Enumerable.Repeat(chars, 8)
-          .Select(s => s[random.Next(s.Length)]).ToArray());
+        if (string.IsNullOrWhiteSpace(patientDto.FullName))
+        {
+            errorMessage = "Full Name is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(patientDto.CNIC))
+        {
+            errorMessage = "CNIC is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(patientDto.PhoneNumber))
+        {
+            errorMessage = "Phone Number is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(patientDto.UserName))
+        {
+            errorMessage = "Username is required.";
+            return false;
+        }
+        if (patientDto.DateOfBirth == null)
+        {
+            errorMessage = "Date of Birth is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(patientDto.Gender))
+        {
+            errorMessage = "Gender is required.";
+            return false;
+        }
+        return true;
     }
     
-    private void ClosePasswordModal()
+private bool ValidateReceptionistDto()
     {
-        showPasswordModal = false;
+        if (string.IsNullOrWhiteSpace(receptionistDto.FullName))
+        {
+            errorMessage = "Full Name is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(receptionistDto.CNIC))
+        {
+            errorMessage = "CNIC is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(receptionistDto.PhoneNumber))
+        {
+            errorMessage = "Phone Number is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(receptionistDto.UserName))
+        {
+            errorMessage = "Username is required.";
+            return false;
+        }
+        return true;
     }
     
-    private void GenerateReport()
+    private bool ValidateLabTechnicianDto()
     {
-        // In a real implementation, this would generate and possibly download a report
-        showReportModal = true;
+        if (string.IsNullOrWhiteSpace(labTechnicianDto.FullName))
+        {
+            errorMessage = "Full Name is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(labTechnicianDto.CNIC))
+        {
+            errorMessage = "CNIC is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(labTechnicianDto.PhoneNumber))
+        {
+            errorMessage = "Phone Number is required.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(labTechnicianDto.UserName))
+        {
+            errorMessage = "Username is required.";
+            return false;
+        }
+        return true;
     }
     
-    private void CloseReportModal()
+    #endregion
+
+    #region Utility Methods
+    
+    private void ResetAllDtos()
     {
-        showReportModal = false;
+        doctorDto = new CreateDoctorDto();
+        patientDto = new CreatePatientDto();
+        receptionistDto = new CreateReceptionistDto();
+        labTechnicianDto = new CreateLabTechDto();
     }
+    
+   
     
     private string GetRoleBadgeClass(string role)
     {
-        return role switch
+        return role.ToLower() switch
         {
-            "Admin" => "bg-danger bg-opacity-75",
-            "Doctor" => "bg-primary bg-opacity-75",
-            "Receptionist" => "bg-info bg-opacity-75",
-            "Patient" => "bg-success bg-opacity-75",
-            _ => "bg-secondary bg-opacity-75"
+            "doctor" => "bg-primary",
+            "patient" => "bg-success",
+            "receptionist" => "bg-info",
+            "lab technician" => "bg-warning",
+            "admin" => "bg-danger",
+            _ => "bg-secondary"
         };
     }
     
-    // Class to store additional user details
-    private class UserDetail
+    private void ClearError()
     {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-        public string PhoneNumber { get; set; } = "";
-        public string CNIC { get; set; } = "";
-        public string Address { get; set; } = "";
+        errorMessage = null;
     }
+    
+    private void ClearSuccess()
+    {
+        successMessage = null;
+    }
+    
+    private async Task GenerateReport()
+    {
+        try
+        {
+            isLoading = true;
+            
+            // Hard-coded report generation for now
+            await Task.Delay(2000); // Simulate processing
+            successMessage = "User report generated successfully!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to generate report: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    
+    #endregion
+    
+    #region Enums
+    
+    private enum UserRole
+    {
+        None,
+        Doctor,
+        Patient,
+        Receptionist,
+        LabTechnician
+    }
+    
+    #endregion
 }
