@@ -1,4 +1,4 @@
-<style>
+
     .profile-card {
         transition: all 0.3s ease;
         border-radius: 10px;
@@ -61,4 +61,3 @@
     .btn:hover {
         transform: translateY(-2px);
     }
-</style>

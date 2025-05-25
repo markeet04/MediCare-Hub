@@ -1,0 +1,729 @@
+@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Components.Authorization
+@using BlazorApp1.Services.Interfaces
+@using BlazorApp1.Authentication
+@using System
+@using System.Threading.Tasks
+@using System.Security.Claims
+@inject ProtectedSessionStorage SessionStorage
+@inject ProtectedLocalStorage LocalStorage
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
+@layout BlazorApp1.Components.Layout.MainLayout
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+
+
+<div class="landing-container @(isWelcomeVisible ? "" : "welcome-hidden") @(isDarkMode ? "dark-mode" : "")">
+    <!-- Dark Mode Toggle -->
+    <button class="dark-mode-toggle" @onclick="ToggleDarkMode">
+        @if (isDarkMode)
+        {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        }
+        else
+        {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        }
+    </button>
+    
+    <div class="welcome-screen">
+        <div class="welcome-content">
+            <div class="welcome-logo">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#1E88E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="#1E88E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="#1E88E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 class="welcome-title">Welcome to <span class="highlight">MedConnect</span></h1>
+            <p class="welcome-subtitle">Your healthcare management platform</p>
+            <div class="pulse-animation"></div>
+            <button class="welcome-button" @onclick="ShowRoleSelection" @onclick:preventDefault="true">
+                Get Started
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 5L19 12L12 19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Animated Particles -->
+        <div class="particles">
+            @for(int i = 1; i <= 15; i++) {
+                <div class="particle particle-@i"></div>
+            }
+        </div>
+    </div>
+
+    <!-- Role Selection Screen -->
+    <div class="login-container @(isRoleSelectionVisible ? "card-visible" : "")">
+        <div class="light-side">
+            <div class="card-container">
+                <div class="auth-card role-selection-card">
+                    <div class="card-header">
+                        <h2>How would you like to access MedConnect?</h2>
+                        <p>Choose your role to continue:</p>
+                    </div>
+                    
+                    <div class="role-options">
+                        <button class="role-button staff-button" @onclick="() => SelectRole(true)">
+                            <div class="role-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 7H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 4V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <h3>Hospital Staff</h3>
+                            <p>Login as Administrator, Doctor, Receptionist, or Lab Technician</p>
+                        </button>
+                        
+                        <button class="role-button patient-button" @onclick="() => SelectRole(false)">
+                            <div class="role-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M16 4H18C18.5304 4 19.0391 4.21071 19.4142 4.58579C19.7893 4.96086 20 5.46957 20 6V20C20 20.5304 19.7893 21.0391 19.4142 21.4142C19.0391 21.7893 18.5304 22 18 22H6C5.46957 22 4.96086 21.7893 4.58579 21.4142C4.21071 21.0391 4 20.5304 4 20V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 11H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 16H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 11H8.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 16H8.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 2V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 5H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <h3>Patient</h3>
+                            <p>Access your health records and appointments</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login/Signup Container -->
+    <div class="login-container @(isLoginVisible ? "card-visible" : "")">
+        <div class="light-side">
+            <div class="card-container">
+                <!-- Staff Login Card -->
+                <div class="auth-card sign-in-card @(isStaffMode && !isSigningUp ? "slide-in" : "slide-out")" style="display: @(isStaffMode ? "block" : "none")">
+                    <div class="card-header">
+                        <h2>Hospital Staff Login</h2>
+                        <p>Enter your credentials:</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="text" @bind="username" placeholder="Username" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="@(showPassword ? "text" : "password")" @bind="password" placeholder="Password" />
+                            <button type="button" class="toggle-password" @onclick="TogglePasswordVisibility">
+                                @if (showPassword)
+                                {
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9.9 4.24C10.5883 4.07888 11.2931 3.99834 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2047 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1752 15.0074 10.8016 14.8565C10.4281 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.572 9.14351 13.1984C8.99262 12.8249 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2219 9.18488 10.8539C9.34884 10.4859 9.58524 10.1547 9.88 9.88M1 1L23 23M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 3.96914 7.65663 6.06 6.06L17.94 17.94Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="remember-forgot">
+                        <label class="remember-me">
+                            <input type="checkbox" @bind="rememberMe" />
+                            <span>Remember me</span>
+                        </label>
+                        <a href="javascript:void(0)" class="forgot-password">Forgot password?</a>
+                    </div>
+                    
+                    <button type="button" class="submit-button" @onclick="HandleLogin" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span>SIGNING IN...</span>
+                        }
+                        else
+                        {
+                            <span>SIGN IN</span>
+                            <div class="arrow-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 5L19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        }
+                    </button>
+                    
+                    <button @onclick="GoBackToRoleSelection" class="toggle-button">
+                        BACK TO ROLE SELECTION
+                    </button>
+                </div>
+
+                <!-- Patient Login Card -->
+                <div class="auth-card sign-in-card @(!isStaffMode && !isSigningUp ? "slide-in" : "slide-out")" style="display: @(!isStaffMode ? "block" : "none")">
+                    <div class="card-header">
+                        <h2>Patient Login</h2>
+                        <p>Enter your credentials:</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="text" @bind="username" placeholder="Username" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="@(showPassword ? "text" : "password")" @bind="password" placeholder="Password" />
+                            <button type="button" class="toggle-password" @onclick="TogglePasswordVisibility">
+                                @if (showPassword)
+                                {
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9.9 4.24C10.5883 4.07888 11.2931 3.99834 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2047 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1752 15.0074 10.8016 14.8565C10.4281 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.572 9.14351 13.1984C8.99262 12.8249 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2219 9.18488 10.8539C9.34884 10.4859 9.58524 10.1547 9.88 9.88M1 1L23 23M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 3.96914 7.65663 6.06 6.06L17.94 17.94Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="remember-forgot">
+                        <label class="remember-me">
+                            <input type="checkbox" @bind="rememberMe" />
+                            <span>Remember me</span>
+                        </label>
+                        <a href="javascript:void(0)" class="forgot-password">Forgot password?</a>
+                    </div>
+                    
+                    <button type="button" class="submit-button" @onclick="HandleLogin" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span>SIGNING IN...</span>
+                        }
+                        else
+                        {
+                            <span>SIGN IN</span>
+                            <div class="arrow-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 5L19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        }
+                    </button>
+                    
+                    <div class="divider">OR</div>
+                    
+                    <button @onclick="ToggleMode" class="toggle-button">
+                        SIGN UP AS PATIENT
+                    </button>
+                    
+                    <button @onclick="GoBackToRoleSelection" class="toggle-button">
+                        BACK TO ROLE SELECTION
+                    </button>
+                </div>
+                
+                <!-- Patient Sign Up Card -->
+                <div class="auth-card sign-up-card @(!isStaffMode && isSigningUp ? "slide-in" : "slide-out")" style="display: @(!isStaffMode && isSigningUp ? "block" : "none")">
+                    <div class="card-header">
+                        <h2>Create Patient Account</h2>
+                        <p>Please provide your details:</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="text" @bind="fullName" placeholder="Full Name" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="text" @bind="signupUsername" placeholder="Username" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="@(showSignupPassword ? "text" : "password")" @bind="signupPassword" placeholder="Password (min 6 chars)" />
+                            <button type="button" class="toggle-password" @onclick="ToggleSignupPasswordVisibility">
+                                @if (showSignupPassword)
+                                {
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.9 4.24C10.5883 4.07888 11.2931 3.99834 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2047 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1752 15.0074 10.8016 14.8565C10.4281 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.572 9.14351 13.1984C8.99262 12.8249 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2219 9.18488 10.8539C9.34884 10.4859 9.58524 10.1547 9.88 9.88M1 1L23 23M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 3.96914 7.65663 6.06 6.06L17.94 17.94Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M22 6L12 13L2 6" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="email" @bind="signupEmail" placeholder="Email Address" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22 16.92V13.92C22 13.42 21.78 12.95 21.41 12.65L19.59 11.35C19.22 11.05 18.78 11.05 18.41 11.35L16.59 12.65C16.22 12.95 16 13.42 16 13.92V16.92C16 17.42 16.22 17.89 16.59 18.19L18.41 19.49C18.78 19.79 19.22 19.79 19.59 19.49L21.41 18.19C21.78 17.89 22 17.42 22 16.92Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M22 16.92V13.92C22 13.42 21.78 12.95 21.41 12.65L19.59 11.35C19.22 11.05 18.78 11.05 18.41 11.35L16.59 12.65C16.22 12.95 16 13.42 16 13.92V16.92C16 17.42 16.22 17.89 16.59 18.19L18.41 19.49C18.78 19.79 19.22 19.79 19.59 19.49L21.41 18.19C21.78 17.89 22 17.42 22 16.92Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="text" @bind="signupCNIC" placeholder="CNIC (e.g., 12345-1234567-1)" maxlength="15" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22 16.92V13.92C22 13.42 21.78 12.95 21.41 12.65L19.59 11.35C19.22 11.05 18.78 11.05 18.41 11.35L16.59 12.65C16.22 12.95 16 13.42 16 13.92V16.92C16 17.42 16.22 17.89 16.59 18.19L18.41 19.49C18.78 19.79 19.22 19.79 19.59 19.49L21.41 18.19C21.78 17.89 22 17.42 22 16.92Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="tel" @bind="signupPhone" placeholder="Phone Number (optional)" />
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="submit-button" @onclick="HandleSignup" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span>CREATING ACCOUNT...</span>
+                        }
+                        else
+                        {
+                            <span>SIGN UP</span>
+                            <div class="arrow-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 5L19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        }
+                    </button>
+                    
+                    <div class="divider">OR</div>
+                    
+                    <button @onclick="ToggleMode" class="toggle-button">
+                        ALREADY HAVE AN ACCOUNT? SIGN IN
+                    </button>
+                    
+                    <button @onclick="GoBackToRoleSelection" class="toggle-button">
+                        BACK TO ROLE SELECTION
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-overlay @(showError ? "show" : "")">
+            <div class="error-message">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="#ff4757" stroke-width="2"/>
+                    <path d="M15 9L9 15" stroke="#ff4757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 9L15 15" stroke="#ff4757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>@errorMessage</span>
+                <button @onclick="ClearError" class="close-error">×</button>
+            </div>
+        </div>
+    }
+</div>
+<link rel="stylesheet" href="LandingPage.css">
+
+@code {
+    private bool isWelcomeVisible = true;
+    private bool isRoleSelectionVisible = false;
+    private bool isLoginVisible = false;
+    private bool isSigningUp = false;
+    private bool isStaffMode = false;
+    private bool isDarkMode = false;
+    private bool showPassword = false;
+    private bool showSignupPassword = false;
+    private bool rememberMe = false;
+    private bool isLoading = false;
+    private bool showError = false;
+    private string errorMessage = string.Empty;
+    
+    // Login form fields
+    private string username = string.Empty;
+    private string password = string.Empty;
+    
+    // Signup form fields
+    private string fullName = string.Empty;
+    private string signupUsername = string.Empty;
+    private string signupPassword = string.Empty;
+    private string signupEmail = string.Empty;
+    private string signupCNIC = string.Empty;
+    private string signupPhone = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if user is already authenticated
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var role = authState.User.FindFirst(ClaimTypes.Role)?.Value;
+            NavigateToRolePage(role);
+        }
+        
+        // Load dark mode preference
+        try
+        {
+            var darkModeResult = await LocalStorage.GetAsync<bool>("darkMode");
+            if (darkModeResult.Success)
+            {
+                isDarkMode = darkModeResult.Value;
+            }
+        }
+        catch
+        {
+            // Ignore errors loading preference
+        }
+    }
+
+    private void ShowRoleSelection()
+    {
+        isWelcomeVisible = false;
+        isRoleSelectionVisible = true;
+    }
+
+    private void SelectRole(bool isStaff)
+    {
+        isStaffMode = isStaff;
+        isRoleSelectionVisible = false;
+        isLoginVisible = true;
+        isSigningUp = false;
+        ClearFormFields();
+    }
+
+    private void GoBackToRoleSelection()
+    {
+        isLoginVisible = false;
+        isRoleSelectionVisible = true;
+        isSigningUp = false;
+        ClearFormFields();
+        ClearError();
+    }
+
+    private void ToggleMode()
+    {
+        if (!isStaffMode) // Only patients can toggle between login/signup
+        {
+            isSigningUp = !isSigningUp;
+            ClearFormFields();
+            ClearError();
+        }
+    }
+
+    private void ToggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
+        // Save preference
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await LocalStorage.SetAsync("darkMode", isDarkMode);
+            }
+            catch
+            {
+                // Ignore errors saving preference
+            }
+        });
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private void ToggleSignupPasswordVisibility()
+    {
+        showSignupPassword = !showSignupPassword;
+    }
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            ShowError("Please enter both username and password.");
+            return;
+        }
+
+        isLoading = true;
+        ClearError();
+
+        try
+        {
+            var user = await AuthService.ValidateCredentialsAsync(username, password);
+            if (user == null)
+            {
+                ShowError("Invalid username or password.");
+                return;
+            }
+
+            var userRole = await AuthService.GetUserRoleAsync(user.UserId);
+            if (string.IsNullOrEmpty(userRole))
+            {
+                ShowError("User role not found. Please contact administrator.");
+                return;
+            }
+
+            // Validate role based on selected mode
+            if (isStaffMode && userRole.Equals("Patient", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowError("Patient accounts cannot login as hospital staff.");
+                return;
+            }
+            else if (!isStaffMode && !userRole.Equals("Patient", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowError("Staff accounts must use hospital staff login.");
+                return;
+            }
+
+            // Create claims principal
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName),
+                new Claim(ClaimTypes.Role, userRole), // Keep original case from database
+                new Claim("UserName", user.UserName),
+                new Claim("CNIC", user.CNIC)
+            };
+
+            if (!string.IsNullOrEmpty(user.PhoneNumber))
+                claims.Add(new Claim("PhoneNumber", user.PhoneNumber));
+
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuth"));
+
+            // Mark user as authenticated and wait for completion
+            await ((AuthStateProvider)AuthStateProvider).MarkUserAsAuthenticatedAsync(claimsPrincipal);
+
+            // Add a small delay to ensure session storage is updated
+            await Task.Delay(100);
+
+            // Force a state change notification
+            StateHasChanged();
+
+            // Navigate based on role with a slight delay
+            await Task.Delay(50);
+            await NavigateToRolePage(userRole);
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Login failed: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSignup()
+    {
+        if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(signupUsername) || 
+            string.IsNullOrWhiteSpace(signupPassword) || string.IsNullOrWhiteSpace(signupEmail) || 
+            string.IsNullOrWhiteSpace(signupCNIC))
+        {
+            ShowError("Please fill in all required fields.");
+            return;
+        }
+
+        if (signupPassword.Length < 6)
+        {
+            ShowError("Password must be at least 6 characters long.");
+            return;
+        }
+
+        if (!IsValidEmail(signupEmail))
+        {
+            ShowError("Please enter a valid email address.");
+            return;
+        }
+
+        if (!IsValidCNIC(signupCNIC))
+        {
+            ShowError("Please enter a valid CNIC (e.g., 12345-1234567-1).");
+            return;
+        }
+
+        isLoading = true;
+        ClearError();
+
+        try
+        {
+            // For now, show success message since patient registration isn't fully implemented
+            ShowError("Patient registration is not yet available. Please contact reception to create an account.");
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Registration failed: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Fixed navigation method - now async and with better role handling
+// Replace the NavigateToRolePage method in your LandingPage.razor with this:
+private async Task NavigateToRolePage(string? role)
+{
+    if (string.IsNullOrEmpty(role))
+    {
+        ShowError("Unable to determine user role.");
+        return;
+    }
+
+    // Debug: Log the role for troubleshooting
+    Console.WriteLine($"Navigating with role: {role}");
+
+    // Don't convert to lowercase - keep the original case from database
+    var navigationUrl = role switch
+    {
+        "Admin" => "/admin/dashboard",
+        "Doctor" => "/doctor/dashboard", 
+        "Receptionist" => "/receptionist/dashboard",
+        "LabTechnician" or "Lab Technician" => "/lab/dashboard", // Handle both cases
+        "Patient" => "/patient/home",
+        _ => "/"
+    };
+
+    Console.WriteLine($"Navigation URL: {navigationUrl}");
+
+    try
+    {
+        // Wait for authentication state to propagate
+        await Task.Delay(300);
+        
+        // Force reload to ensure authorization is properly checked
+        NavigationManager.NavigateTo(navigationUrl, true);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Navigation error: {ex.Message}");
+        ShowError($"Navigation failed: {ex.Message}");
+    }
+}
+
+    private void ShowError(string message)
+    {
+        errorMessage = message;
+        showError = true;
+        
+        // Auto-hide error after 5 seconds
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(5000);
+            await InvokeAsync(() =>
+            {
+                ClearError();
+                StateHasChanged();
+            });
+        });
+    }
+
+    private void ClearError()
+    {
+        errorMessage = string.Empty;
+        showError = false;
+    }
+
+    private void ClearFormFields()
+    {
+        username = string.Empty;
+        password = string.Empty;
+        fullName = string.Empty;
+        signupUsername = string.Empty;
+        signupPassword = string.Empty;
+        signupEmail = string.Empty;
+        signupCNIC = string.Empty;
+        signupPhone = string.Empty;
+        showPassword = false;
+        showSignupPassword = false;
+        rememberMe = false;
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private bool IsValidCNIC(string cnic)
+    {
+        // Basic CNIC validation: 5-7-1 format
+        var pattern = @"^\d{5}-\d{7}-\d{1}$";
+        return System.Text.RegularExpressions.Regex.IsMatch(cnic, pattern);
+    }
+}

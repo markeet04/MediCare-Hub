@@ -6,18 +6,22 @@ namespace BlazorApp1.Services.Interfaces
 {
     public interface IAdminService
     {Task LogActivityAsync(int adminId, string action, string details);
-
+        Task ChangePasswordAsync(EditAdminPasswordDto dto);
         Task<(int userId, string tempPassword)> CreateDoctorAsync(CreateDoctorDto dto);
         Task<(int userId, string tempPassword)> CreateReceptionistAsync(CreateReceptionistDto dto);
         Task<(int userId, string tempPassword)> CreatePatientAsync(CreatePatientDto dto);
         Task<(int userId, string tempPassword)> CreateLabTechAsync(CreateLabTechDto dto);
-        Task UpdateAdminProfileAsync(EditAdminProfileDto dto);
-        Task<EditAdminProfileDto> GetAdminByIdAsync(int adminId);
+               Task UpdateAdminProfileAsync(EditAdminProfileDto dto);
+Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int adminId);
+    Task MarkNotificationAsReadAsync(int notificationId);
+    Task MarkAllNotificationsAsReadAsync(int adminId);
+                Task<AdminProfileDto> GetAdminByIdAsync(int adminId);
+
         
         Task<GlobalStatsDto> GetGlobalStatsAsync();
         Task<IEnumerable<ActivityLogDto>> GetActivityLogsAsync();
         Task<int> GenerateReportAsync(GenerateReportRequestDto dto);
-        Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int adminId);
+       
         Task<LabTechProfileDto> GetLabTechByIdAsync(int labTechId);
         Task<ReceptionistProfileDto> GetReceptionistByIdAsync(int receptionistId);
         Task<PatientProfileDto> GetPatientByIdAsync(int patientId);

@@ -35,41 +35,55 @@ namespace BlazorApp1.Services.Implementations
              _environment = environment;
 
         }
-public async Task<EditAdminProfileDto> GetAdminByIdAsync(int adminId)
+public async Task<AdminProfileDto> GetAdminByIdAsync(int adminId)
 {
-    using var conn = new SqlConnection(_connectionString);
-    await conn.OpenAsync();
-
-    var sql = @"
-        SELECT 
-            u.UserId,
-            u.FullName,
-            u.ProfilePictureUrl,
-            ap.OfficeLocation
-        FROM dbo.Users u
-        INNER JOIN dbo.AdminProfiles ap ON u.UserId = ap.AdminId
-        WHERE u.UserId = @AdminId";
-
-    using var cmd = new SqlCommand(sql, conn);
-    cmd.Parameters.AddWithValue("@AdminId", adminId);
-
-    using var reader = await cmd.ExecuteReaderAsync();
-    if (!await reader.ReadAsync())
-        return null!; // or throw new Exception("Not found");
-
-    return new EditAdminProfileDto
+    try
     {
-        AdminId = reader.GetInt32(reader.GetOrdinal("UserId")),
-        FullName = reader.GetString(reader.GetOrdinal("FullName")),
-        ProfilePictureUrl = reader.IsDBNull(reader.GetOrdinal("ProfilePictureUrl"))
-            ? null
-            : reader.GetString(reader.GetOrdinal("ProfilePictureUrl")),
-        OfficeLocation = reader.IsDBNull(reader.GetOrdinal("OfficeLocation"))
-            ? null
-            : reader.GetString(reader.GetOrdinal("OfficeLocation"))
-    };
-}
+        var query = @"
+            SELECT 
+                u.UserId,
+                u.FullName,
+                u.UserName,
+                u.PhoneNumber,
+                u.ProfilePictureUrl,
+                u.CreatedAt,
+                u.UpdatedAt,
+                ap.OfficeLocation
+            FROM Users u
+            INNER JOIN AdminProfiles ap ON u.UserId = ap.AdminId
+            WHERE u.UserId = @AdminId";
 
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@AdminId", adminId);
+
+        using var reader = await command.ExecuteReaderAsync();
+        
+        if (await reader.ReadAsync())
+        {
+            return new AdminProfileDto
+            {
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                FullName = reader.IsDBNull(reader.GetOrdinal("FullName")) ? string.Empty : reader.GetString(reader.GetOrdinal("FullName")),
+                Username = reader.IsDBNull(reader.GetOrdinal("UserName")) ? string.Empty : reader.GetString(reader.GetOrdinal("UserName")),
+                PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                ProfilePictureUrl = reader.IsDBNull(reader.GetOrdinal("ProfilePictureUrl")) ? null : reader.GetString(reader.GetOrdinal("ProfilePictureUrl")),
+                OfficeLocation = reader.IsDBNull(reader.GetOrdinal("OfficeLocation")) ? null : reader.GetString(reader.GetOrdinal("OfficeLocation")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+            };
+        }
+
+        throw new InvalidOperationException($"Admin with ID {adminId} not found.");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving admin profile for ID: {AdminId}", adminId);
+        throw;
+    }
+}
 public async Task LogActivityAsync(int adminId, string action, string details)
 {
     using var conn = new SqlConnection(_connectionString);
@@ -484,22 +498,23 @@ public async Task<(int userId, string tempPassword)> CreateLabTechAsync(CreateLa
         throw;
     }
 }
-  public async Task UpdateAdminProfileAsync(EditAdminProfileDto dto)
+public async Task UpdateAdminProfileAsync(EditAdminProfileDto dto)
 {
     try
     {
         var query = @"
-            UPDATE AdminProfiles 
-            SET 
-                ProfilePictureUrl = @ProfilePictureUrl,
-                OfficeLocation = @OfficeLocation
-            WHERE AdminId = @AdminId;
-
             UPDATE Users
             SET 
                 FullName = @FullName,
+                PhoneNumber = @PhoneNumber,
+                ProfilePictureUrl = @ProfilePictureUrl,
                 UpdatedAt = SYSUTCDATETIME()
-            WHERE UserId = @AdminId;";
+            WHERE UserId = @AdminId;
+
+            UPDATE AdminProfiles 
+            SET 
+                OfficeLocation = @OfficeLocation
+            WHERE AdminId = @AdminId;";
 
         using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
@@ -507,6 +522,7 @@ public async Task<(int userId, string tempPassword)> CreateLabTechAsync(CreateLa
         using var command = new SqlCommand(query, connection);
         command.Parameters.AddWithValue("@AdminId", dto.AdminId);
         command.Parameters.AddWithValue("@FullName", dto.FullName ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@PhoneNumber", dto.PhoneNumber ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("@ProfilePictureUrl", dto.ProfilePictureUrl ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("@OfficeLocation", dto.OfficeLocation ?? (object)DBNull.Value);
 
@@ -526,18 +542,79 @@ public async Task<(int userId, string tempPassword)> CreateLabTechAsync(CreateLa
     }
 }
 
-        // UPDATE METHODS
-
-public async Task UpdateDoctorAsync(UpdateDoctorDto dto)
+public async Task ChangePasswordAsync(EditAdminPasswordDto dto)
 {
-    using var conn = new SqlConnection(_connectionString);
-    await conn.OpenAsync();
-    using var transaction = conn.BeginTransaction();
-
     try
     {
-        // Update Users table
-        var userSql = @"
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // First, verify the current password
+        var verifyQuery = "SELECT PasswordHash FROM Users WHERE UserId = @AdminId";
+        using var verifyCommand = new SqlCommand(verifyQuery, connection);
+        verifyCommand.Parameters.AddWithValue("@AdminId", dto.AdminId);
+
+        var currentHashObj = await verifyCommand.ExecuteScalarAsync();
+        if (currentHashObj == null)
+        {
+            throw new InvalidOperationException("Admin not found.");
+        }
+
+        var currentHash = currentHashObj.ToString();
+        if (!VerifyPassword(dto.CurrentPassword, currentHash))
+        {
+            throw new UnauthorizedAccessException("Current password is incorrect.");
+        }
+
+        // Hash the new password
+        var newPasswordHash = HashPassword(dto.NewPassword);
+
+        // Update the password
+        var updateQuery = @"
+            UPDATE Users 
+            SET 
+                PasswordHash = @NewPasswordHash,
+                UpdatedAt = SYSUTCDATETIME()
+            WHERE UserId = @AdminId";
+
+        using var updateCommand = new SqlCommand(updateQuery, connection);
+        updateCommand.Parameters.AddWithValue("@AdminId", dto.AdminId);
+        updateCommand.Parameters.AddWithValue("@NewPasswordHash", newPasswordHash);
+
+        var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
+
+        if (rowsAffected == 0)
+        {
+            throw new InvalidOperationException("Failed to update password.");
+        }
+
+        _logger.LogInformation("Password changed successfully for admin ID: {AdminId}", dto.AdminId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error changing password for admin ID: {AdminId}", dto.AdminId);
+        throw;
+    }
+}
+         private bool VerifyPassword(string password, string hash)
+        {
+            var passwordHash = HashPassword(password);
+            return passwordHash == hash;
+        }
+    
+
+        // UPDATE METHODS
+
+        public async Task UpdateDoctorAsync(UpdateDoctorDto dto)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            using var transaction = conn.BeginTransaction();
+
+            try
+            {
+                // Update Users table
+                var userSql = @"
             UPDATE dbo.Users 
             SET UserName = @UserName,
                 CNIC = @CNIC,
@@ -547,36 +624,36 @@ public async Task UpdateDoctorAsync(UpdateDoctorDto dto)
                 UpdatedAt = SYSUTCDATETIME()
             WHERE UserId = @DoctorId";
 
-        using var userCmd = new SqlCommand(userSql, conn, transaction);
-        userCmd.Parameters.AddWithValue("@DoctorId", dto.DoctorId);
-        userCmd.Parameters.AddWithValue("@UserName", dto.UserName);
-        userCmd.Parameters.AddWithValue("@CNIC", dto.CNIC);
-        userCmd.Parameters.AddWithValue("@PhoneNumber", (object?)dto.PhoneNumber ?? DBNull.Value);
-        userCmd.Parameters.AddWithValue("@FullName", dto.FullName);
-        userCmd.Parameters.AddWithValue("@ProfilePictureUrl", (object?)dto.ProfilePictureUrl ?? DBNull.Value);
-        await userCmd.ExecuteNonQueryAsync();
+                using var userCmd = new SqlCommand(userSql, conn, transaction);
+                userCmd.Parameters.AddWithValue("@DoctorId", dto.DoctorId);
+                userCmd.Parameters.AddWithValue("@UserName", dto.UserName);
+                userCmd.Parameters.AddWithValue("@CNIC", dto.CNIC);
+                userCmd.Parameters.AddWithValue("@PhoneNumber", (object?)dto.PhoneNumber ?? DBNull.Value);
+                userCmd.Parameters.AddWithValue("@FullName", dto.FullName);
+                userCmd.Parameters.AddWithValue("@ProfilePictureUrl", (object?)dto.ProfilePictureUrl ?? DBNull.Value);
+                await userCmd.ExecuteNonQueryAsync();
 
-        // Update DoctorProfiles table
-        var profileSql = @"
+                // Update DoctorProfiles table
+                var profileSql = @"
             UPDATE dbo.DoctorProfiles 
             SET Specialty = @Specialty,
                 Qualifications = @Qualifications
             WHERE DoctorId = @DoctorId";
 
-        using var profileCmd = new SqlCommand(profileSql, conn, transaction);
-        profileCmd.Parameters.AddWithValue("@DoctorId", dto.DoctorId);
-        profileCmd.Parameters.AddWithValue("@Specialty", (object?)dto.Specialty ?? DBNull.Value);
-        profileCmd.Parameters.AddWithValue("@Qualifications", (object?)dto.Qualifications ?? DBNull.Value);
-        await profileCmd.ExecuteNonQueryAsync();
+                using var profileCmd = new SqlCommand(profileSql, conn, transaction);
+                profileCmd.Parameters.AddWithValue("@DoctorId", dto.DoctorId);
+                profileCmd.Parameters.AddWithValue("@Specialty", (object?)dto.Specialty ?? DBNull.Value);
+                profileCmd.Parameters.AddWithValue("@Qualifications", (object?)dto.Qualifications ?? DBNull.Value);
+                await profileCmd.ExecuteNonQueryAsync();
 
-        transaction.Commit();
-    }
-    catch
-    {
-        transaction.Rollback();
-        throw;
-    }
-}
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
 
 public async Task UpdateReceptionistAsync(UpdateReceptionistDto dto)
 {
@@ -1829,38 +1906,91 @@ public class YourReportRowDto
             return container.DefaultTextStyle(x => x.FontSize(9)).PaddingVertical(5).PaddingHorizontal(10).BorderBottom(1).BorderColor(Colors.Grey.Lighten2);
         }
 
-        public async Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int adminId)
+      public async Task MarkNotificationAsReadAsync(int notificationId)
+{
+    try
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var query = @"
+            UPDATE Notifications 
+            SET IsRead = 1 
+            WHERE NotificationId = @NotificationId";
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@NotificationId", notificationId);
+
+        await command.ExecuteNonQueryAsync();
+
+        _logger.LogInformation("Notification marked as read: {NotificationId}", notificationId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error marking notification as read: {NotificationId}", notificationId);
+        throw;
+    }
+}
+
+public async Task MarkAllNotificationsAsReadAsync(int adminId)
+{
+    try
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var query = @"
+            UPDATE Notifications 
+            SET IsRead = 1 
+            WHERE UserId = @AdminId AND IsRead = 0";
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@AdminId", adminId);
+
+        var rowsAffected = await command.ExecuteNonQueryAsync();
+
+        _logger.LogInformation("Marked {Count} notifications as read for admin: {AdminId}", rowsAffected, adminId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error marking all notifications as read for admin: {AdminId}", adminId);
+        throw;
+    }
+}
+
+// Your existing GetNotificationsAsync method is already good
+public async Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int adminId)
+{
+    using var conn = new SqlConnection(_connectionString);
+    await conn.OpenAsync();
+
+    var sql = @"
+        SELECT NotificationId, UserId, Title, Message, IsRead, CreatedAt
+        FROM dbo.Notifications
+        WHERE UserId = @AdminId
+        ORDER BY CreatedAt DESC";
+
+    using var cmd = new SqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@AdminId", adminId);
+
+    var notifications = new List<NotificationDto>();
+    using var reader = await cmd.ExecuteReaderAsync();
+
+    while (await reader.ReadAsync())
+    {
+        notifications.Add(new NotificationDto
         {
-            using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            NotificationId = reader.GetInt32(reader.GetOrdinal("NotificationId")),
+            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+            Title = reader.IsDBNull(reader.GetOrdinal("Title")) ? null : reader.GetString(reader.GetOrdinal("Title")),
+            Message = reader.IsDBNull(reader.GetOrdinal("Message")) ? null : reader.GetString(reader.GetOrdinal("Message")),
+            IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+        });
+    }
 
-            var sql = @"
-                SELECT NotificationId, UserId, Title, Message, IsRead, CreatedAt
-                FROM dbo.Notifications
-                WHERE UserId = @AdminId
-                ORDER BY CreatedAt DESC";
-
-            using var cmd = new SqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@AdminId", adminId);
-
-            var notifications = new List<NotificationDto>();
-            using var reader = await cmd.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-                notifications.Add(new NotificationDto
-                {
-                    NotificationId = reader.GetInt32(reader.GetOrdinal("NotificationId")),
-                    UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                    Title = reader.IsDBNull(reader.GetOrdinal("Title")) ? null : reader.GetString(reader.GetOrdinal("Title")),
-                    Message = reader.IsDBNull(reader.GetOrdinal("Message")) ? null : reader.GetString(reader.GetOrdinal("Message")),
-                    IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
-                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-                });
-            }
-
-            return notifications;
-        }
+    return notifications;
+}
 
         private static string HashPassword(string password)
         {

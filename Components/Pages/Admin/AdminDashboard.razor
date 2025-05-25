@@ -1,4 +1,3 @@
-@page "/"
 @page "/admin/dashboard"
 @layout BlazorApp1.Components.Layout.AdminLayout
 @rendermode InteractiveServer
@@ -6,12 +5,177 @@
 @inject IJSRuntime JSRuntime
 @inject BlazorApp1.Services.Interfaces.IAdminService AdminService
 @inject BlazorApp1.Services.Interfaces.IUserService UserService
+@inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
 @using BlazorApp1.Models.DTOs
+@using Microsoft.AspNetCore.Components.Authorization
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-1 fw-bold">Welcome back, Admin</h4>
+        <h4 class="mb-1 fw-bold">Welcome back, @(currentAdmin?.FullName ?? "Admin")</h4>
         <p class="text-muted">Here's what's happening with your hospital today</p>
+    </div>
+    
+    <!-- Top Right Section with Notifications and Avatar -->
+    <div class="d-flex align-items-center gap-3">
+        <!-- Notification Bell -->
+        <div class="position-relative">
+            <button class="btn btn-light rounded-circle p-2 border-0 shadow-sm position-relative" 
+                    @onclick="ToggleNotifications" 
+                    style="width: 45px; height: 45px;">
+                <i class="bi bi-bell fs-5"></i>
+                @if (unreadNotificationCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                          style="font-size: 0.7rem;">
+                        @(unreadNotificationCount > 9 ? "9+" : unreadNotificationCount.ToString())
+                    </span>
+                }
+            </button>
+            
+            <!-- Notification Dropdown -->
+            @if (showNotifications)
+            {
+                <div class="position-absolute end-0 mt-2 bg-white rounded-3 shadow-lg border" 
+                     style="width: 350px; max-height: 400px; z-index: 1050;">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <h6 class="mb-0 fw-bold">Notifications</h6>
+                        @if (unreadNotificationCount > 0)
+                        {
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                                    @onclick="MarkAllAsRead">
+                                Mark all read
+                            </button>
+                        }
+                    </div>
+                    <div class="overflow-auto" style="max-height: 300px;">
+                        @if (notifications?.Any() == true)
+                        {
+                            @foreach (var notification in notifications.Take(5))
+                            {
+                                <div class="p-3 border-bottom @(notification.IsRead ? "" : "bg-light")">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3 flex-shrink-0">
+                                            <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                                <i class="bi bi-info-circle text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            @if (!string.IsNullOrEmpty(notification.Title))
+                                            {
+                                                <h6 class="mb-1 fw-semibold">@notification.Title</h6>
+                                            }
+                                            @if (!string.IsNullOrEmpty(notification.Message))
+                                            {
+                                                <p class="mb-1 text-muted small">@notification.Message</p>
+                                            }
+                                            <small class="text-muted">@GetTimeAgo(notification.CreatedAt)</small>
+                                        </div>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <div class="flex-shrink-0">
+                                                <div class="bg-primary rounded-circle" style="width: 8px; height: 8px;"></div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-4 text-center text-muted">
+                                <i class="bi bi-bell-slash fs-1 mb-3"></i>
+                                <p>No notifications</p>
+                            </div>
+                        }
+                    </div>
+                    @if (notifications?.Count() > 5)
+                    {
+                        <div class="p-3 border-top text-center">
+                            <button class="btn btn-sm btn-primary rounded-pill px-4" 
+                                    @onclick="ViewAllNotifications">
+                                View All Notifications
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        
+        <!-- User Avatar with Dropdown -->
+        <div class="position-relative">
+            <button class="btn p-0 border-0 bg-transparent d-flex align-items-center" 
+                    @onclick="ToggleUserMenu">
+                <div class="d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(currentAdmin?.ProfilePictureUrl))
+                    {
+                        <img src="@currentAdmin.ProfilePictureUrl" 
+                             alt="Profile" 
+                             class="rounded-circle me-2" 
+                             style="width: 45px; height: 45px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                             style="width: 45px; height: 45px;">
+                            <i class="bi bi-person fs-5"></i>
+                        </div>
+                    }
+                    <div class="text-start d-none d-md-block">
+                        <div class="fw-semibold">@(currentAdmin?.FullName ?? "Admin")</div>
+                        <small class="text-muted">Administrator</small>
+                    </div>
+                    <i class="bi bi-chevron-down ms-2"></i>
+                </div>
+            </button>
+            
+            <!-- User Menu Dropdown -->
+            @if (showUserMenu)
+            {
+                <div class="position-absolute end-0 mt-2 bg-white rounded-3 shadow-lg border" 
+                     style="width: 220px; z-index: 1050;">
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(currentAdmin?.ProfilePictureUrl))
+                            {
+                                <img src="@currentAdmin.ProfilePictureUrl" 
+                                     alt="Profile" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            }
+                            <div>
+                                <div class="fw-semibold">@(currentAdmin?.FullName ?? "Admin")</div>
+                                <small class="text-muted">@(currentAdmin?.Username ?? "")</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-2">
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" 
+                                @onclick="GoToProfile">
+                            <i class="bi bi-person me-3"></i>
+                            <span>Profile</span>
+                        </button>
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" 
+                                @onclick="GoToSettings">
+                            <i class="bi bi-gear me-3"></i>
+                            <span>Settings</span>
+                        </button>
+                        <hr class="my-2">
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0 text-danger" 
+                                @onclick="Logout">
+                            <i class="bi bi-box-arrow-right me-3"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
@@ -302,12 +466,31 @@ else
     private GlobalStatsDto? globalStats;
     private IEnumerable<ActivityLogDto>? activityLogs;
     private List<UserDto> allUsers = new();
+    
+    // New properties for notifications and user avatar
+    private AdminProfileDto? currentAdmin;
+    private IEnumerable<NotificationDto>? notifications;
+    private int unreadNotificationCount = 0;
+    private bool showNotifications = false;
+    private bool showUserMenu = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             isLoading = true;
+            
+            // Get current user session
+            var userSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (userSession != null)
+            {
+                // Load admin profile
+                currentAdmin = await AdminService.GetAdminByIdAsync(userSession.UserId);
+                
+                // Load notifications
+                notifications = await AdminService.GetNotificationsAsync(userSession.UserId);
+                unreadNotificationCount = notifications?.Count(n => !n.IsRead) ?? 0;
+            }
             
             // Load global statistics
             globalStats = await AdminService.GetGlobalStatsAsync();
@@ -346,20 +529,20 @@ else
                globalStats.TotalLabTechnicians;
     }
     
-  private string GetActivityIcon(string action)
-{
-    return action?.ToLower() switch
+    private string GetActivityIcon(string action)
     {
-        var a when a.Contains("create") || a.Contains("add") => "bi-person-plus",
-        var a when a.Contains("appointment") => "bi-calendar-plus",
-        var a when a.Contains("update") || a.Contains("edit") => "bi-pencil",
-        var a when a.Contains("delete") || a.Contains("remove") => "bi-trash",
-        var a when a.Contains("login") || a.Contains("access") => "bi-box-arrow-in-right",
-        var a when a.Contains("system") => "bi-gear",
-        var a when a.Contains("lab") => "bi-flask",
-        _ => "bi-activity"
-    };
-}
+        return action?.ToLower() switch
+        {
+            var a when a.Contains("create") || a.Contains("add") => "bi-person-plus",
+            var a when a.Contains("appointment") => "bi-calendar-plus",
+            var a when a.Contains("update") || a.Contains("edit") => "bi-pencil",
+            var a when a.Contains("delete") || a.Contains("remove") => "bi-trash",
+            var a when a.Contains("login") || a.Contains("access") => "bi-box-arrow-in-right",
+            var a when a.Contains("system") => "bi-gear",
+            var a when a.Contains("lab") => "bi-flask",
+            _ => "bi-activity"
+        };
+    }
     
     private string GetTimeAgo(DateTime timestamp)
     {
@@ -377,10 +560,77 @@ else
         return timestamp.ToString("MMM dd");
     }
     
-  private void ViewActivityDetails(int activityId)
-{
-    Nav.NavigateTo($"/admin/activities/{activityId}");
-}
+    // Notification methods
+    private void ToggleNotifications()
+    {
+        showNotifications = !showNotifications;
+        showUserMenu = false; // Close user menu if open
+    }
+    
+    private async Task MarkAllAsRead()
+    {
+        try
+        {
+            var userSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (userSession != null)
+            {
+                await AdminService.MarkAllNotificationsAsReadAsync(userSession.UserId);
+                // Refresh notifications
+                notifications = await AdminService.GetNotificationsAsync(userSession.UserId);
+                unreadNotificationCount = 0;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error marking notifications as read: {ex.Message}");
+        }
+    }
+    
+    private void ViewAllNotifications()
+    {
+        Nav.NavigateTo("/admin/notifications");
+        showNotifications = false;
+    }
+    
+    // User menu methods
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+        showNotifications = false; // Close notifications if open
+    }
+    
+    private void GoToProfile()
+    {
+        Nav.NavigateTo("/admin/profile");
+        showUserMenu = false;
+    }
+    
+    private void GoToSettings()
+    {
+        Nav.NavigateTo("/admin/settings");
+        showUserMenu = false;
+    }
+    
+    private async Task Logout()
+    {
+        try
+        {
+            await AuthStateProvider.MarkUserAsLoggedOutAsync();
+            Nav.NavigateTo("/", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+        }
+    }
+    
+    private void ViewActivityDetails(int activityId)
+    {
+        Nav.NavigateTo($"/admin/activities/{activityId}");
+    }
+    
     private void NavigateToUsers()
     {
         Nav.NavigateTo("/admin/users");
@@ -395,6 +645,7 @@ else
     {
         Nav.NavigateTo("/admin/departments");
     }
+    
     
     private void NavigateToTasks()
     {

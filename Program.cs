@@ -1,4 +1,6 @@
 using BlazorApp1.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using BlazorApp1.Authentication;
 using BlazorApp1.Models.DTOs;
 using BlazorApp1.Services.Interfaces;
 using BlazorApp1.Services.Implementations;
@@ -10,6 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services
+  .AddAuthenticationCore()
+  .AddAuthorizationCore();
+
+// register the concrete type so it can be injected by class name
+builder.Services.AddScoped<BlazorApp1.Authentication.AuthStateProvider>();
 
 builder.Services.AddTransient<SqlConnection>(sp =>
     new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -21,6 +29,12 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<IWebHostEnvironment>(builder.Environment);
+builder.Services.AddAuthenticationCore();
+builder.Services.AddAuthorizationCore();
+
+// Register custom services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 
 
 

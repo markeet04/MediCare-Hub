@@ -1,12 +1,20 @@
+@using Microsoft.AspNetCore.Authorization
 @page "/admin/profile"
 @rendermode InteractiveServer
 @layout BlazorApp1.Components.Layout.AdminLayout
 @inject IAdminService AdminService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
 @using BlazorApp1.Services.Interfaces
 @using BlazorApp1.Models.DTOs
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
-
+@using Microsoft.AspNetCore.Components.Forms
+<script>
+    window.clickElement = (element) => {
+        element.click();
+    };
+</script>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="mb-1 fw-bold">Profile Settings</h4>
@@ -44,17 +52,18 @@ else
                             <img src="@(string.IsNullOrEmpty(profilePictureUrl) ? "avatar-placeholder.png" : profilePictureUrl)" 
                                  class="img-fluid" style="width:120px; height:120px; object-fit:cover" />
                         </div>
-                        <button class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow-sm">
+                        <button class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow-sm" @onclick="TriggerFileUpload">
                             <i class="bi bi-camera"></i>
                         </button>
                     </div>
                     <h5 class="mb-1 fw-bold">@fullName</h5>
                     <p class="text-muted mb-3">System Administrator</p>
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary rounded-pill">
+                        <InputFile @ref="fileInputRef" OnChange="@OnFileSelected" class="d-none" accept="image/*" />
+                        <button class="btn btn-outline-primary rounded-pill" @onclick="TriggerFileUpload">
                             <i class="bi bi-upload me-2"></i>Upload New Picture
                         </button>
-                        <button class="btn btn-outline-danger rounded-pill">
+                        <button class="btn btn-outline-danger rounded-pill" @onclick="RemovePicture">
                             <i class="bi bi-trash me-2"></i>Remove Picture
                         </button>
                     </div>
@@ -74,12 +83,8 @@ else
                             <input class="form-control bg-light" @bind="fullName" placeholder="Enter your full name" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control bg-light" @bind="email" placeholder="Enter your email" />
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control bg-light" placeholder="Enter your phone number" />
+                            <input type="tel" class="form-control bg-light" @bind="phoneNumber" placeholder="Enter your phone number" />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Role</label>
@@ -89,10 +94,7 @@ else
                             <label class="form-label">Office Location</label>
                             <input class="form-control bg-light" @bind="officeLocation" placeholder="Enter office location" />
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Profile Picture URL</label>
-                            <input class="form-control bg-light" @bind="profilePictureUrl" placeholder="Enter profile picture URL" />
-                        </div>
+                   
                     </div>
                 </div>
             </div>
@@ -103,69 +105,43 @@ else
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Current Password</label>
                             <div class="input-group">
-                                <input type="password" class="form-control bg-light" placeholder="Enter current password" />
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="bi bi-eye"></i>
+                                <input type="@(showCurrentPassword ? "text" : "password")" class="form-control bg-light" 
+                                       @bind="currentPassword" placeholder="Enter current password" />
+                                <button class="btn btn-outline-secondary" type="button" @onclick="() => showCurrentPassword = !showCurrentPassword">
+                                    <i class="bi @(showCurrentPassword ? "bi-eye-slash" : "bi-eye")"></i>
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">New Password</label>
                             <div class="input-group">
-                                <input type="password" class="form-control bg-light" placeholder="Enter new password" />
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="bi bi-eye"></i>
+                                <input type="@(showNewPassword ? "text" : "password")" class="form-control bg-light" 
+                                       @bind="newPassword" placeholder="Enter new password" />
+                                <button class="btn btn-outline-secondary" type="button" @onclick="() => showNewPassword = !showNewPassword">
+                                    <i class="bi @(showNewPassword ? "bi-eye-slash" : "bi-eye")"></i>
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Confirm New Password</label>
                             <div class="input-group">
-                                <input type="password" class="form-control bg-light" placeholder="Confirm new password" />
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="bi bi-eye"></i>
+                                <input type="@(showConfirmPassword ? "text" : "password")" class="form-control bg-light" 
+                                       @bind="confirmNewPassword" placeholder="Confirm new password" />
+                                <button class="btn btn-outline-secondary" type="button" @onclick="() => showConfirmPassword = !showConfirmPassword">
+                                    <i class="bi @(showConfirmPassword ? "bi-eye-slash" : "bi-eye")"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="card border-0 shadow-sm profile-card">
-                <div class="card-header bg-white py-3 border-0">
-                    <h5 class="mb-0 fw-bold">Notification Settings</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3 d-flex justify-content-between align-items-center setting-item">
-                        <div>
-                            <h6 class="mb-1">Email Notifications</h6>
-                            <p class="text-muted small mb-0">Receive system notifications via email</p>
+                    @if (!string.IsNullOrEmpty(passwordErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@passwordErrorMessage
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="emailNotif" checked />
-                        </div>
-                    </div>
-                    <div class="mb-3 d-flex justify-content-between align-items-center setting-item">
-                        <div>
-                            <h6 class="mb-1">System Alerts</h6>
-                            <p class="text-muted small mb-0">Get alerts about system activities</p>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="systemAlerts" checked />
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center setting-item">
-                        <div>
-                            <h6 class="mb-1">Two-Factor Authentication</h6>
-                            <p class="text-muted small mb-0">Enable enhanced security for your account</p>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="twoFactor" />
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -191,15 +167,23 @@ else
 <link rel="stylesheet" href="AdminProfile.css">
 
 @code {
+    private InputFile? fileInputRef;
     private string fullName = string.Empty;
-    private string email = string.Empty;
+    private string phoneNumber = string.Empty;
     private string profilePictureUrl = string.Empty;
     private string officeLocation = string.Empty;
+    private string currentPassword = string.Empty;
+    private string newPassword = string.Empty;
+    private string confirmNewPassword = string.Empty;
     private int currentAdminId;
     private bool isLoading = false;
     private bool isDataLoaded = false;
     private string successMessage = string.Empty;
     private string errorMessage = string.Empty;
+    private string passwordErrorMessage = string.Empty;
+    private bool showCurrentPassword = false;
+    private bool showNewPassword = false;
+    private bool showConfirmPassword = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -217,12 +201,13 @@ else
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             if (authState.User.Identity.IsAuthenticated)
             {
-                var userIdClaim = authState.User.FindFirst("UserId");
+                var userIdClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim != null && int.TryParse(userIdClaim.Value, out currentAdminId))
                 {
                     var adminProfile = await AdminService.GetAdminByIdAsync(currentAdminId);
                     
                     fullName = adminProfile.FullName ?? string.Empty;
+                    phoneNumber = adminProfile.PhoneNumber ?? string.Empty;
                     profilePictureUrl = adminProfile.ProfilePictureUrl ?? string.Empty;
                     officeLocation = adminProfile.OfficeLocation ?? string.Empty;
                     
@@ -256,27 +241,142 @@ else
             isLoading = true;
             errorMessage = string.Empty;
             successMessage = string.Empty;
+            passwordErrorMessage = string.Empty;
             StateHasChanged();
 
-            var dto = new EditAdminProfileDto
+            // Update profile information
+            var profileDto = new EditAdminProfileDto
             {
                 AdminId = currentAdminId,
                 FullName = fullName,
+                PhoneNumber = phoneNumber,
                 ProfilePictureUrl = profilePictureUrl,
                 OfficeLocation = officeLocation
             };
 
-            await AdminService.UpdateAdminProfileAsync(dto);
+            await AdminService.UpdateAdminProfileAsync(profileDto);
+
+            // Handle password change if any password fields are filled
+            if (!string.IsNullOrEmpty(currentPassword) || !string.IsNullOrEmpty(newPassword) || !string.IsNullOrEmpty(confirmNewPassword))
+            {
+                if (string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(newPassword) || string.IsNullOrEmpty(confirmNewPassword))
+                {
+                    passwordErrorMessage = "All password fields must be filled to change password.";
+                    return;
+                }
+
+                if (newPassword != confirmNewPassword)
+                {
+                    passwordErrorMessage = "New password and confirmation do not match.";
+                    return;
+                }
+
+                if (newPassword.Length < 8)
+                {
+                    passwordErrorMessage = "New password must be at least 8 characters long.";
+                    return;
+                }
+
+                var passwordDto = new EditAdminPasswordDto
+                {
+                    AdminId = currentAdminId,
+                    CurrentPassword = currentPassword,
+                    NewPassword = newPassword
+                };
+
+                await AdminService.ChangePasswordAsync(passwordDto);
+
+                // Clear password fields after successful change
+                currentPassword = string.Empty;
+                newPassword = string.Empty;
+                confirmNewPassword = string.Empty;
+            }
+
             successMessage = "Profile updated successfully!";
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error saving profile: {ex.Message}";
+            if (ex.Message.Contains("password") || ex.Message.Contains("Password"))
+            {
+                passwordErrorMessage = ex.Message;
+            }
+            else
+            {
+                errorMessage = $"Error saving profile: {ex.Message}";
+            }
         }
         finally
         {
             isLoading = false;
             StateHasChanged();
         }
+    }
+
+   private async Task TriggerFileUpload()
+{
+    try
+    {
+        if (fileInputRef?.Element is not null)
+        {
+            await JSRuntime.InvokeVoidAsync("clickElement", fileInputRef.Element);
+        }
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Error triggering file upload: {ex.Message}";
+    }
+}
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                // Validate file type
+                if (!file.ContentType.StartsWith("image/"))
+                {
+                    errorMessage = "Please select a valid image file.";
+                    return;
+                }
+
+                // Validate file size (max 5MB)
+                if (file.Size > 5 * 1024 * 1024)
+                {
+                    errorMessage = "File size must be less than 5MB.";
+                    return;
+                }
+
+                isLoading = true;
+                StateHasChanged();
+
+                // Convert to Base64
+                using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var fileBytes = memoryStream.ToArray();
+                var base64String = Convert.ToBase64String(fileBytes);
+                profilePictureUrl = $"data:{file.ContentType};base64,{base64String}";
+
+                successMessage = "Image uploaded successfully. Click 'Save Changes' to apply.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error uploading file: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemovePicture()
+    {
+        profilePictureUrl = string.Empty;
+        successMessage = "Profile picture removed. Click 'Save Changes' to apply.";
+        StateHasChanged();
     }
 }
