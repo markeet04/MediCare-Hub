@@ -1,0 +1,184 @@
+   .animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .patients-table tbody tr {
+        transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .patients-table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+        transform: translateY(-3px);
+    }
+
+    .patients-table .btn-light {
+        transition: all 0.2s;
+    }
+
+    .patients-table .btn-light:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+        transform: scale(1.1);
+    }
+
+    .dropdown-menu {
+        animation: dropdownFadeIn 0.3s ease-out;
+    }
+
+    @keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-outline-teal, .btn-teal {
+        transition: all 0.2s;
+    }
+
+    .btn-outline-teal:hover, .btn-teal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
+    }
+
+    /* Modal Animations */
+    .modal.fade .modal-dialog {
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+
+    .modal.show .modal-dialog {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    /* Timeline Styling */
+    .visits-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .visits-timeline::before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e2e8f0;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+        padding-left: 1rem;
+    }
+
+    .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: -22px;
+        top: 5px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: rgba(32, 201, 151, 0.5);
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 0 2px rgba(32, 201, 151, 0.2);
+        z-index: 1;
+    }
+
+    .medication-item {
+        border-left: 3px solid rgba(32, 201, 151, 0.5);
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .medication-item:hover {
+        border-left-color: rgb(32, 201, 151);
+        background-color: rgba(32, 201, 151, 0.05);
+        transform: translateX(5px);
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #64748b;
+        padding: 0.75rem 1rem;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: rgba(32, 201, 151, 0.3);
+        background-color: transparent;
+    }
+
+    .nav-tabs .nav-link.active {
+        border-bottom-color: rgb(32, 201, 151);
+        color: rgb(32, 201, 151);
+        font-weight: 600;
+        background-color: transparent;
+    }
+
+    /* Lab Results Chart Styling */
+    .lab-result-chart {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: #f8fafc;
+        transition: all 0.2s;
+    }
+
+    .lab-result-chart:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+        transform: translateY(-3px);
+    }
+
+    .note-item {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: #f8fafc;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .note-item:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+        transform: translateY(-3px);
+    }
+      .text-pink {
+        color: #e91e63 !important;
+    }
+
+    .bg-pink {
+        background-color: #e91e63 !important;
+    }
+
+    .patient-row:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    .avatar-wrapper {
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 0.8rem;
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }

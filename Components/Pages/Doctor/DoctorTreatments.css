@@ -1,0 +1,111 @@
+ .animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+   .note-preview {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .note-content {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .previous-notes::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .previous-notes::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .previous-notes::-webkit-scrollbar-thumb {
+        background: #20b2aa;
+        border-radius: 10px;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .notes-table tbody tr:hover {
+        background-color: rgba(32, 178, 170, 0.05);
+    } .notes-container {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .note-row:hover {
+        background-color: rgba(0, 128, 128, 0.05);
+    }
+
+    .note-preview {
+        max-width: 300px;
+        word-wrap: break-word;
+    }
+
+    .avatar-wrapper {
+        min-width: 40px;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .treatments-table tbody tr {
+        transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .treatments-table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+        transform: translateY(-3px);
+    }
+
+    .treatments-table .btn-light {
+        transition: all 0.2s;
+    }
+
+    .treatments-table .btn-light:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+        transform: scale(1.1);
+    }
+
+    .dropdown-menu {
+        animation: dropdownFadeIn 0.3s ease-out;
+    }
+
+    @keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-outline-teal, .btn-teal {
+        transition: all 0.2s;
+    }
+
+    .btn-outline-teal:hover, .btn-teal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-header .btn-close {
+        background-color: rgba(32, 201, 151, 0.1);
+        border-radius: 50%;
+        opacity: 1;
+    }

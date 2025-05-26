@@ -12,10 +12,13 @@ namespace BlazorApp1.Models.DTOs
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        
+
         // Navigation properties
         public string PatientName { get; set; } = string.Empty;
         public string DoctorName { get; set; } = string.Empty;
         public string? ReceptionistName { get; set; }
+        public string? PatientPhone { get; set; }
+        public int? PatientAge { get; set; }
+        public string? PatientGender { get; set; }
     }
 }

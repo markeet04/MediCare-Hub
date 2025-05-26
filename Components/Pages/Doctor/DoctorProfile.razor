@@ -1,6 +1,21 @@
+@using Microsoft.AspNetCore.Authorization
 @page "/doctor/profile"
-@layout BlazorApp1.Components.Layout.DoctorLayout
 @rendermode InteractiveServer
+@layout BlazorApp1.Components.Layout.DoctorLayout
+@inject IDoctorService DoctorService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@using BlazorApp1.Services.Interfaces
+@using BlazorApp1.Models.DTOs
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+<script>
+    window.clickElement = (element) => {
+        element.click();
+    };
+</script>
 
 <div class="profile-container animate-fade-in">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,143 +26,164 @@
             </h3>
             <p class="text-muted">Manage your account information</p>
         </div>
-        <button class="btn btn-teal rounded-pill shadow-sm px-4" @onclick="Save">
-            <i class="bi bi-check-lg me-2"></i>Save Changes
+        <button class="btn btn-teal rounded-pill shadow-sm px-4" @onclick="Save" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <i class="bi bi-hourglass-split me-2">Saving...</i>
+            }
+            else
+            {
+                <i class="bi bi-check-lg me-2">Save Changes</i>
+            }
         </button>
     </div>
 
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm profile-card">
-                <div class="card-body text-center p-4">
-                    <div class="position-relative mx-auto mb-4" style="width:120px">
-                        <div class="profile-image-container rounded-circle overflow-hidden border shadow-sm" style="width:120px; height:120px;">
-                            <img src="@(string.IsNullOrEmpty(profileImage) ? "avatar-placeholder.png" : profileImage)" 
-                                 class="img-fluid" style="width:120px; height:120px; object-fit:cover" />
-                        </div>
-                        <button class="btn btn-sm btn-teal rounded-circle position-absolute bottom-0 end-0 shadow-sm">
-                            <i class="bi bi-camera"></i>
-                        </button>
-                    </div>
-                    <h5 class="mb-1 fw-bold">@name</h5>
-                    <p class="text-muted mb-3">Cardiologist</p>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-teal rounded-pill">
-                            <i class="bi bi-upload me-2"></i>Upload New Picture
-                        </button>
-                        <button class="btn btn-outline-danger rounded-pill">
-                            <i class="bi bi-trash me-2"></i>Remove Picture
-                        </button>
-                    </div>
-                </div>
+    @if (isLoading && !isDataLoaded)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-teal" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-2 text-muted">Loading profile data...</p>
         </div>
-        
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm mb-4 profile-card">
-                <div class="card-header bg-white py-3 border-0">
-                    <h5 class="mb-0 fw-bold text-teal">Personal Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Full Name</label>
-                            <input class="form-control bg-light" @bind="name" placeholder="Enter your full name" />
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm profile-card">
+                    <div class="card-body text-center p-4">
+                        <div class="position-relative mx-auto mb-4" style="width:120px">
+                            <div class="profile-image-container rounded-circle overflow-hidden border shadow-sm" style="width:120px; height:120px;">
+                                <img src="@(string.IsNullOrEmpty(profilePictureUrl) ? "avatar-placeholder.png" : profilePictureUrl)" 
+                                     class="img-fluid" style="width:120px; height:120px; object-fit:cover" />
+                            </div>
+                            <button class="btn btn-sm btn-teal rounded-circle position-absolute bottom-0 end-0 shadow-sm" @onclick="TriggerFileUpload">
+                                <i class="bi bi-camera"></i>
+                            </button>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control bg-light" @bind="email" placeholder="Enter your email" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control bg-light" placeholder="Enter your phone number" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Specialization</label>
-                            <input class="form-control bg-light" value="Cardiology" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Profile Picture URL</label>
-                            <input class="form-control bg-light" @bind="profileImage" placeholder="Enter profile picture URL" />
+                        <h5 class="mb-1 fw-bold">@fullName</h5>
+                        <p class="text-muted mb-3">@specialization</p>
+                        <div class="d-grid gap-2">
+                            <InputFile @ref="fileInputRef" OnChange="@OnFileSelected" class="d-none" accept="image/*" />
+                            <button class="btn btn-outline-teal rounded-pill" @onclick="TriggerFileUpload">
+                                <i class="bi bi-upload me-2"></i>Upload New Picture
+                            </button>
+                            <button class="btn btn-outline-danger rounded-pill" @onclick="RemovePicture">
+                                <i class="bi bi-trash me-2"></i>Remove Picture
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="card border-0 shadow-sm mb-4 profile-card">
-                <div class="card-header bg-white py-3 border-0">
-                    <h5 class="mb-0 fw-bold text-teal">Change Password</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Current Password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control bg-light" placeholder="Enter current password" />
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm mb-4 profile-card">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h5 class="mb-0 fw-bold text-teal">Personal Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Editable Fields -->
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name <span class="text-success">*</span></label>
+                                <input class="form-control bg-light" @bind="fullName" placeholder="Enter your full name" />
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <span class="text-success">*</span></label>
+                                <input type="tel" class="form-control bg-light" @bind="phoneNumber" placeholder="Enter your phone number" />
+                            </div>
+                            
+                            <!-- Read-only Fields -->
+                            <div class="col-md-6">
+                                <label class="form-label">Specialization</label>
+                                <input class="form-control bg-secondary-subtle" value="@specialization" disabled />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CNIC</label>
+                                <input class="form-control bg-secondary-subtle" value="@cnic" disabled />
+                            </div>
+                        
+                            <div class="col-md-6">
+                                <label class="form-label">Qualifications</label>
+                                <input class="form-control bg-secondary-subtle" value="@qualifications" disabled />
+                            </div>
+          
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">New Password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control bg-light" placeholder="Enter new password" />
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Confirm New Password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control bg-light" placeholder="Confirm new password" />
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Fields marked with <span class="text-success">*</span> can be edited. Other fields are managed by administration.
+                            </small>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="card border-0 shadow-sm profile-card">
-                <div class="card-header bg-white py-3 border-0">
-                    <h5 class="mb-0 fw-bold text-teal">Notification Settings</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3 d-flex justify-content-between align-items-center setting-item">
-                        <div>
-                            <h6 class="mb-1">Email Notifications</h6>
-                            <p class="text-muted small mb-0">Receive patient and system notifications via email</p>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="emailNotif" checked />
-                        </div>
+                
+                <div class="card border-0 shadow-sm mb-4 profile-card">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h5 class="mb-0 fw-bold text-teal">Change Password</h5>
                     </div>
-                    <div class="mb-3 d-flex justify-content-between align-items-center setting-item">
-                        <div>
-                            <h6 class="mb-1">Patient Updates</h6>
-                            <p class="text-muted small mb-0">Get notifications about patient status changes</p>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Current Password</label>
+                                <div class="input-group">
+                                    <input type="@(showCurrentPassword ? "text" : "password")" class="form-control bg-light" 
+                                           @bind="currentPassword" placeholder="Enter current password" />
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="() => showCurrentPassword = !showCurrentPassword">
+                                        <i class="bi @(showCurrentPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">New Password</label>
+                                <div class="input-group">
+                                    <input type="@(showNewPassword ? "text" : "password")" class="form-control bg-light" 
+                                           @bind="newPassword" placeholder="Enter new password" />
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="() => showNewPassword = !showNewPassword">
+                                        <i class="bi @(showNewPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Confirm New Password</label>
+                                <div class="input-group">
+                                    <input type="@(showConfirmPassword ? "text" : "password")" class="form-control bg-light" 
+                                           @bind="confirmNewPassword" placeholder="Confirm new password" />
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="() => showConfirmPassword = !showConfirmPassword">
+                                        <i class="bi @(showConfirmPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="patientUpdates" checked />
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center setting-item">
-                        <div>
-                            <h6 class="mb-1">Two-Factor Authentication</h6>
-                            <p class="text-muted small mb-0">Enable enhanced security for your account</p>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="twoFactor" />
-                        </div>
+                        @if (!string.IsNullOrEmpty(passwordErrorMessage))
+                        {
+                            <div class="alert alert-danger mt-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>@passwordErrorMessage
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 </div>
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@successMessage
+        <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+    </div>
+}
 
 <style>
     .animate-fade-in {
@@ -193,27 +229,6 @@
         transition: all 0.3s ease;
     }
     
-    .form-check-input {
-        cursor: pointer;
-        width: 2.5em;
-        height: 1.25em;
-    }
-    
-    .form-check-input:checked {
-        background-color: var(--bs-teal);
-        border-color: var(--bs-teal);
-    }
-    
-    .setting-item {
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        transition: all 0.2s;
-    }
-    
-    .setting-item:hover {
-        background-color: rgba(32, 201, 151, 0.05);
-    }
-    
     .btn {
         transition: all 0.2s;
     }
@@ -231,16 +246,263 @@
         background-color: var(--bs-teal);
         color: white;
     }
+
+    .btn-teal {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+        color: white;
+    }
+
+    .btn-teal:hover {
+        background-color: #1a8b6e;
+        border-color: #1a8b6e;
+    }
+
+    .text-teal {
+        color: var(--bs-teal) !important;
+    }
 </style>
 
 @code {
-    private string name = "Dr. Ahmed";
-    private string email = "dr.ahmed@hospital.com";
-    private string profileImage = "/doctor-avatar.png";
+    private InputFile? fileInputRef;
+    
+    // Editable fields
+    private string fullName = string.Empty;
+    private string phoneNumber = string.Empty;
+    private string profilePictureUrl = string.Empty;
+    
+    // Read-only fields
+    private string employeeId = string.Empty;
+    private string specialization = string.Empty;
+    private string cnic = string.Empty;
+    private string email = string.Empty;
+    private string qualifications = string.Empty;
+    private string experienceYears = string.Empty;
+    
+    // Password fields
+    private string currentPassword = string.Empty;
+    private string newPassword = string.Empty;
+    private string confirmNewPassword = string.Empty;
+    
+    // State management
+    private int currentDoctorId;
+    private int currentUserId;
+    private bool isLoading = false;
+    private bool isDataLoaded = false;
+    private string successMessage = string.Empty;
+    private string errorMessage = string.Empty;
+    private string passwordErrorMessage = string.Empty;
+    private bool showCurrentPassword = false;
+    private bool showNewPassword = false;
+    private bool showConfirmPassword = false;
 
-    private void Save()
+    protected override async Task OnInitializedAsync()
     {
-        // Placeholder for saving profile info
-        Console.WriteLine("Saving profile changes...");
+        await LoadDoctorProfile();
+    }
+
+    private async Task LoadDoctorProfile()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Get current user ID from authentication state
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out currentUserId))
+                {
+                    var doctorProfile = await DoctorService.GetDoctorProfileByUserIdAsync(currentUserId);
+                    
+                    if (doctorProfile != null)
+                    {
+                        currentDoctorId = doctorProfile.DoctorId;
+                        
+                        // Editable fields
+                        fullName = doctorProfile.FullName ?? string.Empty;
+                        phoneNumber = doctorProfile.PhoneNumber ?? string.Empty;
+                        profilePictureUrl = doctorProfile.ProfilePictureUrl ?? string.Empty;
+                        
+                        // Read-only fields
+                        specialization = doctorProfile.Specialty ?? string.Empty;
+                        cnic = doctorProfile.CNIC ?? string.Empty;
+                        qualifications = doctorProfile.Qualifications ?? string.Empty;
+                        
+                        isDataLoaded = true;
+                    }
+                    else
+                    {
+                        errorMessage = "Doctor profile not found.";
+                    }
+                }
+                else
+                {
+                    errorMessage = "Unable to retrieve user ID from authentication.";
+                }
+            }
+            else
+            {
+                errorMessage = "User is not authenticated.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading profile: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            successMessage = string.Empty;
+            passwordErrorMessage = string.Empty;
+            StateHasChanged();
+
+            // Update profile information (only editable fields)
+            var updateRequest = new UpdateDoctorProfileRequest
+            {
+                FullName = fullName,
+                PhoneNumber = phoneNumber,
+                ProfilePictureUrl = profilePictureUrl
+            };
+
+            await DoctorService.UpdateDoctorProfileAsync(currentDoctorId, updateRequest);
+
+            // Handle password change if any password fields are filled
+            bool hasPasswordFields = !string.IsNullOrEmpty(currentPassword) || 
+                                   !string.IsNullOrEmpty(newPassword) || 
+                                   !string.IsNullOrEmpty(confirmNewPassword);
+
+            if (hasPasswordFields)
+            {
+                if (string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(newPassword) || string.IsNullOrEmpty(confirmNewPassword))
+                {
+                    passwordErrorMessage = "All password fields must be filled to change password.";
+                    return;
+                }
+
+                if (newPassword != confirmNewPassword)
+                {
+                    passwordErrorMessage = "New password and confirmation do not match.";
+                    return;
+                }
+
+                if (newPassword.Length < 8)
+                {
+                    passwordErrorMessage = "New password must be at least 8 characters long.";
+                    return;
+                }
+
+                // Change password
+                var passwordRequest = new ChangeDoctorPasswordRequest
+                {
+                    DoctorId = currentDoctorId,
+                    CurrentPassword = currentPassword,
+                    NewPassword = newPassword
+                };
+
+                await DoctorService.ChangePasswordAsync(passwordRequest);
+                currentPassword = string.Empty;
+                newPassword = string.Empty;
+                confirmNewPassword = string.Empty;
+            }
+
+            successMessage = "Profile updated successfully!";
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
+            {
+                passwordErrorMessage = ex.Message;
+            }
+            else
+            {
+                errorMessage = $"Error saving profile: {ex.Message}";
+            }
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task TriggerFileUpload()
+    {
+        try
+        {
+            if (fileInputRef?.Element is not null)
+            {
+                await JSRuntime.InvokeVoidAsync("clickElement", fileInputRef.Element);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error triggering file upload: {ex.Message}";
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                // Validate file type
+                if (!file.ContentType.StartsWith("image/"))
+                {
+                    errorMessage = "Please select a valid image file.";
+                    return;
+                }
+
+                // Validate file size (max 5MB)
+                if (file.Size > 5 * 1024 * 1024)
+                {
+                    errorMessage = "File size must be less than 5MB.";
+                    return;
+                }
+
+                isLoading = true;
+                StateHasChanged();
+
+                // Convert to Base64
+                using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var fileBytes = memoryStream.ToArray();
+                var base64String = Convert.ToBase64String(fileBytes);
+                profilePictureUrl = $"data:{file.ContentType};base64,{base64String}";
+
+                successMessage = "Image uploaded successfully. Click 'Save Changes' to apply.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error uploading file: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemovePicture()
+    {
+        profilePictureUrl = string.Empty;
+        successMessage = "Profile picture removed. Click 'Save Changes' to apply.";
+        StateHasChanged();
     }
 }

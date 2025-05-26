@@ -1,555 +1,544 @@
-@* @page "/" *@
+@* 
+Assumptions:
+- AppointmentDto has properties: AppointmentId, PatientName, ScheduledDateTime, Status
+- DoctorProfileDto has properties: DoctorId, FullName, Specialization (or similar)
+- AuthStateProvider is in BlazorApp1.Authentication namespace
+- IDoctorService is in BlazorApp1.Services.Interfaces namespace
+*@
+
 @page "/doctor/dashboard"
 @layout DoctorLayout
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject BlazorApp1.Services.Interfaces.IDoctorService DoctorService
+@inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
+@using BlazorApp1.Models.DTOs
+@using BlazorApp1.Authentication
 
-<div class="d-flex justify-content-between align-items-center mb-4 ">
-    <div>
-        <h4 class="mb-1 fw-bold">Welcome back, Dr. Ahmed</h4>
-        <p class="text-muted">Here's your patient overview for today, @DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
-    </div>
-    <div>
-        <button class="btn btn-teal rounded-pill shadow-sm" @onclick="StartConsultation">
-            <i class="bi bi-camera-video me-2"></i>Start Consultation
-        </button>
-    </div>
-</div>
+<link rel="stylesheet" href="DoctoDashboard.css">
 
-<!-- Today's Overview -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="animate-fade-in card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
-            <div class="position-absolute bg-teal bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-teal bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-calendar-check fs-4 text-teal"></i>
-                    </div>
-                    <h6 class="text-muted mb-0">Today's Appointments</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">8</h2>
-                <div class="mt-3 d-flex align-items-center text-info">
-                    <i class="bi bi-clock me-1"></i>
-                    <span>Next in 25 min</span>
-                </div>
-            </div>
+@if (IsLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
+        <span class="ms-3">Loading dashboard...</span>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToPatients">
-            <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-people fs-4 text-success"></i>
-                    </div>
-                    <h6 class="text-muted mb-0">Active Patients</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">42</h2>
-                <div class="mt-3 d-flex align-items-center text-success">
-                    <i class="bi bi-arrow-up me-1"></i>
-                    <span>3 new this week</span>
-                </div>
-            </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @ErrorMessage
+    </div>
+}
+else
+{
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1 fw-bold">Welcome back, @(CurrentDoctor?.FullName ?? "Doctor")</h4>
+            <p class="text-muted">Here's your patient overview for today, @DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
         </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToLabOrders">
-            <div class="position-absolute bg-warning bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-flask fs-4 text-warning"></i>
+            
+        <!-- Notification Bell -->
+        <div class="position-relative">
+            <button class="btn btn-light rounded-circle p-2 border-0 shadow-sm position-relative" 
+                    @onclick="ToggleNotifications" 
+                    style="width: 45px; height: 45px;">
+                <i class="bi bi-bell fs-5"></i>
+                @if (unreadNotificationCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                          style="font-size: 0.7rem;">
+                        @(unreadNotificationCount > 9 ? "9+" : unreadNotificationCount.ToString())
+                    </span>
+                }
+            </button>
+            
+            <!-- Notification Dropdown -->
+            @if (showNotifications)
+            {
+                <div class="position-absolute end-0 mt-2 bg-white rounded-3 shadow-lg border" 
+                     style="width: 350px; max-height: 400px; z-index: 1050;">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <h6 class="mb-0 fw-bold">Notifications</h6>
+                        @if (unreadNotificationCount > 0)
+                        {
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                                    @onclick="MarkAllAsRead">
+                                Mark all read
+                            </button>
+                        }
                     </div>
-                    <h6 class="text-muted mb-0">Pending Lab Results</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">7</h2>
-                <div class="mt-3 d-flex align-items-center text-warning">
-                    <i class="bi bi-hourglass-split me-1"></i>
-                    <span>2 urgent results</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAIPredictions">
-            <div class="position-absolute bg-primary bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-robot fs-4 text-primary"></i>
+                    <div class="overflow-auto" style="max-height: 300px;">
+                        @if (notifications?.Any() == true)
+                        {
+                            @foreach (var notification in notifications.Take(5))
+                            {
+                                <div class="p-3 border-bottom @(notification.IsRead ? "" : "bg-light")">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3 flex-shrink-0">
+                                            <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                                <i class="bi bi-info-circle text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            @if (!string.IsNullOrEmpty(notification.Title))
+                                            {
+                                                <h6 class="mb-1 fw-semibold">@notification.Title</h6>
+                                            }
+                                            @if (!string.IsNullOrEmpty(notification.Message))
+                                            {
+                                                <p class="mb-1 text-muted small">@notification.Message</p>
+                                            }
+                                            <small class="text-muted">@GetTimeAgo(notification.CreatedAt)</small>
+                                        </div>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <div class="flex-shrink-0">
+                                                <div class="bg-primary rounded-circle" style="width: 8px; height: 8px;"></div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-4 text-center text-muted">
+                                <i class="bi bi-bell-slash fs-1 mb-3"></i>
+                                <p>No notifications</p>
+                            </div>
+                        }
                     </div>
-                    <h6 class="text-muted mb-0">AI Insights</h6>
+                    @if (notifications?.Count() > 5)
+                    {
+                        <div class="p-3 border-top text-center">
+                            <button class="btn btn-sm btn-primary rounded-pill px-4" 
+                                    @onclick="ViewAllNotifications">
+                                View All Notifications
+                            </button>
+                        </div>
+                    }
                 </div>
-                <h2 class="mb-0 fw-bold counter">5</h2>
-                <div class="mt-3 d-flex align-items-center text-primary">
-                    <i class="bi bi-lightbulb me-1"></i>
-                    <span>New predictions available</span>
-                </div>
-            </div>
+            }
         </div>
-    </div>
-</div>
-
-<!-- Main Content - Two Columns -->
-<div class="row">
-    <!-- Left Column - Patient Appointments -->
-    <div class="col-lg-8">
-        <!-- Today's Appointments -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
-                <h5 class="mb-0 fw-bold">Today's Schedule</h5>
+        
+        <!-- User Avatar with Dropdown -->
+        <div class="position-relative">
+            <button class="btn p-0 border-0 bg-transparent d-flex align-items-center" 
+                    @onclick="ToggleUserMenu">
                 <div class="d-flex align-items-center">
-                    <div class="me-3 d-flex align-items-center">
-                        <div class="me-2 rounded-circle bg-success" style="width: 8px; height: 8px;"></div>
-                        <span class="text-muted small">Confirmed</span>
+                    @if (!string.IsNullOrEmpty(CurrentDoctor?.ProfilePictureUrl))
+                    {
+                        <img src="@CurrentDoctor.ProfilePictureUrl" 
+                             alt="Profile" 
+                             class="rounded-circle me-2" 
+                             style="width: 45px; height: 45px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                             style="width: 45px; height: 45px;">
+                            <i class="bi bi-person fs-5"></i>
+                        </div>
+                    }
+                    <div class="text-start d-none d-md-block">
+                        <div class="fw-semibold">@(CurrentDoctor?.FullName ?? "Admin")</div>
+                        <small class="text-muted">Administrator</small>
                     </div>
-                    <div class="me-3 d-flex align-items-center">
-                        <div class="me-2 rounded-circle bg-warning" style="width: 8px; height: 8px;"></div>
-                        <span class="text-muted small">Pending</span>
+                    <i class="bi bi-chevron-down ms-2"></i>
+                </div>
+            </button>
+            
+            <!-- User Menu Dropdown -->
+            @if (showUserMenu)
+            {
+                <div class="position-absolute end-0 mt-2 bg-white rounded-3 shadow-lg border" 
+                     style="width: 220px; z-index: 1050;">
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(CurrentDoctor?.ProfilePictureUrl))
+                            {
+                                <img src="@CurrentDoctor.ProfilePictureUrl" 
+                                     alt="Profile" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            }
+                            <div>
+                                <div class="fw-semibold">@(CurrentDoctor?.FullName ?? "Admin")</div>
+                               
+                            </div>
+                        </div>
                     </div>
+                    <div class="py-2">
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" 
+                                @onclick="GoToProfile">
+                            <i class="bi bi-person me-3"></i>
+                            <span>Profile</span>
+                        </button>
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" 
+                                @onclick="GoToSettings">
+                            <i class="bi bi-gear me-3"></i>
+                            <span>Settings</span>
+                        </button>
+                        <hr class="my-2">
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0 text-danger" 
+                                @onclick="Logout">
+                            <i class="bi bi-box-arrow-right me-3"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+   
+  
+
+    <!-- Today's Overview Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
+                <div class="position-absolute bg-teal bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-teal bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-calendar-check fs-4 text-teal"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Today's Appointments</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold">@TodayAppointments.Count</h2>
+                    @if (TodayAppointments.Any())
+                    {
+                        var nextAppointment = TodayAppointments.Where(a => a.ScheduledDateTime > DateTime.Now).OrderBy(a => a.ScheduledDateTime).FirstOrDefault();
+                        if (nextAppointment != null)
+                        {
+                            var minutesUntilNext = (int)(nextAppointment.ScheduledDateTime - DateTime.Now).TotalMinutes;
+                            <div class="mt-3 d-flex align-items-center text-info">
+                                <i class="bi bi-clock me-1"></i>
+                                <span>Next in @minutesUntilNext min</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToPatients">
+                <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-people fs-4 text-success"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Assigned Patients</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold">@AssignedPatientsCount</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column - Today's Appointments -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                    <h5 class="mb-0 fw-bold">Today's Schedule</h5>
                     <button class="btn btn-sm btn-outline-teal rounded-pill px-3" @onclick="NavigateToAppointments">View All</button>
                 </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <!-- Appointment Item 1 -->
-                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(1)">
-                        <div class="me-3 position-relative">
-                            <div class="rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                                <span class="text-teal fw-bold">SJ</span>
-                            </div>
-                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                <div class="card-body p-0">
+                    @if (TodayAppointments.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var appointment in TodayAppointments.OrderBy(a => a.ScheduledDateTime))
+                            {
+                                <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)">
+                                    <div class="me-3 position-relative">
+                                        <div class="rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                                            <span class="text-teal fw-bold">@GetPatientInitials(appointment.PatientName)</span>
+                                        </div>
+                                        <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle @GetStatusIndicatorClass(appointment.Status)" style="width: 12px; height: 12px;"></div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <h6 class="mb-0">@appointment.PatientName</h6>
+                                            <span class="badge rounded-pill bg-teal-subtle text-teal">@appointment.ScheduledDateTime.ToString("hh:mm tt")</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <p class="text-muted mb-0 small">@appointment.ScheduledDateTime.ToString("MMM dd, yyyy")</p>
+                                            <span class="@GetStatusTextClass(appointment.Status) small fw-medium d-none d-md-block">@appointment.Status</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="mb-0">Sarah Johnson</h6>
-                                <span class="badge rounded-pill bg-teal-subtle text-teal">09:30 AM</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <p class="text-muted mb-0 small">Follow-up • Hypertension • 42 years</p>
-                                <span class="text-success small fw-medium d-none d-md-block">In 25 minutes</span>
-                            </div>
+                    }
+                    else
+                    {
+                        <div class="p-5 text-center">
+                            <i class="bi bi-calendar-x fs-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">No appointments scheduled for today</h5>
+                            <p class="text-muted">Your schedule is clear for today.</p>
                         </div>
-                    </div>
-                    
-                    <!-- Appointment Item 2 -->
-                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(2)">
-                        <div class="me-3 position-relative">
-                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                                <span class="text-primary fw-bold">MT</span>
-                            </div>
-                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="mb-0">Michael Torres</h6>
-                                <span class="badge rounded-pill bg-teal-subtle text-teal">10:15 AM</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <p class="text-muted mb-0 small">Post-surgery • Cardiac • 58 years</p>
-                                <span class="text-success small fw-medium d-none d-md-block">In 70 minutes</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Appointment Item 3 -->
-                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(3)">
-                        <div class="me-3 position-relative">
-                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                                <span class="text-info fw-bold">EL</span>
-                            </div>
-                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-warning" style="width: 12px; height: 12px;"></div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="mb-0">Emily Liu</h6>
-                                <span class="badge rounded-pill bg-teal-subtle text-teal">11:00 AM</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <p class="text-muted mb-0 small">New Patient • Chest Pain • 34 years</p>
-                                <span class="text-warning small fw-medium d-none d-md-block">Pending confirmation</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Appointment Item 4 -->
-                    <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewPatientDetails(4)">
-                        <div class="me-3 position-relative">
-                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                                <span class="text-warning fw-bold">RD</span>
-                            </div>
-                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="mb-0">Robert Davis</h6>
-                                <span class="badge rounded-pill bg-teal-subtle text-teal">02:30 PM</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <p class="text-muted mb-0 small">Follow-up • Diabetes Type 2 • 62 years</p>
-                                <span class="text-success small fw-medium d-none d-md-block">Confirmed</span>
-                            </div>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
         
-        <!-- Patient Health Stats -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
-                <h5 class="mb-0 fw-bold">Patient Health Metrics</h5>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-teal rounded-start-pill" onclick="@(() => SwitchMetricsView("Weekly"))">Weekly</button>
-                    <button class="btn btn-sm btn-outline-teal rounded-end-pill" onclick="@(() => SwitchMetricsView("Monthly"))">Monthly</button>
+        <!-- Right Column - Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold">Quick Actions</h5>
                 </div>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px; position: relative;">
-                    <!-- Placeholder for the actual chart component -->
-                    <div class="placeholder-chart d-flex flex-column justify-content-center align-items-center h-100">
-                        <i class="bi bi-heart-pulse text-teal" style="font-size: 4rem;"></i>
-                        <p class="text-muted mt-3">Patient recovery rates by treatment plan</p>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToAppointments">
+                            <span class="d-flex align-items-center">
+                                <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                    <i class="bi bi-calendar-check text-teal"></i>
+                                </div>
+                                <span>View All Appointments</span>
+                            </span>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToPatients">
+                            <span class="d-flex align-items-center">
+                                <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                    <i class="bi bi-people text-teal"></i>
+                                </div>
+                                <span>Manage Patients</span>
+                            </span>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToNewPatient">
+                            <span class="d-flex align-items-center">
+                                <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
+                                    <i class="bi bi-person-plus text-teal"></i>
+                                </div>
+                                <span>Add New Patient</span>
+                            </span>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Right Column - Patient Info & Actions -->
-    <div class="col-lg-4">
-        <!-- Quick Actions -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-3">
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToNewPatient">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-person-plus text-teal"></i>
-                            </div>
-                            <span>Add New Patient</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToCreatePrescription">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-file-earmark-medical text-teal"></i>
-                            </div>
-                            <span>Create Prescription</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToOrderLab">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-flask text-teal"></i>
-                            </div>
-                            <span>Order Lab Test</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Recent Patient Activities -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Recent Updates</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item p-3 update-item" @onclick="() => ViewAlertDetails(1)">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="bi bi-exclamation-circle"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">Critical Lab Result</h6>
-                                <p class="text-muted small mb-1">Patient: Michael Torres</p>
-                                <p class="text-muted small mb-0">
-                                    <i class="bi bi-clock me-1"></i> 35 minutes ago
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="list-group-item p-3 update-item" @onclick="() => ViewAlertDetails(2)">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">Prescription Filled</h6>
-                                <p class="text-muted small mb-1">Patient: Sarah Johnson</p>
-                                <p class="text-muted small mb-0">
-                                    <i class="bi bi-clock me-1"></i> 2 hours ago
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="list-group-item p-3 update-item" @onclick="() => ViewAlertDetails(3)">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="bi bi-robot"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">New AI Prediction</h6>
-                                <p class="text-muted small mb-1">Patient: Robert Davis</p>
-                                <p class="text-muted small mb-0">
-                                    <i class="bi bi-clock me-1"></i> 3 hours ago
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Reminders -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">Reminders</h5>
-                <button class="btn btn-sm btn-outline-teal rounded-circle">
-                    <i class="bi bi-plus"></i>
-                </button>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item p-3 d-flex align-items-center">
-                        <div class="form-check me-3">
-                            <input class="form-check-input" type="checkbox" value="" id="reminder1">
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Follow up with Patient #4872</h6>
-                            <p class="text-muted small mb-0">Today, 4:30 PM</p>
-                        </div>
-                    </div>
-                    <div class="list-group-item p-3 d-flex align-items-center">
-                        <div class="form-check me-3">
-                            <input class="form-check-input" type="checkbox" value="" id="reminder2">
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Review lab results for Sarah Johnson</h6>
-                            <p class="text-muted small mb-0">Today, 5:00 PM</p>
-                        </div>
-                    </div>
-                    <div class="list-group-item p-3 d-flex align-items-center">
-                        <div class="form-check me-3">
-                            <input class="form-check-input" type="checkbox" value="" id="reminder3">
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Department meeting</h6>
-                            <p class="text-muted small mb-0">Tomorrow, 10:00 AM</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+}
 
 @code {
-    private string MetricsView { get; set; } = "Weekly";
-    
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    // Properties for binding data
+    private DoctorProfileDto? CurrentDoctor { get; set; }
+    private List<AppointmentDto> TodayAppointments { get; set; } = new();
+    private int AssignedPatientsCount { get; set; } = 0;
+    private bool IsLoading { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+ private IEnumerable<NotificationDto>? notifications;
+    private int unreadNotificationCount = 0;
+    private bool showNotifications = false;
+    private bool showUserMenu = false;
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
+        try
         {
-            // Initialize any JS-dependent components here
-            await JSRuntime.InvokeVoidAsync("eval", "try { var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]')); var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); }); } catch (e) { console.error(e); }");
+            // Get current user session
+            var userSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (userSession == null)
+            {
+                ErrorMessage = "Unable to retrieve user session. Please log in again.";
+                return;
+            }
+
+            // Load doctor profile
+            CurrentDoctor = await DoctorService.GetDoctorProfileByUserIdAsync(userSession.UserId);
+            if (CurrentDoctor == null)
+            {
+                ErrorMessage = "Unable to load doctor profile.";
+                return;
+            }
+                  notifications = await DoctorService.GetNotificationsAsync(userSession.UserId);
+                unreadNotificationCount = notifications?.Count(n => !n.IsRead) ?? 0;
+
+            // Load today's appointments
+            TodayAppointments = (await DoctorService.GetTodayAppointmentsAsync(CurrentDoctor.DoctorId)).ToList();
+
+            // Load assigned patients count (optional - you may need to add this method to your service)
+            try
+            {
+                var assignedPatients = await DoctorService.GetAssignedPatientsAsync(CurrentDoctor.DoctorId);
+                AssignedPatientsCount = assignedPatients.Count();
+            }
+            catch
+            {
+                // If this method fails, just keep the count at 0
+                AssignedPatientsCount = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle errors
+            ErrorMessage = $"An error occurred while loading the dashboard: {ex.Message}";
+            Console.WriteLine($"Dashboard loading error: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+    private async Task MarkAllAsRead()
+    {
+        try
+        {
+            var userSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (userSession != null)
+            {
+                await DoctorService.MarkAllNotificationsAsReadAsync(userSession.UserId);
+                // Refresh notifications
+                notifications = await DoctorService.GetNotificationsAsync(userSession.UserId);
+                unreadNotificationCount = 0;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error marking notifications as read: {ex.Message}");
         }
     }
     
-    private void SwitchMetricsView(string view)
+    private void ViewAllNotifications()
     {
-        MetricsView = view;
-        // Here you would reload chart data based on the selected view
+        Nav.NavigateTo("/doctor/notifications");
+        showNotifications = false;
     }
     
-    private void ViewPatientDetails(int patientId)
+    // User menu methods
+    private void ToggleUserMenu()
     {
-        Nav.NavigateTo($"/doctor/patients/{patientId}");
+        showUserMenu = !showUserMenu;
+        showNotifications = false; // Close notifications if open
     }
     
-    private void ViewAlertDetails(int alertId)
+    private void GoToProfile()
     {
-        Nav.NavigateTo($"/doctor/alerts/{alertId}");
+        Nav.NavigateTo("/doctor/profile");
+        showUserMenu = false;
     }
     
+    private void GoToSettings()
+    {
+        Nav.NavigateTo("/doctor/settings");
+        showUserMenu = false;
+    }
+    
+    private async Task Logout()
+    {
+        try
+        {
+            await AuthStateProvider.MarkUserAsLoggedOutAsync();
+            Nav.NavigateTo("/", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+        }
+    }
+ private void ToggleNotifications()
+    {
+        showNotifications = !showNotifications;
+        showUserMenu = false; // Close user menu if open
+    }
+    // Helper methods
+    private string GetPatientInitials(string patientName)
+    {
+        if (string.IsNullOrWhiteSpace(patientName))
+            return "??";
+
+        var parts = patientName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        
+        return parts.Length > 0 ? $"{parts[0][0]}?".ToUpper() : "??";
+    }
+
+    private string GetStatusIndicatorClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "confirmed" => "bg-success",
+            "pending" => "bg-warning",
+            "cancelled" => "bg-danger",
+            "completed" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusTextClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "confirmed" => "text-success",
+            "pending" => "text-warning",
+            "cancelled" => "text-danger",
+            "completed" => "text-info",
+            _ => "text-secondary"
+        };
+    }
+  private string GetTimeAgo(DateTime timestamp)
+    {
+        var timeSpan = DateTime.Now - timestamp;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return timestamp.ToString("MMM dd");
+    }
+    
+    // Navigation methods
+    private void ViewAppointmentDetails(int appointmentId)
+    {
+        Nav.NavigateTo($"/doctor/appointments/{appointmentId}");
+    }
+
     private void NavigateToPatients()
     {
         Nav.NavigateTo("/doctor/patients");
     }
-    
+
     private void NavigateToAppointments()
     {
         Nav.NavigateTo("/doctor/appointments");
     }
-    
-    private void NavigateToLabOrders()
-    {
-        Nav.NavigateTo("/doctor/laborders");
-    }
-    
-    private void NavigateToAIPredictions()
-    {
-        Nav.NavigateTo("/doctor/aipredictions");
-    }
-    
+
     private void NavigateToNewPatient()
     {
         Nav.NavigateTo("/doctor/patients/new");
     }
-    
-    private void NavigateToCreatePrescription()
-    {
-        Nav.NavigateTo("/doctor/prescriptions/new");
-    }
-    
-    private void NavigateToOrderLab()
-    {
-        Nav.NavigateTo("/doctor/laborders/new");
-    }
-    
+
     private void StartConsultation()
     {
         Nav.NavigateTo("/doctor/teleconsultation");
     }
 }
-
-<style>
-    /* Custom teal colors (matching the doctor layout) */
-    .bg-teal {
-        background-color: var(--bs-teal) !important;
-    }
-    
-    .bg-teal-subtle {
-        background-color: rgba(var(--bs-teal-rgb), 0.1) !important;
-    }
-    
-    .text-teal {
-        color: var(--bs-teal) !important;
-    }
-    
-    .btn-teal {
-        background-color: var(--bs-teal);
-        border-color: var(--bs-teal);
-        color: white;
-    }
-    
-    .btn-teal:hover {
-        background-color: #1ba881;
-        border-color: #1ba881;
-        color: white;
-    }
-    
-    .btn-outline-teal {
-        color: var(--bs-teal);
-        border-color: var(--bs-teal);
-    }
-    
-    .btn-outline-teal:hover {
-        background-color: var(--bs-teal);
-        color: white;
-    }
-    
-    /* Dashboard specific styles */
-    .appointment-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .appointment-item:hover {
-        background-color: rgba(var(--bs-teal-rgb), 0.03);
-    }
-    
-    .update-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .update-item:hover {
-        background-color: rgba(var(--bs-teal-rgb), 0.03);
-    }
-    
-    .quick-action-btn {
-        transition: all 0.3s;
-    }
-    
-    .quick-action-btn:hover {
-        background-color: var(--bs-teal);
-        color: white;
-    }
-    
-    .quick-action-btn:hover .rounded-circle {
-        background-color: rgba(255, 255, 255, 0.2) !important;
-    }
-    
-    .quick-action-btn:hover i {
-        color: white !important;
-    }
-    
-    .counter {
-        animation: countup 2s ease-out;
-    }
-    
-    @@keyframes countup {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .stat-card {
-        overflow: hidden;
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
-    
-    .stat-card::after {
-        content: '';
-        position: absolute;
-        width: 200%;
-        height: 200%;
-        top: -50%;
-        left: -50%;
-        background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-        transform: scale(0);
-        opacity: 0;
-        transition: transform 0.6s, opacity 0.6s;
-    }
-    
-    .stat-card:hover::after {
-        opacity: 1;
-        transform: scale(1);
-    }
-    
-    .form-check-input:checked {
-        background-color: var(--bs-teal);
-        border-color: var(--bs-teal);
-    }
-</style>

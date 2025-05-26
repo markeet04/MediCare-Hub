@@ -1,20 +1,51 @@
+@*
+Assumptions:
+- AuthStateProvider has GetCurrentUserSessionAsync() method returning UserSessionDto with UserId and Role
+- IDoctorService methods: GetDoctorLabOrdersAsync, CreateLabOrderAsync, GetAssignedPatientsAsync, GetDoctorAppointmentsAsync
+- GetLabOrderByIdAsync method assumed to exist (or will need to be added to IDoctorService)
+- PatientSummaryDto has PatientId and Name properties
+- AppointmentDto has AppointmentId, Date, and PatientName properties
+- LabOrderDto includes TestType property (added assumption)
+*@
+
 @page "/doctor/laborders"
 @layout DoctorLayout
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
+@inject BlazorApp1.Services.Interfaces.IDoctorService DoctorService
+@using BlazorApp1.Models.DTOs
 
-<div class="animate-fade-in d-flex justify-content-between align-items-center mb-4 ">
+<div class="animate-fade-in d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="mb-1 fw-bold">Lab Orders</h4>
-        <p class="text-muted">Manage and track lab orders for your patients, @DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
+        <p class="text-muted">
+            Manage and track lab orders for your patients, @DateTime.Now.ToString("dddd, MMMM d, yyyy")
+        </p>
     </div>
     <div>
-        <button class="btn btn-teal rounded-pill shadow-sm" @onclick="NavigateToNewLabOrder">
+        <button class="btn btn-teal rounded-pill shadow-sm" @onclick="OpenNewLabOrderModal">
             <i class="bi bi-plus-circle me-2"></i>New Lab Order
         </button>
     </div>
 </div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty"></button>
+    </div>
+}
 
 <!-- Filters and Search -->
 <div class="card border-0 shadow-sm mb-4 animate-fade-in">
@@ -22,13 +53,14 @@
         <h5 class="mb-0 fw-bold">Filter Lab Orders</h5>
         <div class="d-flex align-items-center">
             <select class="form-select form-select-sm me-2 rounded-pill" @onchange="ChangeFilterStatus">
-                <option value="All">All Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Completed">Completed</option>
-                <option value="Urgent">Urgent</option>
+                <option value="All" selected="@(FilterStatus == "All")">All Statuses</option>
+                <option value="Pending" selected="@(FilterStatus == "Pending")">Pending</option>
+                <option value="Completed" selected="@(FilterStatus == "Completed")">Completed</option>
+                <option value="Urgent" selected="@(FilterStatus == "Urgent")">Urgent</option>
             </select>
             <div class="position-relative">
-                <input type="search" class="form-control bg-light border-0 rounded-pill" placeholder="Search lab orders..." @oninput="SearchLabOrders" />
+                <input type="search" class="form-control bg-light border-0 rounded-pill"
+                       placeholder="Search lab orders..." @bind="SearchQuery" @oninput="SearchLabOrders" />
                 <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
             </div>
         </div>
@@ -55,134 +87,559 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="list-group list-group-flush animate-fade-in">
-            <!-- Lab Order Item 1 -->
-            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(1)">
-                <div class="me-3 position-relative">
-                    <div class="rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                        <span class="text-teal fw-bold">SJ</span>
-                    </div>
-                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+        @if (isLoading)
+        {
+            <div class="d-flex justify-content-center align-items-center py-5">
+                <div class="spinner-border text-teal" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h6 class="mb-0">Sarah Johnson</h6>
-                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3921</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <p class="text-muted mb-0 small">Blood Panel • Ordered: May 17, 2025</p>
-                        <span class="text-success small fw-medium">Completed</span>
-                    </div>
-                </div>
+                <span class="ms-2">Loading lab orders...</span>
             </div>
-            <!-- Lab Order Item 2 -->
-            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(2)">
-                <div class="me-3 position-relative">
-                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                        <span class="text-primary fw-bold">MT</span>
+        }
+        else if (filteredLabOrders?.Any() == true)
+        {
+            <div class="list-group list-group-flush animate-fade-in">
+                @foreach (var order in filteredLabOrders)
+                {
+                    <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item"
+                         @onclick="() => OpenLabOrderDetails(order.LabOrderId)">
+                        <div class="me-3 position-relative">
+                            <div class="rounded-circle @GetAvatarBackgroundClass(order.Status) d-flex align-items-center justify-content-center flex-shrink-0"
+                                 style="width: 50px; height: 50px;">
+                                <span class="@GetAvatarTextClass(order.Status) fw-bold">@GetPatientInitials(order.PatientName)</span>
+                            </div>
+                            <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle @GetStatusDotClass(order.Status)"
+                                 style="width: 12px; height: 12px;"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">@order.PatientName</h6>
+                                <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-@order.LabOrderId</span>
+                            </div>
+
+                        </div>
                     </div>
-                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-warning" style="width: 12px; height: 12px;"></div>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h6 class="mb-0">Michael Torres</h6>
-                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3922</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <p class="text-muted mb-0 small">Cardiac Biomarkers • Ordered: May 18, 2025</p>
-                        <span class="text-warning small fw-medium">Pending</span>
-                    </div>
-                </div>
+                }
             </div>
-            <!-- Lab Order Item 3 -->
-            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(3)">
-                <div class="me-3 position-relative">
-                    <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                        <span class="text-danger fw-bold">EL</span>
-                    </div>
-                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-danger" style="width: 12px; height: 12px;"></div>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h6 class="mb-0">Emily Liu</h6>
-                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3923</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <p class="text-muted mb-0 small">Urgent: Electrolyte Panel • Ordered: May 19, 2025</p>
-                        <span class="text-danger small fw-medium">Urgent</span>
-                    </div>
-                </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No lab orders found</h5>
+                <p class="text-muted">@(filteredLabOrders?.Any() == false && allLabOrders?.Any() == true ? "Try adjusting your search or filter criteria." : "Create your first lab order to get started.")</p>
             </div>
-            <!-- Lab Order Item 4 -->
-            <div class="list-group-item px-4 py-3 d-flex align-items-center lab-order-item" @onclick="() => ViewLabOrderDetails(4)">
-                <div class="me-3 position-relative">
-                    <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
-                        <span class="text-info fw-bold">RD</span>
+        }
+    </div>
+</div>
+
+<!-- New Lab Order Modal -->
+<div class="modal fade" id="newLabOrderModal" tabindex="-1" aria-labelledby="newLabOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="newLabOrderModalLabel">Create New Lab Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form @onsubmit="SaveNewLabOrder" @onsubmit:preventDefault="true">
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(modalErrorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @modalErrorMessage
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="patientSelect" class="form-label fw-medium">Select Patient <span class="text-danger">*</span></label>
+                            <select id="patientSelect" class="form-select" @bind="newLabOrder.PatientId" required>
+                                <option value="0">-- Select Patient --</option>
+                                @if (assignedPatients != null)
+                                {
+                                    @foreach (var patient in assignedPatients)
+                                    {
+                                        <option value="@patient.PatientId">@GetPatientName(patient)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentSelect" class="form-label fw-medium">Link to Appointment (Optional)</label>
+                            <select id="appointmentSelect" class="form-select" @bind="newLabOrder.AppointmentId">
+                                <option value="">-- No Appointment --</option>
+                                @if (doctorAppointments != null)
+                                {
+                                    @foreach (var appointment in doctorAppointments)
+                                    {
+                                        <option value="@appointment.AppointmentId">@GetAppointmentDate(appointment).ToString("MMM d, yyyy h:mm tt") - @appointment.PatientName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
                     </div>
-                    <div class="position-absolute bottom-0 end-0 border border-2 border-white rounded-circle bg-success" style="width: 12px; height: 12px;"></div>
+                    <div class="mb-3">
+                        <label for="testTypeSelect" class="form-label fw-medium">Test Type <span class="text-danger">*</span></label>
+                        <select id="testTypeSelect" class="form-select" @bind="newLabOrder.TestType" required>
+                            <option value="">-- Select Test Type --</option>
+                            <option value="Blood Panel">Blood Panel</option>
+                            <option value="Cardiac Biomarkers">Cardiac Biomarkers</option>
+                            <option value="Electrolyte Panel">Electrolyte Panel</option>
+                            <option value="Glucose Test">Glucose Test</option>
+                            <option value="Lipid Profile">Lipid Profile</option>
+                            <option value="Thyroid Function">Thyroid Function</option>
+                            <option value="Liver Function">Liver Function</option>
+                            <option value="Kidney Function">Kidney Function</option>
+                            <option value="Urine Analysis">Urine Analysis</option>
+                            <option value="Complete Blood Count">Complete Blood Count</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="instructionsTextarea" class="form-label fw-medium">Instructions (Optional)</label>
+                        <textarea id="instructionsTextarea" class="form-control" rows="4" 
+                                  @bind="newLabOrder.Instructions" 
+                                  placeholder="Enter any special instructions or notes for the lab..."></textarea>
+                    </div>
                 </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h6 class="mb-0">Robert Davis</h6>
-                        <span class="badge rounded-pill bg-teal-subtle text-teal">Order #LO-3924</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <p class="text-muted mb-0 small">Glucose Test • Ordered: May 16, 2025</p>
-                        <span class="text-success small fw-medium">Completed</span>
-                    </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-teal rounded-pill" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="bi bi-check-circle me-2"></i>Create Lab Order
+                    </button>
                 </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Lab Order Details Modal -->
+<div class="modal fade" id="labOrderDetailsModal" tabindex="-1" aria-labelledby="labOrderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="labOrderDetailsModalLabel">Lab Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (selectedOrder != null)
+                {
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium text-muted">Order ID</label>
+                            <p class="mb-0">LO-@selectedOrder.LabOrderId</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium text-muted">Status</label>
+                            <p class="mb-0">
+                                <span class="badge @GetStatusBadgeClass(selectedOrder.Status)">@selectedOrder.Status</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium text-muted">Patient</label>
+                            <p class="mb-0">@selectedOrder.PatientName</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium text-muted">Ordering Doctor</label>
+                            <p class="mb-0">@selectedOrder.DoctorName</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                   
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium text-muted">Order Date</label>
+                            <p class="mb-0">@selectedOrder.OrderDate.ToString("MMM d, yyyy h:mm tt")</p>
+                        </div>
+                    </div>
+                    @if (selectedOrder.AppointmentId.HasValue)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium text-muted">Linked Appointment</label>
+                            <p class="mb-0">Appointment ID: @selectedOrder.AppointmentId</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(selectedOrder.LabTechName))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium text-muted">Lab Technician</label>
+                            <p class="mb-0">@selectedOrder.LabTechName</p>
+                        </div>
+                    }
+                    @if (selectedOrder.CompletedAt.HasValue)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium text-muted">Completed Date</label>
+                            <p class="mb-0">@selectedOrder.CompletedAt.Value.ToString("MMM d, yyyy h:mm tt")</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(selectedOrder.Results))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium text-muted">Results</label>
+                            <div class="border rounded p-3 bg-light">
+                                <p class="mb-0">@selectedOrder.Results</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium text-muted">Results</label>
+                            <div class="border rounded p-3 bg-light text-muted">
+                                <p class="mb-0"><em>Results not yet available</em></p>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(selectedOrder.ReportFilePath))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium text-muted">Report</label>
+                            <p class="mb-0">
+                                <a href="@selectedOrder.ReportFilePath" target="_blank" class="btn btn-outline-teal btn-sm rounded-pill">
+                                    <i class="bi bi-download me-2"></i>Download Report
+                                </a>
+                            </p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-teal" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading lab order details...</p>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
 @code {
+    // Get current doctor ID from session
+    private int currentDoctorId = 0;
     private string FilterStatus { get; set; } = "All";
     private string SearchQuery { get; set; } = "";
+    
+    // Data collections
+    private List<LabOrderDto>? allLabOrders;
+    private List<LabOrderDto>? filteredLabOrders;
+    private List<PatientSummaryDto>? assignedPatients;
+    private List<AppointmentDto>? doctorAppointments;
+    
+    // Selected order for details modal
+    private LabOrderDto? selectedOrder;
+    
+    // New lab order form
+    private CreateLabOrderRequest newLabOrder = new();
+    
+    // UI state
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private string modalErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Get current doctor ID from session
+            var userSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (userSession == null || userSession.Role != "Doctor")
+            {
+                errorMessage = "Access denied. Please log in as a doctor.";
+                Nav.NavigateTo("/login");
+                return;
+            }
+            
+            currentDoctorId = userSession.UserId;
+            
+            // Load all lab orders for this doctor
+            await LoadLabOrders();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error initializing page: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             // Initialize tooltips
-            await JSRuntime.InvokeVoidAsync("eval", "try { var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]')); var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); }); } catch (e) { console.error(e); }");
+            await JSRuntime.InvokeVoidAsync("eval",
+                "try { var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]')); " +
+                "var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); }); } catch (e) { console.error(e); }");
         }
+    }
+
+    // Load all lab orders for this doctor
+    private async Task LoadLabOrders()
+    {
+        try
+        {
+            var orders = await DoctorService.GetDoctorLabOrdersAsync(currentDoctorId);
+            allLabOrders = orders.OrderByDescending(o => o.OrderDate).ToList();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading lab orders: {ex.Message}";
+        }
+    }
+
+    // Apply client-side filter and search
+    private void ApplyFilters()
+    {
+        if (allLabOrders == null)
+        {
+            filteredLabOrders = new List<LabOrderDto>();
+            return;
+        }
+
+        var filtered = allLabOrders.AsEnumerable();
+
+        // Apply status filter
+        if (FilterStatus != "All")
+        {
+            filtered = filtered.Where(o => o.Status.Equals(FilterStatus, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            var searchTerm = SearchQuery.ToLowerInvariant();
+            filtered = filtered.Where(o => 
+                o.PatientName.ToLowerInvariant().Contains(searchTerm) ||
+                
+                o.LabOrderId.ToString().Contains(searchTerm));
+        }
+
+        filteredLabOrders = filtered.ToList();
+        StateHasChanged();
     }
 
     private void ChangeFilterStatus(ChangeEventArgs e)
     {
         FilterStatus = e.Value?.ToString() ?? "All";
-        // Apply filtering logic here (e.g., fetch filtered data)
+        ApplyFilters();
     }
 
     private void SearchLabOrders(ChangeEventArgs e)
     {
         SearchQuery = e.Value?.ToString() ?? "";
-        // Apply search logic here (e.g., filter list based on search query)
+        ApplyFilters();
     }
 
-    private void ViewLabOrderDetails(int orderId)
+    // Open 'New Lab Order' modal and load dropdown data
+    private async Task OpenNewLabOrderModal()
     {
-        Nav.NavigateTo($"/doctor/laborders/{orderId}");
+        try
+        {
+            modalErrorMessage = string.Empty;
+            newLabOrder = new CreateLabOrderRequest();
+            
+            // Load patients and appointments for dropdowns
+            var patientsTask = DoctorService.GetAssignedPatientsAsync(currentDoctorId);
+            var appointmentsTask = DoctorService.GetDoctorAppointmentsAsync(currentDoctorId, DateTime.Now.Date);
+            
+            await Task.WhenAll(patientsTask, appointmentsTask);
+            
+            assignedPatients = (await patientsTask).ToList();
+            doctorAppointments = (await appointmentsTask).Where(a => GetAppointmentDate(a) >= DateTime.Now).ToList();
+            
+            await JSRuntime.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('newLabOrderModal')).show()");
+        }
+        catch (Exception ex)
+        {
+            modalErrorMessage = $"Error loading modal data: {ex.Message}";
+        }
     }
 
-    private void NavigateToNewLabOrder()
+    // Save new lab order via service
+    private async Task SaveNewLabOrder()
     {
-        Nav.NavigateTo("/doctor/laborders/new");
+        try
+        {
+            modalErrorMessage = string.Empty;
+            
+            // Validate required fields
+            if (newLabOrder.PatientId <= 0)
+            {
+                modalErrorMessage = "Please select a patient.";
+                return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(newLabOrder.TestType))
+            {
+                modalErrorMessage = "Please select a test type.";
+                return;
+            }
+            
+            isSaving = true;
+            
+            // Create lab order
+            var newOrderId = await DoctorService.CreateLabOrderAsync(currentDoctorId, newLabOrder);
+            
+            // Reload lab orders list
+            await LoadLabOrders();
+            
+            // Close modal and show success message
+            await JSRuntime.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('newLabOrderModal')).hide()");
+            successMessage = $"Lab order created successfully! Order ID: LO-{newOrderId}";
+            
+            // Reset form
+            newLabOrder = new CreateLabOrderRequest();
+        }
+        catch (Exception ex)
+        {
+            modalErrorMessage = $"Error creating lab order: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    // Open 'Lab Order Details' modal
+    private async Task OpenLabOrderDetails(int labOrderId)
+    {
+        try
+        {
+            selectedOrder = null;
+            await JSRuntime.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('labOrderDetailsModal')).show()");
+            
+            // Note: GetLabOrderByIdAsync method needs to be added to IDoctorService
+            // For now, we'll get the order from the loaded list
+            selectedOrder = allLabOrders?.FirstOrDefault(o => o.LabOrderId == labOrderId);
+            
+            // If we had the service method, it would be:
+            // selectedOrder = await DoctorService.GetLabOrderByIdAsync(labOrderId);
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading lab order details: {ex.Message}";
+        }
+    }
+
+    // Helper methods for safe property access
+    private string GetPatientName(PatientSummaryDto patient)
+    {
+        // Assuming PatientSummaryDto has a Name property instead of PatientName
+        return patient.FullName ?? "Unknown Patient";
+    }
+
+    private DateTime GetAppointmentDate(AppointmentDto appointment)
+    {
+        // Assuming AppointmentDto has a Date property instead of AppointmentDate
+        return appointment.ScheduledDateTime;
+    }
+
+
+
+    // Helper methods for UI styling
+    private string GetPatientInitials(string patientName)
+    {
+        if (string.IsNullOrWhiteSpace(patientName)) return "??";
+        
+        var parts = patientName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        }
+        else if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2 ? parts[0][..2].ToUpper() : parts[0].ToUpper();
+        }
+        
+        return "??";
+    }
+
+    private string GetAvatarBackgroundClass(string status)
+    {
+        return status?.ToLowerInvariant() switch
+        {
+            "completed" => "bg-success bg-opacity-10",
+            "pending" => "bg-warning bg-opacity-10",
+            "urgent" => "bg-danger bg-opacity-10",
+            _ => "bg-teal bg-opacity-10"
+        };
+    }
+
+    private string GetAvatarTextClass(string status)
+    {
+        return status?.ToLowerInvariant() switch
+        {
+            "completed" => "text-success",
+            "pending" => "text-warning",
+            "urgent" => "text-danger",
+            _ => "text-teal"
+        };
+    }
+
+    private string GetStatusDotClass(string status)
+    {
+        return status?.ToLowerInvariant() switch
+        {
+            "completed" => "bg-success",
+            "pending" => "bg-warning",
+            "urgent" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusTextClass(string status)
+    {
+        return status?.ToLowerInvariant() switch
+        {
+            "completed" => "text-success",
+            "pending" => "text-warning",
+            "urgent" => "text-danger",
+            _ => "text-muted"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLowerInvariant() switch
+        {
+            "completed" => "bg-success",
+            "pending" => "bg-warning text-dark",
+            "urgent" => "bg-danger",
+            _ => "bg-secondary"
+        };
     }
 }
 
 <style>
-.animate-fade-in {
+    .animate-fade-in {
         animation: fadeIn 0.5s ease-out;
     }
+
     /* Reusing teal colors from DoctorLayout */
     .bg-teal {
         background-color: var(--bs-teal) !important;
     }
 
     .bg-teal-subtle {
-        background-color: rgba(vermilion(--bs-teal-rgb), 0.1) !important;
+        background-color: rgba(20, 184, 166, 0.1) !important;
     }
 
     .text-teal {
@@ -218,18 +675,28 @@
     }
 
     .lab-order-item:hover {
-        background-color: rgba(var(--bs-teal-rgb), 0.03);
+        background-color: rgba(20, 184, 166, 0.03);
     }
 
     /* Form select styling */
     .form-select {
-        border-color: rgba(var(--bs-teal-rgb), 0.2);
+        border-color: rgba(20, 184, 166, 0.2);
         transition: all 0.3s ease;
     }
 
     .form-select:focus {
         border-color: var(--bs-teal);
-        box-shadow: 0 0 0 0.2rem rgba(var(--bs-teal-rgb), 0.25);
+        box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.25);
+    }
+
+    /* Modal enhancements */
+    .modal-content {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        background-color: #f8f9fa;
     }
 
     /* Responsive adjustments */

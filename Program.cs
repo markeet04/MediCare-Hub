@@ -25,6 +25,7 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddControllers();
 
 // Register services
+builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
@@ -36,7 +37,7 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 
-
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 

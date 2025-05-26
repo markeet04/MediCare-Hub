@@ -1,252 +1,598 @@
 @page "/doctor/treatments"
 @layout BlazorApp1.Components.Layout.DoctorLayout
 @rendermode InteractiveServer
+@inject BlazorApp1.Services.Interfaces.IDoctorService doctorService
+@inject IJSRuntime JSRuntime
+@inject BlazorApp1.Authentication.AuthStateProvider authStateProvider
+@using BlazorApp1.Models.DTOs
+@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="treatments-container animate-fade-in">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="text-teal mb-2">
-                <i class="bi bi-clipboard2-pulse me-2"></i>
-                Treatment Plans
-            </h3>
-            <p class="text-muted">Manage and update patient treatment strategies</p>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-teal rounded-pill">
-                <i class="bi bi-filter me-2"></i>
-                Filter
-            </button>
-            <button class="btn btn-teal rounded-pill" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
-                <i class="bi bi-plus-lg me-2"></i>
-                New Treatment Plan
-            </button>
-        </div>
-    </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover treatments-table mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="py-3 px-4 text-muted">Patient</th>
-                            <th class="py-3 px-4 text-muted">Diagnosis</th>
-                            <th class="py-3 px-4 text-muted">Treatment</th>
-                            <th class="py-3 px-4 text-muted">Started On</th>
-                            <th class="py-3 px-4 text-muted">Status</th>
-                            <th class="py-3 px-4 text-muted text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="treatment-row">
-                            <td class="py-3 px-4 align-middle">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <span class="text-teal fw-bold">JS</span>
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold">Jane Smith</div>
-                                        <small class="text-muted">Cardiology</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4 align-middle">Hypertension</td>
-                            <td class="py-3 px-4 align-middle">Medication Management</td>
-                            <td class="py-3 px-4 align-middle">
-                                <small class="text-muted">May 1, 2025</small>
-                            </td>
-                            <td class="py-3 px-4 align-middle">
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Ongoing</span>
-                            </td>
-                            <td class="py-3 px-4 align-middle text-end">
-                                <div class="dropdown">
-                                    <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu shadow-sm">
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit Plan</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Discontinue</a></li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="treatment-row">
-                            <td class="py-3 px-4 align-middle">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <span class="text-teal fw-bold">AR</span>
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold">Ali Raza</div>
-                                        <small class="text-muted">Neurology</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4 align-middle">Migraine Disorder</td>
-                            <td class="py-3 px-4 align-middle">Preventive Therapy</td>
-                            <td class="py-3 px-4 align-middle">
-                                <small class="text-muted">April 15, 2025</small>
-                            </td>
-                            <td class="py-3 px-4 align-middle">
-                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">Monitoring</span>
-                            </td>
-                            <td class="py-3 px-4 align-middle text-end">
-                                <div class="dropdown">
-                                    <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu shadow-sm">
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit Plan</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Discontinue</a></li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-            <small class="text-muted">Showing 2 of 2 treatment plans</small>
-            <nav>
-                <ul class="pagination mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    <li class="page-item active">
-                        <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-
-    <!-- New Treatment Plan Modal -->
-    <div class="modal fade" id="newTreatmentModal" tabindex="-1" aria-labelledby="newTreatmentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title text-teal" id="newTreatmentModalLabel">
-                        <i class="bi bi-clipboard2-pulse me-2"></i>
-                        Create New Treatment Plan
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="notes-container animate-fade-in">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="text-teal mb-2">
+                        <i class="bi bi-journal-medical me-2"></i>
+                        Doctor Notes
+                    </h3>
+                    <p class="text-muted">Manage patient notes and clinical observations</p>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="patientSelect" class="form-label">Patient</label>
-                        <select class="form-select" id="patientSelect">
-                            <option selected>Select Patient</option>
-                            <option>Jane Smith</option>
-                            <option>Ali Raza</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="diagnosisInput" class="form-label">Diagnosis</label>
-                        <input type="text" class="form-control" id="diagnosisInput" placeholder="Enter diagnosis">
-                    </div>
-                    <div class="mb-3">
-                        <label for="treatmentDetails" class="form-label">Treatment Details</label>
-                        <textarea class="form-control" id="treatmentDetails" rows="4" placeholder="Describe treatment plan"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="startDate" class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="startDate">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="treatmentStatus" class="form-label">Status</label>
-                            <select class="form-select" id="treatmentStatus">
-                                <option selected>Ongoing</option>
-                                <option>Monitoring</option>
-                                <option>Completed</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-teal rounded-pill">Create Treatment Plan</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-teal rounded-pill" @onclick="RefreshNotes">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-teal rounded-pill" @onclick="() => OpenNotesModal(0, string.Empty)">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        New Note
+                    </button>
                 </div>
             </div>
+
+            @if (isLoadingNotes)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-teal" role="status">
+                        <span class="visually-hidden">Loading notes...</span>
+                    </div>
+                    <p class="text-muted mt-3">Loading your notes...</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(notesError))
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    @notesError
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        @if (doctorNotes.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover notes-table mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="py-3 px-4 text-muted">Patient</th>
+                                            <th class="py-3 px-4 text-muted">Note Preview</th>
+                                            <th class="py-3 px-4 text-muted">Created</th>
+                                            <th class="py-3 px-4 text-muted">Appointment</th>
+                                            <th class="py-3 px-4 text-muted text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var note in doctorNotes)
+                                        {
+                                            <tr class="note-row">
+                                                <td class="py-3 px-4 align-middle">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-wrapper rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                            <span class="text-teal fw-bold">@GetInitials(note.PatientName)</span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">@note.PatientName</div>
+                                                            <small class="text-muted">Patient ID: @note.PatientId</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-4 align-middle">
+                                                    <div class="note-preview">
+                                                        @GetNotePreview(note.NoteText)
+                                                        @if (note.NoteText.Length > 100)
+                                                        {
+                                                            <span class="text-muted">...</span>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-4 align-middle">
+                                                    <small class="text-muted">@note.CreatedAt.ToString("MMM d, yyyy")</small>
+                                                    <br>
+                                                    <small class="text-muted">@note.CreatedAt.ToString("HH:mm")</small>
+                                                </td>
+                                                <td class="py-3 px-4 align-middle">
+                                                    @if (note.AppointmentId.HasValue)
+                                                    {
+                                                        <span class="badge bg-info bg-opacity-10 text-info rounded-pill">
+                                                            Apt #@note.AppointmentId
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">General Note</span>
+                                                    }
+                                                </td>
+                                                <td class="py-3 px-4 align-middle text-end">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="bi bi-three-dots-vertical"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu shadow-sm">
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" @onclick="() => OpenNotesModal(note.PatientId, note.PatientName)" @onclick:preventDefault="true">
+                                                                    <i class="bi bi-eye me-2"></i>View Details
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" @onclick="() => OpenNotesModal(note.PatientId, note.PatientName)" @onclick:preventDefault="true">
+                                                                    <i class="bi bi-plus me-2"></i>Add Note
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-journal-medical text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-3">No Notes Found</h5>
+                                <p class="text-muted">Start by creating your first patient note</p>
+                                <button class="btn btn-teal rounded-pill" @onclick="() => OpenNotesModal(0, string.Empty)">
+                                    <i class="bi bi-plus-lg me-2"></i>
+                                    Create First Note
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (doctorNotes.Any())
+                    {
+                        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Showing @doctorNotes.Count() notes</small>
+                            <nav>
+                                <ul class="pagination mb-0">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                    </li>
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">1</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Patient Notes Modal -->
+            <div class="modal fade" id="patientNotesModal" tabindex="-1" aria-labelledby="patientNotesModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title text-teal" id="patientNotesModalLabel">
+                                <i class="bi bi-journal-medical me-2"></i>
+                                @if (selectedPatientId > 0)
+                                {
+                                    <span>Notes for @selectedPatientName</span>
+                                }
+                                else
+                                {
+                                    <span>Create New Note</span>
+                                }
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            @if (isLoadingPatientNotes)
+                            {
+                                <!-- Loading state for patient notes -->
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-teal" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">Loading patient notes...</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Patient Selection (for new notes) -->
+                                @if (selectedPatientId == 0)
+                                {
+                                    <div class="mb-3">
+                                        <label for="patientSelect" class="form-label">Select Patient</label>
+                                        <select class="form-select" id="patientSelect" @bind="newNotePatientId">
+                                            <option value="0">Choose a patient...</option>
+                                            @if (availablePatients.Any())
+                                            {
+                                                @foreach (var patient in availablePatients)
+                                                {
+                                                    <option value="@patient.PatientId">@patient.FullName (@patient.CNIC)</option>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <option disabled>No patients available</option>
+                                            }
+                                        </select>
+                                        @if (!availablePatients.Any() && !isLoadingNotes)
+                                        {
+                                            <div class="form-text text-warning">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                                No patients found. Please ensure you have patients assigned to you.
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Previous Notes Display -->
+                                @if (selectedPatientId > 0 && patientNotes.Any())
+                                {
+                                    <div class="mb-4">
+                                        <h6 class="text-muted mb-3">
+                                            <i class="bi bi-clock-history me-2"></i>
+                                            Previous Notes (@patientNotes.Count())
+                                        </h6>
+                                        <div class="previous-notes" style="max-height: 300px; overflow-y: auto;">
+                                            @foreach (var note in patientNotes.OrderByDescending(n => n.CreatedAt))
+                                            {
+                                                <div class="card mb-2 border-start border-4 border-teal">
+                                                    <div class="card-body p-3">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-calendar3 me-1"></i>
+                                                                @note.CreatedAt.ToString("MMM d, yyyy 'at' HH:mm")
+                                                            </small>
+                                                            @if (note.AppointmentId.HasValue)
+                                                            {
+                                                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill">
+                                                                    Apt #@note.AppointmentId
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                        <div class="note-content" style="white-space: pre-wrap;">@note.NoteText</div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Add New Note Section -->
+                                <div class="add-note-section">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="bi bi-plus-circle me-2"></i>
+                                        Add New Note
+                                    </h6>
+                                    
+                                    @if (!string.IsNullOrEmpty(noteError))
+                                    {
+                                        <div class="alert alert-danger" role="alert">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            @noteError
+                                        </div>
+                                    }
+
+                                    <div class="mb-3">
+                                        <label for="appointmentSelect" class="form-label">Link to Appointment (Optional)</label>
+                                        <select class="form-select" id="appointmentSelect" @bind="newNoteAppointmentId">
+                                            <option value="">No appointment</option>
+                                            @foreach (var appointment in availableAppointments)
+                                            {
+                                                <option value="@appointment.AppointmentId">
+                                                    @appointment.ScheduledDateTime.ToString("MMM d, yyyy HH:mm") - @appointment.PatientName
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="noteText" class="form-label">Note Content</label>
+                                        <textarea class="form-control" id="noteText" rows="6" 
+                                                 placeholder="Enter your clinical notes here..." 
+                                                 @bind="newNoteText"></textarea>
+                                        <div class="form-text">
+                                            Be detailed and specific. This note will be part of the patient's medical record.
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-teal rounded-pill" @onclick="SaveNewNote" disabled="@isSavingNote">
+                                @if (isSavingNote)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-lg me-2"></i>
+                                }
+                                Save Note
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug info (remove in production) -->
+            @if (showDebugInfo)
+            {
+                <div class="alert alert-info mt-3">
+                    <h6>Debug Information:</h6>
+                    <p>Current Doctor ID: @currentDoctorId</p>
+                    <p>Available Patients Count: @availablePatients.Count</p>
+                    <p>Available Appointments Count: @availableAppointments.Count</p>
+                    <p>Loading Notes: @isLoadingNotes</p>
+                    <p>Notes Error: @(notesError ?? "None")</p>
+                </div>
+            }
         </div>
-    </div>
-</div>
+  
 
-<style>
-    .animate-fade-in {
-        animation: fadeIn 0.5s ease-out;
+
+@code {
+    // Main notes data
+    private List<DoctorNoteDto> doctorNotes = new();
+    private bool isLoadingNotes = true;
+    private string? notesError;
+
+    // Modal state
+    private int selectedPatientId;
+    private string selectedPatientName = string.Empty;
+    private List<DoctorNoteDto> patientNotes = new();
+    private bool isLoadingPatientNotes;
+
+    // New note form
+    private int newNotePatientId;
+    private int? newNoteAppointmentId;
+    private string newNoteText = string.Empty;
+    private bool isSavingNote;
+    private string? noteError;
+
+    // Available data for dropdowns
+    private List<PatientSummaryDto> availablePatients = new();
+    private List<AppointmentDto> availableAppointments = new();
+
+    // Authentication
+    private int currentDoctorId;
+    private bool showDebugInfo = false; // Set to true for debugging
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Get the current user session
+            var userSession = await authStateProvider.GetCurrentUserSessionAsync();
+            
+            if (userSession == null)
+            {
+                notesError = "Unable to get user session. Please log in again.";
+                return;
+            }
+
+            // Get the doctor profile using the user ID
+            var doctorProfile = await doctorService.GetDoctorProfileByUserIdAsync(userSession.UserId);
+            
+            if (doctorProfile == null)
+            {
+                notesError = "Doctor profile not found. Please contact support.";
+                return;
+            }
+
+            currentDoctorId = doctorProfile.DoctorId;
+
+            // Load all data
+            await LoadDoctorNotes();
+            await LoadAvailablePatients();
+            await LoadAvailableAppointments();
+        }
+        catch (Exception ex)
+        {
+            notesError = "Failed to initialize page. Please refresh and try again.";
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+        }
     }
 
-    @@keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    // Load all doctor notes
+    private async Task LoadDoctorNotes()
+    {
+        if (currentDoctorId == 0) return;
+
+        isLoadingNotes = true;
+        notesError = null;
+        StateHasChanged();
+
+        try
+        {
+            var notes = await doctorService.GetDoctorNotesAsync(currentDoctorId);
+            doctorNotes = notes.ToList();
+        }
+        catch (Exception ex)
+        {
+            notesError = "Failed to load notes. Please try again.";
+            Console.WriteLine($"Error loading doctor notes: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingNotes = false;
+            StateHasChanged();
+        }
     }
 
-    .treatments-table tbody tr {
-        transition: background-color 0.2s, transform 0.2s;
+    // Load available patients for new note creation
+    private async Task LoadAvailablePatients()
+    {
+        if (currentDoctorId == 0) return;
+
+        try
+        {
+            var patients = await doctorService.GetAssignedPatientsAsync(currentDoctorId);
+            availablePatients = patients.ToList();
+            Console.WriteLine($"Loaded {availablePatients.Count} patients for doctor {currentDoctorId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading patients: {ex.Message}");
+            // Don't set error here as it's not critical for the main page
+        }
     }
 
-    .treatments-table tbody tr:hover {
-        background-color: rgba(32, 201, 151, 0.05);
-        transform: translateY(-3px);
+    // Load available appointments for linking
+    private async Task LoadAvailableAppointments()
+    {
+        if (currentDoctorId == 0) return;
+
+        try
+        {
+            var appointments = await doctorService.GetDoctorAppointmentsAsync(currentDoctorId);
+            availableAppointments = appointments.ToList();
+            Console.WriteLine($"Loaded {availableAppointments.Count} appointments for doctor {currentDoctorId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading appointments: {ex.Message}");
+            // Don't set error here as it's not critical for the main page
+        }
     }
 
-    .treatments-table .btn-light {
-        transition: all 0.2s;
-    }
-
-    .treatments-table .btn-light:hover {
-        background-color: rgba(32, 201, 151, 0.1);
-        transform: scale(1.1);
-    }
-
-    .dropdown-menu {
-        animation: dropdownFadeIn 0.3s ease-out;
-    }
-
-    @@keyframes dropdownFadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .btn-outline-teal, .btn-teal {
-        transition: all 0.2s;
-    }
-
-    .btn-outline-teal:hover, .btn-teal:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
-    }
-
-    .modal-content {
-        border-radius: 12px;
-    }
-
-    .modal-header .btn-close {
-        background-color: rgba(32, 201, 151, 0.1);
-        border-radius: 50%;
-        opacity: 1;
-    }
-</style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Optional: Add any interactive scripts for the treatments page
-        const createTreatmentBtn = document.querySelector('#newTreatmentModal .btn-teal');
+    // Open the notes modal for a specific patient or new note
+    private async Task OpenNotesModal(int patientId, string patientName)
+    {
+        selectedPatientId = patientId;
+        selectedPatientName = patientName;
+        newNotePatientId = patientId;
         
-        createTreatmentBtn.addEventListener('click', function() {
-            // Placeholder for treatment creation logic
-            console.log('Creating new treatment plan');
-            // You would typically add validation and API call here
-            // For now, just close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newTreatmentModal'));
-            modal.hide();
-        });
-    });
-</script>
+        // Reset form
+        newNoteText = string.Empty;
+        newNoteAppointmentId = null;
+        noteError = null;
+        
+        // Load patient notes if specific patient selected
+        if (patientId > 0)
+        {
+            await LoadPatientNotes(patientId);
+        }
+        else
+        {
+            patientNotes.Clear();
+        }
+
+        // Show modal
+        await JSRuntime.InvokeVoidAsync("eval", 
+            "new bootstrap.Modal(document.getElementById('patientNotesModal')).show()");
+    }
+
+    // Load notes for a specific patient
+    private async Task LoadPatientNotes(int patientId)
+    {
+        if (currentDoctorId == 0) return;
+
+        isLoadingPatientNotes = true;
+        StateHasChanged();
+
+        try
+        {
+            var notes = await doctorService.GetDoctorNotesAsync(currentDoctorId, patientId);
+            patientNotes = notes.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading patient notes: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingPatientNotes = false;
+            StateHasChanged();
+        }
+    }
+
+    // Save new note
+    private async Task SaveNewNote()
+    {
+        // Validation
+        if ((selectedPatientId == 0 && newNotePatientId == 0) || string.IsNullOrWhiteSpace(newNoteText))
+        {
+            noteError = "Please select a patient and enter note content.";
+            return;
+        }
+
+        if (currentDoctorId == 0)
+        {
+            noteError = "Unable to identify current doctor. Please refresh the page.";
+            return;
+        }
+
+        isSavingNote = true;
+        noteError = null;
+        StateHasChanged();
+
+        try
+        {
+            var request = new CreateDoctorNoteRequest
+            {
+                PatientId = selectedPatientId > 0 ? selectedPatientId : newNotePatientId,
+                AppointmentId = newNoteAppointmentId,
+                NoteText = newNoteText.Trim()
+            };
+
+            var noteId = await doctorService.AddDoctorNoteAsync(currentDoctorId, request);
+            
+            // Refresh the notes list
+            await LoadDoctorNotes();
+            
+            // If we were viewing a specific patient, refresh their notes
+            if (selectedPatientId > 0)
+            {
+                await LoadPatientNotes(selectedPatientId);
+            }
+            
+            // Reset form
+            newNoteText = string.Empty;
+            newNoteAppointmentId = null;
+            
+            // Show success message (you could add a toast notification here)
+            noteError = null;
+        }
+        catch (Exception ex)
+        {
+            noteError = "Failed to save note. Please try again.";
+            Console.WriteLine($"Error saving note: {ex.Message}");
+        }
+        finally
+        {
+            isSavingNote = false;
+            StateHasChanged();
+        }
+    }
+
+    // Refresh notes
+    private async Task RefreshNotes()
+    {
+        await LoadDoctorNotes();
+        await LoadAvailablePatients();
+        await LoadAvailableAppointments();
+    }
+
+    // Helper method to get patient initials
+    private string GetInitials(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return "??";
+
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        
+        return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+    }
+
+    // Helper method to get note preview
+    private string GetNotePreview(string noteText)
+    {
+        if (string.IsNullOrWhiteSpace(noteText))
+            return "No content";
+            
+        return noteText.Length > 100 ? noteText.Substring(0, 100) : noteText;
+    }
+}

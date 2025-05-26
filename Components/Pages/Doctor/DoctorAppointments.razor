@@ -3,574 +3,972 @@
 @rendermode InteractiveServer
 @using System
 @using System.Collections.Generic
+@using BlazorApp1.Models.DTOs
+@using BlazorApp1.Services.Interfaces
+@using BlazorApp1.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IDoctorService doctorService
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider authStateProvider
 
-<div class=" animate-fade-in d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h3 class="mb-1">📅 Appointments</h3>
-        <p class="text-muted mb-0">Manage your patient schedule</p>
-    </div>
-    <div class="d-flex">
-    </div>
+<style>:root {
+    /* Green Color Palette - Matching the sidebar */
+    --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --primary-light: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --neutral-gradient: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    
+    /* Surface colors */
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --surface-light: #f0fdf4;
+    --border: #e2e8f0;
+    --border-light: #ecfdf5;
+    
+    /* Text colors */
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --text-success: #059669;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-green: 0 4px 14px 0 rgb(16 185 129 / 0.15);
+    
+    /* Border radius */
+    --radius: 12px;
+    --radius-sm: 8px;
+}
+
+/* Animations */
+@@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@@keyframes greenGlow {
+    0%, 100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+/* Header Section */
+.page-header {
+    background: var(--primary-gradient);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-green);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.page-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* Modern Cards */
+.modern-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.modern-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.card-header-modern {
+    background: linear-gradient(135deg, var(--surface-light) 0%, #ecfdf5 100%);
+    border-bottom: 1px solid var(--border-light);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header-modern h5 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Today's Schedule Table */
+.schedule-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.schedule-table thead th {
+    background: var(--surface-light);
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.schedule-table tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: all 0.2s ease;
+}
+
+.schedule-table tbody tr:hover {
+    background: var(--surface-light);
+    transform: translateX(2px);
+}
+
+.schedule-table tbody td {
+    padding: 1.25rem 1rem;
+    vertical-align: middle;
+}
+
+.patient-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.patient-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-sm);
+}
+
+.patient-details h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.patient-details small {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.status-completed { 
+    background: var(--primary-gradient); 
+    color: white; 
+}
+.status-in-progress { 
+    background: var(--accent-gradient); 
+    color: white; 
+}
+.status-cancelled { 
+    background: var(--danger-gradient); 
+    color: white; 
+}
+.status-waiting { 
+    background: var(--warning-gradient); 
+    color: white; 
+}
+.status-scheduled { 
+    background: var(--neutral-gradient); 
+    color: var(--text-primary); 
+}
+
+/* Modern Calendar */
+.calendar-container {
+    padding: 1.5rem;
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.nav-button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.nav-button:hover {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-green);
+}
+
+.month-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 200px;
+    text-align: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.calendar-header {
+    display: contents;
+}
+
+.calendar-day-header {
+    background: var(--surface-light);
+    padding: 1rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-success);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calendar-day {
+    background: var(--surface);
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 60px;
+    padding: 0.5rem;
+}
+
+.calendar-day:hover {
+    background: var(--surface-light);
+    transform: scale(1.02);
+    box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    background: #fafafa;
+}
+
+.calendar-day.today {
+    background: var(--primary-gradient);
+    color: white;
+    font-weight: 600;
+    animation: greenGlow 2s ease-in-out infinite;
+}
+
+.calendar-day.today:hover {
+    transform: scale(1.05);
+    animation: none;
+    box-shadow: var(--shadow-green);
+}
+
+.calendar-day.has-appointments {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.calendar-day.has-appointments.today {
+    background: var(--primary-gradient);
+    border: none;
+}
+
+.appointment-indicator {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+}
+
+.calendar-day.today .appointment-indicator {
+    background: rgba(255,255,255,0.9);
+    color: var(--text-success);
+}
+
+/* Modern Modal */
+.modern-modal .modal-content {
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.modern-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem 2rem;
+    border: none;
+}
+
+.modern-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.modern-modal .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.modern-modal .btn-close:hover {
+    opacity: 1;
+}
+
+.modern-modal .modal-body {
+    padding: 2rem;
+}
+
+.appointment-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.timeline-time {
+    flex-shrink: 0;
+    width: 80px;
+    padding: 0.5rem;
+    background: var(--surface-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-success);
+    font-size: 0.875rem;
+}
+
+.timeline-content {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.timeline-content:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.appointment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.appointment-patient {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.appointment-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.action-button:hover {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-sm);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    color: var(--text-success);
+}
+
+/* Custom button styling for modal */
+.btn-primary-green {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary-green:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-green);
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .calendar-day {
+        min-height: 50px;
+        font-size: 0.875rem;
+    }
+    
+    .timeline-item {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .timeline-time {
+        width: 100%;
+    }
+    
+    .appointment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}</style>
+
+<!-- Modern Page Header -->
+<div class="animate-fade-in page-header">
+    <h1>📅 Appointments</h1>
+    <p>Manage your patient schedule with ease</p>
 </div>
 
-
-
-<!-- Today's Appointments Section -->
-<div class="animate-fade-in card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-calendar3 text-teal me-2"></i>
-            <h5 class="mb-0">Today's Schedule</h5>
-        </div>
-        <span class="fw-medium">Monday, May 11, 2025</span>
+<!-- Today's Schedule Section -->
+<div class="animate-fade-in modern-card mb-4">
+    <div class="card-header-modern">
+        <h5>
+            <div class="icon-badge">
+                <i class="bi bi-clock"></i>
+            </div>
+            Today's Schedule
+        </h5>
+        <span class="text-muted">@DateTime.Today.ToString("dddd, MMMM dd, yyyy")</span>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+        @if (todayAppointments != null && todayAppointments.Any())
+        {
+            <table class="schedule-table">
+                <thead>
                     <tr>
                         <th style="width: 12%">Time</th>
-                        <th style="width: 23%">Patient</th>
+                        <th style="width: 35%">Patient</th>
                         <th style="width: 20%">Purpose</th>
-                        <th style="width: 15%">Status</th>
-                        <th style="width: 15%">Room</th>
+                        <th style="width: 18%">Status</th>
                         <th style="width: 15%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="align-middle">
-                        <td>9:00 AM</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-wrapper rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
-                                    <span class="text-info fw-bold">JS</span>
+                    @foreach (var appointment in todayAppointments.OrderBy(a => a.ScheduledDateTime))
+                    {
+                        <tr class="animate-slide-in">
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">
+                                    @appointment.ScheduledDateTime.ToString("h:mm tt")
                                 </div>
-                                <div>
-                                    <p class="mb-0 fw-medium">Jane Smith</p>
-                                    <small class="text-muted">42 years, Female</small>
+                            </td>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-avatar">
+                                        @GetInitials(appointment.PatientName)
+                                    </div>
+                                    <div class="patient-details">
+                                        <h6>@appointment.PatientName</h6>
+                                        <small>Patient ID: #@appointment.PatientId</small>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>Follow-up Consultation</td>
-                        <td><span class="badge bg-success">Completed</span></td>
-                        <td>Room 103</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-file-earmark-text"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="align-middle">
-                        <td>10:30 AM</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-wrapper rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
-                                    <span class="text-warning fw-bold">AR</span>
+                            </td>
+                         
+                            <td>
+                                <span class="status-badge @GetStatusClass(appointment.Status)">
+                                    @appointment.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="action-button" title="View Details">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </button>
+                                    <button class="action-button" title="Chat">
+                                        <i class="bi bi-chat-dots"></i>
+                                    </button>
                                 </div>
-                                <div>
-                                    <p class="mb-0 fw-medium">Ali Raza</p>
-                                    <small class="text-muted">35 years, Male</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Chest Pain Assessment</td>
-                        <td><span class="badge bg-primary">In Progress</span></td>
-                        <td>Room 115</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-file-earmark-text"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="align-middle">
-                        <td>1:00 PM</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-wrapper rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
-                                    <span class="text-danger fw-bold">SK</span>
-                                </div>
-                                <div>
-                                    <p class="mb-0 fw-medium">Sara Khan</p>
-                                    <small class="text-muted">28 years, Female</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Annual Checkup</td>
-                        <td><span class="badge bg-secondary">Waiting</span></td>
-                        <td>Room 107</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-file-earmark-text"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="align-middle">
-                        <td>2:30 PM</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
-                                    <span class="text-primary fw-bold">MT</span>
-                                </div>
-                                <div>
-                                    <p class="mb-0 fw-medium">Mark Thompson</p>
-                                    <small class="text-muted">52 years, Male</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Blood Pressure Review</td>
-                        <td><span class="badge bg-secondary">Scheduled</span></td>
-                        <td>Room 110</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-file-earmark-text"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
-        </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>No appointments scheduled for today</p>
+            </div>
+        }
     </div>
 </div>
 
-<!-- Calendar View Section -->
-<div class="animate-fade-in card border-0 shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-calendar2-week text-teal me-2"></i>
-            <h5 class="mb-0">Calendar View</h5>
-        </div>
-        <div class="d-flex align-items-center">
-            <button class="btn btn-sm btn-light me-2">
+<!-- Modern Calendar Section -->
+<div class="animate-fade-in modern-card">
+    <div class="card-header-modern">
+        <h5>
+            <div class="icon-badge">
+                <i class="bi bi-calendar2-week"></i>
+            </div>
+            Calendar View
+        </h5>
+    </div>
+    <div class="calendar-container">
+        <!-- Calendar Navigation -->
+        <div class="calendar-nav">
+            <button class="nav-button" @onclick="PreviousMonth">
                 <i class="bi bi-chevron-left"></i>
             </button>
-            <span class="fw-medium">May 2025</span>
-            <button class="btn btn-sm btn-light ms-2">
+            <div class="month-title">@currentMonth.ToString("MMMM yyyy")</div>
+            <button class="nav-button" @onclick="NextMonth">
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>
-    </div>
-    <div class="card-body">
+
         <!-- Calendar Grid -->
         <div class="calendar-grid">
-            <div class="calendar-header row text-center mb-2">
-                <div class="col">Mon</div>
-                <div class="col">Tue</div>
-                <div class="col">Wed</div>
-                <div class="col">Thu</div>
-                <div class="col">Fri</div>
-                <div class="col">Sat</div>
-                <div class="col">Sun</div>
+            <!-- Header -->
+            <div class="calendar-header">
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+                <div class="calendar-day-header">Sun</div>
             </div>
-            <div class="calendar-days">
-                <div class="row g-2 mb-2">
-                    <div class="col">
-                        <div class="calendar-day text-muted">28</div>
+
+            <!-- Calendar Days -->
+            @{
+                var firstDayOfMonth = new DateTime(currentMonth.Year, currentMonth.Month, 1);
+                var daysInMonth = DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month);
+                var firstWeekday = (int)firstDayOfMonth.DayOfWeek;
+                firstWeekday = firstWeekday == 0 ? 6 : firstWeekday - 1;
+                
+                var prevMonth = currentMonth.AddMonths(-1);
+                var daysInPrevMonth = DateTime.DaysInMonth(prevMonth.Year, prevMonth.Month);
+                
+                var currentDay = 1;
+                var nextMonthDay = 1;
+            }
+
+            @for (int i = 0; i < 42; i++)
+            {
+                @if (i < firstWeekday)
+                {
+                    var prevDay = daysInPrevMonth - firstWeekday + i + 1;
+                    <div class="calendar-day other-month">@prevDay</div>
+                }
+                else if (currentDay <= daysInMonth)
+                {
+                    var dayDate = new DateTime(currentMonth.Year, currentMonth.Month, currentDay);
+                    var hasAppointments = monthAppointments?.Any(a => a.ScheduledDateTime.Date == dayDate.Date) == true;
+                    var isToday = dayDate.Date == DateTime.Today;
+                    var appointmentCount = hasAppointments ? monthAppointments.Count(a => a.ScheduledDateTime.Date == dayDate.Date) : 0;
+                    
+                    var cssClasses = "calendar-day";
+                    if (isToday) cssClasses += " today";
+                    if (hasAppointments) cssClasses += " has-appointments";
+
+                    <div class="@cssClasses" @onclick="() => OpenDayModal(dayDate)">
+                        @currentDay
+                        @if (hasAppointments)
+                        {
+                            <div class="appointment-indicator">@appointmentCount</div>
+                        }
                     </div>
-                    <div class="col">
-                        <div class="calendar-day text-muted">29</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day text-muted">30</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">1</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">2</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">3</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">4</div>
-                    </div>
-                </div>
-                <div class="row g-2 mb-2">
-                    <div class="col">
-                        <div class="calendar-day">5</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">6</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">7</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">8</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">9</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">10</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day current-day" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">11</div>
-                    </div>
-                </div>
-                <div class="row g-2 mb-2">
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">12</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">13</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">14</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">15</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">16</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">17</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">18</div>
-                    </div>
-                </div>
-                <div class="row g-2 mb-2">
-                    <div class="col">
-                        <div class="calendar-day">19</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">20</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">21</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">22</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">23</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">24</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">25</div>
-                    </div>
-                </div>
-                <div class="row g-2">
-                    <div class="col">
-                        <div class="calendar-day">26</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">27</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">28</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">29</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day has-appointments" data-bs-toggle="modal" data-bs-target="#dayAppointmentsModal">30</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day">31</div>
-                    </div>
-                    <div class="col">
-                        <div class="calendar-day text-muted">1</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="d-flex justify-content-center mt-3 text-muted">
-            <div class="d-flex align-items-center me-3">
-                <div class="calendar-day-indicator current-day-indicator me-1"></div>
-                <small>Today</small>
-            </div>
-            <div class="d-flex align-items-center">
-                <div class="calendar-day-indicator has-appointments-indicator me-1"></div>
-                <small>Has Appointments</small>
-            </div>
+                    currentDay++;
+                }
+                else
+                {
+                    <div class="calendar-day other-month">@nextMonthDay</div>
+                    nextMonthDay++;
+                }
+            }
         </div>
     </div>
 </div>
 
-<!-- Day Appointments Modal -->
-<div class="modal fade" id="dayAppointmentsModal" tabindex="-1" aria-labelledby="dayAppointmentsModalLabel" aria-hidden="true">
+<!-- Modern Day Appointments Modal -->
+<div class="modal fade modern-modal" id="dayAppointmentsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="dayAppointmentsModalLabel">Appointments for May 12, 2025</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">
+                    Appointments for @selectedDate.ToString("MMMM dd, yyyy")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-item-time">08:30 AM</div>
-                        <div class="timeline-item-content">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">Emma Wilson</h6>
-                                        <span class="badge bg-secondary">Scheduled</span>
-                                    </div>
-                                    <p class="text-muted mb-1 small">Follow-up after surgery</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">Room 108</small>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-chat-dots"></i>
-                                            </button>
+                @if (dayAppointments != null && dayAppointments.Any())
+                {
+                    <div class="appointment-timeline">
+                        @foreach (var appointment in dayAppointments.OrderBy(a => a.ScheduledDateTime))
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-time">
+                                    @appointment.ScheduledDateTime.ToString("h:mm tt")
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="appointment-header">
+                                        <div class="appointment-patient">
+                                            <div class="patient-avatar">
+                                                @GetInitials(appointment.PatientName)
+                                            </div>
+                                            <div class="patient-details">
+                                                <h6>@appointment.PatientName</h6>
+                                            </div>
                                         </div>
+                                        <span class="status-badge @GetStatusClass(appointment.Status)">
+                                            @appointment.Status
+                                        </span>
                                     </div>
+                    
                                 </div>
                             </div>
-                        </div>
+                        }
                     </div>
-                    <div class="timeline-item">
-                        <div class="timeline-item-time">10:00 AM</div>
-                        <div class="timeline-item-content">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">James Li</h6>
-                                        <span class="badge bg-secondary">Scheduled</span>
-                                    </div>
-                                    <p class="text-muted mb-1 small">Initial consultation</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">Room 105</small>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-chat-dots"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No appointments scheduled for this day</p>
                     </div>
-                    <div class="timeline-item">
-                        <div class="timeline-item-time">1:15 PM</div>
-                        <div class="timeline-item-content">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">Rachel Green</h6>
-                                        <span class="badge bg-secondary">Scheduled</span>
-                                    </div>
-                                    <p class="text-muted mb-1 small">Medication review</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">Room 112</small>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-chat-dots"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">
-                </button>
+            <div class="modal-footer" style="border: none; padding: 1.5rem 2rem;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- New Appointment Modal -->
-<div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label for="patientSelect" class="form-label">Patient</label>
-                        <select class="form-select" id="patientSelect">
-                            <option selected disabled>Select a patient</option>
-                            <option>Jane Smith</option>
-                            <option>Ali Raza</option>
-                            <option>Sara Khan</option>
-                            <option>Mark Thompson</option>
-                            <option>Emma Wilson</option>
-                        </select>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="appointmentDate" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="appointmentDate">
-                        </div>
-                        <div class="col">
-                            <label for="appointmentTime" class="form-label">Time</label>
-                            <input type="time" class="form-control" id="appointmentTime">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="appointmentType" class="form-label">Appointment Type</label>
-                        <select class="form-select" id="appointmentType">
-                            <option selected disabled>Select type</option>
-                            <option>Initial Consultation</option>
-                            <option>Follow-up</option>
-                            <option>Annual Checkup</option>
-                            <option>Urgent Care</option>
-                            <option>Medication Review</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="appointmentRoom" class="form-label">Room</label>
-                        <select class="form-select" id="appointmentRoom">
-                            <option selected disabled>Select room</option>
-                            <option>Room 101</option>
-                            <option>Room 102</option>
-                            <option>Room 103</option>
-                            <option>Room 104</option>
-                            <option>Room 105</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="appointmentNotes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="appointmentNotes" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
+@code {
+    // Core properties for calendar functionality
+    private DateTime currentMonth = DateTime.Today;
+    private DateTime selectedDate = DateTime.Today;
+    private int doctorId;
+    
+    // Appointment data collections
+    private List<AppointmentDto>? monthAppointments;
+    private List<AppointmentDto>? dayAppointments;
+    private List<AppointmentDto>? todayAppointments;
 
-<style>
-       .animate-fade-in {
-        animation: fadeIn 0.5s ease-out;
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current doctor's ID from authentication state
+        await GetCurrentDoctorId();
+        
+        // Load initial data
+        await LoadMonthAppointments();
+        await LoadTodayAppointments();
     }
 
-    @@keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    /// <summary>
+    /// Gets the current doctor's ID from the authentication state
+    /// </summary>
+    private async Task GetCurrentDoctorId()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    // Get doctor profile by user ID to get doctor ID
+                    var doctorProfile = await doctorService.GetDoctorProfileByUserIdAsync(userId);
+                    if (doctorProfile != null)
+                    {
+                        doctorId = doctorProfile.DoctorId;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting doctor ID: {ex.Message}");
+        }
     }
 
-    /* Calendar Custom Styles */
-    .calendar-header {
-        font-weight: 500;
-        color: #6c757d;
+    /// <summary>
+    /// Loads appointments for the current month and updates the calendar
+    /// </summary>
+    private async Task LoadMonthAppointments()
+    {
+        if (doctorId <= 0) return;
+
+        try
+        {
+            // Calculate date range for the current month
+            var startOfMonth = new DateTime(currentMonth.Year, currentMonth.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            // Load appointments for the month
+            var appointments = await doctorService.GetDoctorAppointmentsAsync(
+                doctorId, 
+                startOfMonth, 
+                endOfMonth
+            );
+            
+            monthAppointments = appointments?.ToList() ?? new List<AppointmentDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading month appointments: {ex.Message}");
+            monthAppointments = new List<AppointmentDto>();
+        }
     }
-    
-    .calendar-day {
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-weight: 500;
+
+    /// <summary>
+    /// Loads today's appointments for the today's schedule section
+    /// </summary>
+    private async Task LoadTodayAppointments()
+    {
+        if (doctorId <= 0) return;
+
+        try
+        {
+            var appointments = await doctorService.GetTodayAppointmentsAsync(doctorId);
+            todayAppointments = appointments?.ToList() ?? new List<AppointmentDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading today's appointments: {ex.Message}");
+            todayAppointments = new List<AppointmentDto>();
+        }
     }
-    
-    .calendar-day:hover {
-        background-color: rgba(32, 201, 151, 0.1);
+
+    /// <summary>
+    /// Navigates to the previous month and reloads appointments
+    /// </summary>
+    private async Task PreviousMonth()
+    {
+        currentMonth = currentMonth.AddMonths(-1);
+        await LoadMonthAppointments();
+        StateHasChanged();
     }
-    
-    .calendar-day.current-day {
-        background-color: var(--bs-teal);
-        color: white;
+
+    /// <summary>
+    /// Navigates to the next month and reloads appointments
+    /// </summary>
+    private async Task NextMonth()
+    {
+        currentMonth = currentMonth.AddMonths(1);
+        await LoadMonthAppointments();
+        StateHasChanged();
     }
-    
-    .calendar-day.has-appointments {
-        position: relative;
+
+    /// <summary>
+    /// Opens the day appointments modal for the selected date
+    /// </summary>
+    private async Task OpenDayModal(DateTime day)
+    {
+        selectedDate = day;
+        
+        // Filter appointments for the selected day
+        dayAppointments = monthAppointments?
+            .Where(a => a.ScheduledDateTime.Date == day.Date)
+            .ToList() ?? new List<AppointmentDto>();
+
+        // Show the modal using JavaScript interop
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("bootstrap.Modal.getOrCreateInstance", "#dayAppointmentsModal")
+                          .AsTask()
+                          .ContinueWith(async _ => 
+                          {
+                              await JSRuntime.InvokeVoidAsync("bootstrap.Modal.getInstance", "#dayAppointmentsModal")
+                                           .AsTask()
+                                           .ContinueWith(async __ => 
+                                           {
+                                               await JSRuntime.InvokeVoidAsync("eval", 
+                                                   "bootstrap.Modal.getInstance(document.getElementById('dayAppointmentsModal')).show()");
+                                           });
+                          });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening modal: {ex.Message}");
+        }
+        
+        StateHasChanged();
     }
-    
-    .calendar-day.has-appointments::after {
-        content: '';
-        position: absolute;
-        bottom: 8px;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background-color: var(--bs-primary);
+
+    /// <summary>
+    /// Gets initials from a full name for avatar display
+    /// </summary>
+    private string GetInitials(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName)) return "??";
+        
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        
+        return parts.Length > 0 ? parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper() : "??";
     }
-    
-    .calendar-day-indicator {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
+
+    /// <summary>
+    /// Returns appropriate CSS class based on appointment status
+    /// </summary>
+    private string GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" => "status-completed",
+            "in progress" => "status-in-progress",
+            "cancelled" => "status-cancelled",
+            "waiting" => "status-waiting",
+            "scheduled" => "status-scheduled",
+            _ => "status-scheduled"
+        };
     }
-    
-    .current-day-indicator {
-        background-color: var(--bs-teal);
-    }
-    
-    .has-appointments-indicator {
-        background-color: var(--bs-primary);
-    }
-    
-    /* Timeline Styles */
-    .timeline {
-        position: relative;
-        padding-left: 90px;
-    }
-    
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 85px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background-color: #dee2e6;
-    }
-    
-    .timeline-item {
-        position: relative;
-        margin-bottom: 20px;
-    }
-    
-    .timeline-item-time {
-        position: absolute;
-        left: -90px;
-        width: 75px;
-        text-align: right;
-        color: #6c757d;
-        font-size: 0.85rem;
-        font-weight: 500;
-        padding-top: 0.5rem;
-    }
-    
-    .timeline-item-content {
-        position: relative;
-    }
-    
-    .timeline-item-content::before {
-        content: '';
-        position: absolute;
-        left: -17px;
-        top: 15px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: var(--bs-teal);
-        border: 2px solid white;
-        box-shadow: 0 0 0 1px #dee2e6;
-    }
-</style>
+}
