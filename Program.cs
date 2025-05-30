@@ -5,6 +5,7 @@ using BlazorApp1.Models.DTOs;
 using BlazorApp1.Services.Interfaces;
 using BlazorApp1.Services.Implementations;
 using Microsoft.Data.SqlClient;
+using BlazorApp1.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,10 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddControllers();
 
 // Register services
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ILabTechnicianService, LabTechnicianService>();
+builder.Services.AddScoped<IReceptionistService,ReceptionistService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();

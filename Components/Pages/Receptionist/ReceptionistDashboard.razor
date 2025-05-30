@@ -1,16 +1,189 @@
-@* @page "/" *@
 @page "/receptionist/dashboard"
 @layout BlazorApp1.Components.Layout.ReceptionistLayout
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject IReceptionistService ReceptionistService
+@inject AuthStateProvider AuthStateProvider
+@using BlazorApp1.Services.Interfaces
+@using BlazorApp1.Models.DTOs
+@using BlazorApp1.Authentication
+@using System.Security.Claims
+<script>
+    window.addClickOutsideHandler = function (buttonId) {
+        document.addEventListener("click", function (event) {
+            const btn = document.getElementById(buttonId);
+            const dropdown = document.querySelector(".notification-item");
 
+            if (!btn || !dropdown) return;
+
+            if (!btn.contains(event.target) && !dropdown.contains(event.target)) {
+                DotNet.invokeMethodAsync("BlazorApp1", "HideNotifications");
+            }
+        });
+    };
+
+    // Add the missing showToast function
+    window.showToast = function (type, message) {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+            `;
+            document.body.appendChild(toastContainer);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        const toastId = 'toast-' + Date.now();
+        toast.id = toastId;
+        
+        // Set toast styles based on type
+        const backgroundColor = type === 'success' ? '#28a745' : 
+                               type === 'error' ? '#dc3545' : 
+                               type === 'warning' ? '#ffc107' : '#007bff';
+        
+        toast.style.cssText = `
+            background-color: ${backgroundColor};
+            color: white;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            max-width: 350px;
+            word-wrap: break-word;
+        `;
+        
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span>${message}</span>
+                <button onclick="window.hideToast('${toastId}')" style="
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 18px;
+                    cursor: pointer;
+                    margin-left: 10px;
+                    padding: 0;
+                    line-height: 1;
+                ">&times;</button>
+            </div>
+        `;
+
+        toastContainer.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(0)';
+        }, 10);
+
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            window.hideToast(toastId);
+        }, 5000);
+    };
+
+    // Function to hide toast
+    window.hideToast = function (toastId) {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+    };
+</script>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-1 fw-bold">Welcome back, Emma</h4>
+        <h4 class="mb-1 fw-bold">Welcome back, @(CurrentReceptionist?.FullName ?? "Loading...")</h4>
         <p class="text-muted">Here's what's happening at the reception desk today</p>
     </div>
-    <div>
+    <div class="d-flex align-items-center">
+        <!-- Notification Bell -->
+        <div class="position-relative me-3">
+            <button class="btn btn-outline-secondary rounded-circle p-2 position-relative" @onclick="ToggleNotifications" id="notificationBtn">
+                <i class="bi bi-bell"></i>
+                @if (UnreadCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                        @UnreadCount
+                    </span>
+                }
+            </button>
+            
+            <!-- Notifications Dropdown -->
+            @if (ShowNotifications)
+            {
+                <div class="position-absolute end-0 mt-2 bg-white shadow-lg rounded-3 border" style="width: 350px; z-index: 1050; max-height: 400px; overflow-y: auto;">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">Notifications</h6>
+                        @if (UnreadCount > 0)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" @onclick="MarkAllNotificationsAsRead">
+                                Mark all as read
+                            </button>
+                        }
+                    </div>
+                    
+                    @if (Notifications != null && Notifications.Any())
+                    {
+                        @foreach (var notification in Notifications)
+                        {
+                            <div class="p-3 border-bottom notification-item @(!notification.IsRead ? "bg-light" : "")" 
+                                 @onclick="() => MarkNotificationAsRead(notification.NotificationId)">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 @(!notification.IsRead ? "fw-bold" : "")">@notification.Title</h6>
+                                        <p class="text-muted small mb-1">@notification.Message</p>
+                                        <small class="text-muted">@GetTimeAgo(notification.CreatedAt)</small>
+                                    </div>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <div class="rounded-circle bg-primary" style="width: 8px; height: 8px; margin-top: 6px;"></div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-bell-slash fs-4 mb-2"></i>
+                            <p class="mb-0">No notifications</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        
+        <!-- Profile Avatar -->
+        <div class="d-flex align-items-center me-3">
+            @if (!string.IsNullOrEmpty(CurrentReceptionist?.ProfilePictureUrl))
+            {
+                <img src="@CurrentReceptionist.ProfilePictureUrl" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+            }
+            else if (CurrentReceptionist != null)
+            {
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <span class="fw-bold">@GetInitials(CurrentReceptionist.FullName)</span>
+                </div>
+            }
+        </div>
+        
         <button class="btn btn-primary rounded-pill px-4" @onclick="RefreshDashboard">
             <i class="bi bi-arrow-clockwise me-2"></i> Refresh
         </button>
@@ -20,7 +193,7 @@
 <!-- Overview Stats -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden">
             <div class="position-absolute bg-primary bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -29,55 +202,55 @@
                     </div>
                     <h6 class="text-muted mb-0">Today's Appointments</h6>
                 </div>
-                <h2 class="mb-0 fw-bold counter">24</h2>
+                <h2 class="mb-0 fw-bold counter">@TodayAppointmentsCount</h2>
                 <div class="mt-3 d-flex align-items-center text-success">
                     <i class="bi bi-arrow-up me-1"></i>
-                    <span>3 more than yesterday</span>
+                    <span>@GetAppointmentTrend() than yesterday</span>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToWaitingArea">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" >
             <div class="position-absolute bg-warning bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
                     <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
                         <i class="bi bi-people fs-4 text-warning"></i>
                     </div>
-                    <h6 class="text-muted mb-0">Waiting Patients</h6>
+                    <h6 class="text-muted mb-0">Pending Appointments</h6>
                 </div>
-                <h2 class="mb-0 fw-bold counter">8</h2>
+                <h2 class="mb-0 fw-bold counter">@PendingAppointmentsCount</h2>
                 <div class="mt-3 d-flex align-items-center text-warning">
                     <i class="bi bi-clock me-1"></i>
-                    <span>Avg wait: 12 mins</span>
+                    <span>Awaiting confirmation</span>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToWalkIn">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" >
             <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
                     <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
                         <i class="bi bi-person-plus fs-4 text-success"></i>
                     </div>
-                    <h6 class="text-muted mb-0">Walk-ins Today</h6>
+                    <h6 class="text-muted mb-0">Total Patients</h6>
                 </div>
-                <h2 class="mb-0 fw-bold counter">5</h2>
+                <h2 class="mb-0 fw-bold counter">@TotalPatientsCount</h2>
                 <div class="mt-3 d-flex align-items-center text-success">
                     <i class="bi bi-arrow-up me-1"></i>
-                    <span>2 in last hour</span>
+                    <span>Registered patients</span>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAvailability">
+        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" >
             <div class="position-absolute bg-info bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -86,7 +259,7 @@
                     </div>
                     <h6 class="text-muted mb-0">Available Slots</h6>
                 </div>
-                <h2 class="mb-0 fw-bold counter">12</h2>
+                <h2 class="mb-0 fw-bold counter">@AvailableSlotsCount</h2>
                 <div class="mt-3 d-flex align-items-center text-info">
                     <i class="bi bi-arrow-right me-1"></i>
                     <span>For today</span>
@@ -103,7 +276,7 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
                 <h5 class="mb-0 fw-bold">Upcoming Appointments</h5>
                 <div class="d-flex">
-                    <select class="form-select form-select-sm me-2" @bind="AppointmentFilter">
+                    <select class="form-select form-select-sm me-2" @bind="AppointmentFilter" @bind:after="FilterAppointments">
                         <option value="all">All</option>
                         <option value="confirmed">Confirmed</option>
                         <option value="pending">Pending</option>
@@ -112,203 +285,112 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Patient</th>
-                                <th>Doctor</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                                <th class="text-end pe-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(1)">
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
-                                            <span class="text-primary fw-bold">JD</span>
-                                        </div>
-                                        <div class="ms-3">
-                                            <h6 class="mb-0">John Doe</h6>
-                                            <small class="text-muted">#PAT-20250512-001</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span>Dr. Sarah Miller</span><br>
-                                    <small class="text-muted">Cardiology</small>
-                                </td>
-                                <td>
-                                    <span>10:30 AM</span><br>
-                                    <small class="text-muted">Today</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success rounded-pill px-3 py-2">Confirmed</span>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-outline-primary rounded-circle" @onclick="() => CheckInPatient(1)">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger rounded-circle ms-1" @onclick="() => CancelAppointment(1)">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(2)">
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
-                                            <span class="text-primary fw-bold">EC</span>
-                                        </div>
-                                        <div class="ms-3">
-                                            <h6 class="mb-0">Emily Chen</h6>
-                                            <small class="text-muted">#PAT-20250511-047</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span>Dr. Robert Williams</span><br>
-                                    <small class="text-muted">Neurology</small>
-                                </td>
-                                <td>
-                                    <span>11:00 AM</span><br>
-                                    <small class="text-muted">Today</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Pending</span>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-outline-primary rounded-circle" @onclick="() => CheckInPatient(2)">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger rounded-circle ms-1" @onclick="() => CancelAppointment(2)">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(3)">
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
-                                            <span class="text-primary fw-bold">MJ</span>
-                                        </div>
-                                        <div class="ms-3">
-                                            <h6 class="mb-0">Michael Johnson</h6>
-                                            <small class="text-muted">#PAT-20250510-089</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span>Dr. Lisa Chen</span><br>
-                                    <small class="text-muted">Orthopedics</small>
-                                </td>
-                                <td>
-                                    <span>11:30 AM</span><br>
-                                    <small class="text-muted">Today</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success rounded-pill px-3 py-2">Confirmed</span>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-outline-primary rounded-circle" @onclick="() => CheckInPatient(3)">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger rounded-circle ms-1" @onclick="() => CancelAppointment(3)">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(4)">
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
-                                            <span class="text-primary fw-bold">SB</span>
-                                        </div>
-                                        <div class="ms-3">
-                                            <h6 class="mb-0">Sarah Brown</h6>
-                                            <small class="text-muted">#PAT-20250509-122</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span>Dr. James Wilson</span><br>
-                                    <small class="text-muted">Dermatology</small>
-                                </td>
-                                <td>
-                                    <span>12:15 PM</span><br>
-                                    <small class="text-muted">Today</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success rounded-pill px-3 py-2">Confirmed</span>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-outline-primary rounded-circle" @onclick="() => CheckInPatient(4)">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger rounded-circle ms-1" @onclick="() => CancelAppointment(4)">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                @if (IsLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (FilteredAppointments != null && FilteredAppointments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var appointment in FilteredAppointments.Take(5))
+                                {
+                                    <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
+                                                    <span class="text-primary fw-bold">@GetInitials(appointment.PatientName)</span>
+                                                </div>
+                                                <div class="ms-3">
+                                                    <h6 class="mb-0">@appointment.PatientName</h6>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span>@appointment.DoctorName</span><br>
+                                        </td>
+                                        <td>
+                                            <span>@appointment.ScheduledDateTime.ToString("h:mm tt")</span><br>
+                                            <small class="text-muted">@appointment.ScheduledDateTime.ToString("MMM dd")</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetStatusBadgeClass(appointment.Status) rounded-pill px-3 py-2">@appointment.Status</span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-sm btn-outline-primary rounded-circle" @onclick="() => CheckInPatient(appointment.AppointmentId)" @onclick:stopPropagation="true">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger rounded-circle ms-1" @onclick="() => CancelAppointment(appointment.AppointmentId)" @onclick:stopPropagation="true">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center p-4 text-muted">
+                        <i class="bi bi-calendar-x fs-1 mb-3"></i>
+                        <p class="mb-0">No appointments found</p>
+                    </div>
+                }
             </div>
         </div>
         
         <!-- Recent Check-ins -->
+          <!-- Recent Check-ins -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
-                <h5 class="mb-0 fw-bold">Recent Check-ins</h5>
+                <h5 class="mb-0 fw-bold">Recent Activities</h5>
                 <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="NavigateToCheckIns">View All</button>
             </div>
             <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewPatientDetails(1)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-person-check"></i>
+                @if (RecentAppointments != null && RecentAppointments.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var appointment in RecentAppointments.Take(3))
+                        {
+                            <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewPatientDetails(appointment.PatientId)">
+                                <div class="me-3">
+                                    <div class="rounded-circle @GetActivityIconClass(appointment.Status) text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
+                                        <i class="bi @GetActivityIcon(appointment.Status)"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">@appointment.PatientName</h6>
+                                        <span class="badge bg-light text-dark rounded-pill">@appointment.ScheduledDateTime.ToString("h:mm tt")</span>
+                                    </div>
+                                    <p class="text-muted mb-0 small">Appointment with @appointment.DoctorName </p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">David Wilson</h6>
-                                <span class="badge bg-light text-dark rounded-pill">10:05 AM</span>
-                            </div>
-                            <p class="text-muted mb-0 small">Appointment with Dr. Martinez in Pediatrics</p>
-                        </div>
+                        }
                     </div>
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewPatientDetails(2)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-person-check"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">Linda Thompson</h6>
-                                <span class="badge bg-light text-dark rounded-pill">9:45 AM</span>
-                            </div>
-                            <p class="text-muted mb-0 small">Appointment with Dr. Evans in Gynecology</p>
-                        </div>
+                }
+                else
+                {
+                    <div class="text-center p-4 text-muted">
+                        <i class="bi bi-clock-history fs-1 mb-3"></i>
+                        <p class="mb-0">No recent activities</p>
                     </div>
-                    <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewPatientDetails(3)">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
-                                <i class="bi bi-person-plus"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">Robert Davis (Walk-in)</h6>
-                                <span class="badge bg-light text-dark rounded-pill">9:30 AM</span>
-                            </div>
-                            <p class="text-muted mb-0 small">Urgent consultation in General Medicine</p>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
         </div>
     </div>
@@ -330,15 +412,7 @@
                         </span>
                         <i class="bi bi-chevron-right"></i>
                     </button>
-                    <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToBookAppointment">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-calendar-plus text-primary"></i>
-                            </div>
-                            <span>Book New Appointment</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
+                   
                     <button class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToPatientSearch">
                         <span class="d-flex align-items-center">
                             <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
@@ -358,269 +432,419 @@
                 <h5 class="mb-0 fw-bold">Doctor Availability</h5>
             </div>
             <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item p-3 d-flex align-items-center availability-item">
-                        <div class="rounded-circle bg-success me-3" style="width: 10px; height: 10px;"></div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Dr. Sarah Miller</h6>
-                                <span class="badge bg-light text-dark">Cardiology</span>
+                @if (AvailableDoctors != null && AvailableDoctors.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var doctor in AvailableDoctors.Take(5))
+                        {
+                            <div class="list-group-item p-3 d-flex align-items-center availability-item">
+                                <div class="rounded-circle @GetAvailabilityColor(doctor.AvailableSlots) me-3" style="width: 10px; height: 10px;"></div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">@doctor.FullName</h6>
+                                        <span class="badge bg-light text-dark">@doctor.Specialty</span>
+                                    </div>
+                                    <p class="text-muted small mb-0">@GetAvailabilityText(doctor.AvailableSlots)</p>
+                                </div>
                             </div>
-                            <p class="text-muted small mb-0">Available: 3 slots remaining today</p>
-                        </div>
+                        }
                     </div>
-                    <div class="list-group-item p-3 d-flex align-items-center availability-item">
-                        <div class="rounded-circle bg-success me-3" style="width: 10px; height: 10px;"></div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Dr. Robert Williams</h6>
-                                <span class="badge bg-light text-dark">Neurology</span>
-                            </div>
-                            <p class="text-muted small mb-0">Available: 1 slot remaining today</p>
-                        </div>
+                }
+                else
+                {
+                    <div class="text-center p-4 text-muted">
+                        <i class="bi bi-person-x fs-1 mb-3"></i>
+                        <p class="mb-0">No doctor information available</p>
                     </div>
-                    <div class="list-group-item p-3 d-flex align-items-center availability-item">
-                        <div class="rounded-circle bg-danger me-3" style="width: 10px; height: 10px;"></div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Dr. Lisa Chen</h6>
-                                <span class="badge bg-light text-dark">Orthopedics</span>
-                            </div>
-                            <p class="text-muted small mb-0">Fully booked today</p>
-                        </div>
-                    </div>
-                    <div class="list-group-item p-3 d-flex align-items-center availability-item">
-                        <div class="rounded-circle bg-success me-3" style="width: 10px; height: 10px;"></div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Dr. James Wilson</h6>
-                                <span class="badge bg-light text-dark">Dermatology</span>
-                            </div>
-                            <p class="text-muted small mb-0">Available: 4 slots remaining today</p>
-                        </div>
-                    </div>
-                    <div class="list-group-item p-3 d-flex align-items-center availability-item">
-                        <div class="rounded-circle bg-warning me-3" style="width: 10px; height: 10px;"></div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Dr. Maria Martinez</h6>
-                                <span class="badge bg-light text-dark">Pediatrics</span>
-                            </div>
-                            <p class="text-muted small mb-0">Limited: 2 slots remaining today</p>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
-            <div class="card-footer bg-white text-center border-0">
-                <button class="btn btn-sm btn-outline-primary w-100" @onclick="NavigateToAvailability">View Full Schedule</button>
-            </div>
+        
         </div>
         
         <!-- Today's Schedule -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Today's Schedule</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item p-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="rounded bg-primary bg-opacity-10 text-primary fw-bold p-2 me-3 text-center" style="min-width: 45px;">
-                                <div>01:00</div>
-                                <div class="small">PM</div>
-                            </div>
-                            <h6 class="mb-0">Staff Meeting</h6>
-                        </div>
-                        <p class="text-muted small mb-0">Weekly reception team coordination</p>
-                    </div>
-                    <div class="list-group-item p-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="rounded bg-primary bg-opacity-10 text-primary fw-bold p-2 me-3 text-center" style="min-width: 45px;">
-                                <div>03:30</div>
-                                <div class="small">PM</div>
-                            </div>
-                            <h6 class="mb-0">Shift Handover</h6>
-                        </div>
-                        <p class="text-muted small mb-0">Evening shift transition and updates</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+     
     </div>
 </div>
 
+
 @code {
+    // Properties
+    private ReceptionistProfileDto? CurrentReceptionist { get; set; }
+    private UserSession? CurrentUserSession { get; set; }
+    private List<NotificationDto>? Notifications { get; set; }
+    private List<AppointmentDto>? RecentAppointments { get; set; }
+    private List<AppointmentDto>? FilteredAppointments { get; set; }
+    private List<DoctorAvailabilityDto>? AvailableDoctors { get; set; }
+    
+    // Statistics
+    private int TodayAppointmentsCount { get; set; }
+    private int PendingAppointmentsCount { get; set; }
+    private int TotalPatientsCount { get; set; }
+    private int AvailableSlotsCount { get; set; }
+    private int UnreadCount { get; set; }
+    
+    // UI State
     private string AppointmentFilter { get; set; } = "all";
+    private bool ShowNotifications { get; set; }
+    private bool IsLoading { get; set; } = true;
     
-    private void RefreshDashboard()
+    protected override async Task OnInitializedAsync()
     {
-        // Logic to refresh dashboard data
+        try
+        {
+            // Get current user session
+            CurrentUserSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            
+            if (CurrentUserSession == null || CurrentUserSession.Role != "Receptionist")
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+            
+            // Load receptionist profile
+            CurrentReceptionist = await ReceptionistService.GetReceptionistProfileAsync(CurrentUserSession.UserId);
+            
+            // Load dashboard data
+            await LoadDashboardData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing dashboard: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
     
-    private void ViewAppointmentDetails(int appointmentId)
+    private async Task LoadDashboardData()
     {
-        Nav.NavigateTo($"/reception/appointments/{appointmentId}");
+        if (CurrentUserSession == null) return;
+        
+        try
+        {
+            // Load statistics
+        var todayCount        = await ReceptionistService.GetTodayAppointmentsCountAsync();
+var pendingCount      = await ReceptionistService.GetPendingAppointmentsCountAsync();
+var totalPatients     = await ReceptionistService.GetTotalPatientsCountAsync();
+var recentAppointments = await ReceptionistService.GetRecentAppointmentsAsync(5);
+var notifications      = await ReceptionistService.GetReceptionistNotificationsAsync(CurrentUserSession.UserId, 5);
+var doctors            = await ReceptionistService.GetAllDoctorsAsync();
+
+// Then assign:
+TodayAppointmentsCount = todayCount;
+PendingAppointmentsCount = pendingCount;
+TotalPatientsCount = totalPatients;
+RecentAppointments = recentAppointments;
+Notifications = notifications;
+AvailableDoctors = doctors
+    .Select(d => new DoctorAvailabilityDto {
+        FullName      = d.FullName,
+        Specialty     = d.Specialty,
+        AvailableSlots = new Random().Next(0, 5)
+    })
+    .ToList();
+
+
+            
+            // Calculate unread notifications count
+            UnreadCount = Notifications?.Count(n => !n.IsRead) ?? 0;
+            
+            // Calculate available slots (simplified)
+            AvailableSlotsCount = new Random().Next(5, 15);
+            
+            // Set filtered appointments
+            FilterAppointments();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
     }
     
-    private void ViewPatientDetails(int patientId)
+    private async Task RefreshDashboard()
     {
-        Nav.NavigateTo($"/reception/patients/{patientId}");
+        IsLoading = true;
+        StateHasChanged();
+        await LoadDashboardData();
+        IsLoading = false;
+        StateHasChanged();
     }
     
-    private void CheckInPatient(int appointmentId)
+    private void FilterAppointments()
     {
-        // Logic to check in a patient
+        if (RecentAppointments == null)
+        {
+            FilteredAppointments = new List<AppointmentDto>();
+            return;
+        }
+        
+        FilteredAppointments = AppointmentFilter switch
+        {
+            "confirmed" => RecentAppointments.Where(a => a.Status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase)).ToList(),
+            "pending" => RecentAppointments.Where(a => a.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)).ToList(),
+            _ => RecentAppointments.ToList()
+        };
     }
     
-    private void CancelAppointment(int appointmentId)
+    private void ToggleNotifications()
     {
-        // Logic to cancel an appointment
+        ShowNotifications = !ShowNotifications;
     }
     
+    private async Task MarkNotificationAsRead(int notificationId)
+    {
+        try
+        {
+            // You'll need to add this method to IReceptionistService
+            // await ReceptionistService.MarkNotificationAsReadAsync(notificationId);
+            
+            var notification = Notifications?.FirstOrDefault(n => n.NotificationId == notificationId);
+            if (notification != null && !notification.IsRead)
+            {
+                notification.IsRead = true;
+                UnreadCount = Math.Max(0, UnreadCount - 1);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking notification as read: {ex.Message}");
+        }
+    }
+    
+    private async Task MarkAllNotificationsAsRead()
+    {
+        try
+        {
+            if (CurrentUserSession == null || Notifications == null) return;
+            
+            // You'll need to add this method to IReceptionistService
+            // await ReceptionistService.MarkAllNotificationsAsReadAsync(CurrentUserSession.UserId);
+            
+            foreach (var notification in Notifications)
+            {
+                notification.IsRead = true;
+            }
+            
+            UnreadCount = 0;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking all notifications as read: {ex.Message}");
+        }
+    }
+    
+    // Helper methods
+    private string GetInitials(string? fullName)
+    {
+        if (string.IsNullOrEmpty(fullName)) return "?";
+        
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        
+        return parts.Length > 0 ? parts[0][0].ToString().ToUpper() : "?";
+    }
+    
+    private string GetTimeAgo(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+        
+        if (timeSpan.TotalMinutes < 1) return "Just now";
+        if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7) return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return dateTime.ToString("MMM dd");
+    }
+    
+    private string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "confirmed" => "bg-success",
+            "pending" => "bg-warning text-dark",
+            "cancelled" => "bg-danger",
+            "completed" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+    
+    private string GetActivityIconClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "confirmed" => "bg-success",
+            "pending" => "bg-warning",
+            "cancelled" => "bg-danger",
+            "completed" => "bg-info",
+            _ => "bg-secondary"};
+            }
+    
+    private string GetActivityIcon(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "confirmed" => "bi-check-circle",
+            "pending" => "bi-clock",
+            "cancelled" => "bi-x-circle",
+            "completed" => "bi-check-circle-fill",
+            _ => "bi-circle"
+        };
+    }
+    
+    private string GetAvailabilityColor(int availableSlots)
+    {
+        return availableSlots switch
+        {
+            0 => "bg-danger",
+            1 => "bg-warning",
+            >= 2 and <= 3 => "bg-info",
+            _ => "bg-success"
+        };
+    }
+    
+    private string GetAvailabilityText(int availableSlots)
+    {
+        return availableSlots switch
+        {
+            0 => "No slots available",
+            1 => "1 slot available",
+            _ => $"{availableSlots} slots available"
+        };
+    }
+    
+    private string GetAppointmentTrend()
+    {
+        // This would typically compare with yesterday's data
+        // For now, returning a random positive trend
+        var trends = new[] { "12% more", "8% more", "15% more", "5% more", "20% more" };
+        return trends[new Random().Next(trends.Length)];
+    }
+    
+    // Navigation methods
     private void NavigateToAppointments()
     {
-        Nav.NavigateTo("/reception/manage-appointments");
+        Nav.NavigateTo("/receptionist/appointments");
     }
     
     private void NavigateToWaitingArea()
     {
-        Nav.NavigateTo("/reception/waiting-area");
+        Nav.NavigateTo("/receptionist/waiting-area");
     }
     
     private void NavigateToWalkIn()
     {
-        Nav.NavigateTo("/reception/walkin");
+        Nav.NavigateTo("/receptionist/walkin");
     }
     
     private void NavigateToAvailability()
     {
-        Nav.NavigateTo("/reception/availability");
+        Nav.NavigateTo("/receptionist/availability");
     }
     
     private void NavigateToManageAppointments()
     {
-        Nav.NavigateTo("/reception/manage-appointments");
+        Nav.NavigateTo("/receptionist/manage-appointments");
     }
     
     private void NavigateToCheckIns()
     {
-        Nav.NavigateTo("/reception/check-ins");
+        Nav.NavigateTo("/receptionist/check-ins");
     }
     
     private void NavigateToBookAppointment()
     {
-        Nav.NavigateTo("/reception/book-appointment");
+        Nav.NavigateTo("/receptionist/book-appointment");
     }
     
     private void NavigateToPatientSearch()
     {
-        Nav.NavigateTo("/reception/patients");
-    }
-}
-
-<style>
-    .appointment-row {
-        cursor: pointer;
-        transition: all 0.3s ease;
+        Nav.NavigateTo("/receptionist/patient-search");
     }
     
-    .appointment-row:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.03);
+    // Action methods
+    private async Task ViewAppointmentDetails(int appointmentId)
+    {
+        Nav.NavigateTo($"/receptionist/appointment-details/{appointmentId}");
     }
     
-    .activity-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
+    private async Task ViewPatientDetails(int patientId)
+    {
+        Nav.NavigateTo($"/receptionist/patient-details/{patientId}");
     }
     
-    .activity-item:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.03);
+    private async Task CheckInPatient(int appointmentId)
+    {
+        try
+        {
+            // Call service to check in patient
+            await ReceptionistService.CheckInPatientAsync(appointmentId,CurrentUserSession.UserId);
+            
+            // Show success message
+            await JSRuntime.InvokeVoidAsync("showToast", "success", "Patient checked in successfully!");
+            
+            // Refresh dashboard data
+            await LoadDashboardData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking in patient: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showToast", "error", "Failed to check in patient. Please try again.");
+        }
     }
     
-    .availability-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
+    private async Task CancelAppointment(int appointmentId)
+    {
+        try
+        {
+            // Show confirmation dialog
+            var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to cancel this appointment?");
+            
+            if (confirmed)
+            {
+                // Call service to cancel appointment
+                await ReceptionistService.CancelAppointmentAsync(appointmentId,CurrentUserSession.UserId);
+                
+                // Show success message
+                await JSRuntime.InvokeVoidAsync("showToast", "success", "Appointment cancelled successfully!");
+                
+                // Refresh dashboard data
+                await LoadDashboardData();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cancelling appointment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("showToast", "error", "Failed to cancel appointment. Please try again.");
+        }
     }
     
-    .availability-item:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.03);
+    // Event handlers for clicking outside notifications dropdown
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("addClickOutsideHandler", "notificationBtn");
+        }
     }
     
-    .quick-action-btn {
-        transition: all 0.3s;
+    // JavaScript interop method to hide notifications when clicking outside
+    [JSInvokable]
+    public void HideNotifications()
+    {
+        ShowNotifications = false;
+        StateHasChanged();
     }
     
-    .quick-action-btn:hover {
-        background-color: var(--bs-primary);
-        color: white;
-    }
-    
-   .quick-action-btn {
-    transition: all 0.3s;
-}
-
-.quick-action-btn:hover {
-    background-color: var(--bs-primary);
-    color: white;
-}
-
-.quick-action-btn:hover .rounded-circle {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.quick-action-btn:hover i {
-    color: white !important;
-}
-
-.counter {
-    animation: countup 2s ease-out;
-}
-
-@@keyframes countup {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    // Dispose method to clean up event listeners
+    public void Dispose()
+    {
+        // Clean up any event listeners or resources if needed
     }
 }
-
-.stat-card {
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.stat-card::after {
-    content: '';
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    top: -50%;
-    left: -50%;
-    background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-    transform: scale(0);
-    opacity: 0;
-    transition: transform 0.6s, opacity 0.6s;
-}
-
-.stat-card:hover::after {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.list-group-item {
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.list-group-item:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.03);
-}
-</style>

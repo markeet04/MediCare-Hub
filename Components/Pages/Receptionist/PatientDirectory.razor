@@ -1,0 +1,611 @@
+@page "/receptionist/patient-directory"
+@layout ReceptionistLayout
+@using BlazorApp1.Models.DTOs
+@using BlazorApp1.Services.Interfaces
+@inject BlazorApp1.Services.Interfaces.IReceptionistService ReceptionistService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-primary mb-1">
+                    <i class="bi bi-people me-2"></i>
+                    Patient Directory
+                </h2>
+                <p class="text-muted mb-0">Manage and view all registered patients</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary rounded-pill" @onclick="RefreshPatients">
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                    Refresh
+                </button>
+                <button class="btn btn-primary rounded-pill" @onclick="NavigateToWalkIn">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Register New Patient
+                </button>
+            </div>  
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="position-relative">
+                            <input type="text" value="@searchTerm" @oninput="OnSearchInput" @onkeypress="HandleSearchKeyPress"
+                                   class="form-control bg-light border-0 rounded-pill ps-5" 
+                                   placeholder="Search by name, CNIC, or phone..." />
+                            <i class="bi bi-search position-absolute start-0 top-50 translate-middle-y ms-3 text-muted"></i>
+                            @if (!string.IsNullOrEmpty(searchTerm))
+                            {
+                                <button class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-2 rounded-circle p-1" 
+                                        @onclick="ClearSearch">
+                                    <i class="bi bi-x text-muted"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select value="@selectedGenderFilter" @onchange="OnGenderFilterChange" class="form-select bg-light border-0 rounded-pill">                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select value="@selectedBloodGroupFilter" @onchange="OnBloodGroupFilterChange" class="form-select bg-light border-0 rounded-pill">                            <option value="">All Blood Groups</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-primary rounded-pill" @onclick="SearchPatients">
+                            <i class="bi bi-search me-2"></i>
+                            Search
+                        </button>
+                        @if (isFiltered)
+                        {
+                            <button class="btn btn-outline-secondary rounded-pill ms-2" @onclick="ClearAllFilters">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Clear Filters
+                            </button>
+                        }
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            Showing @filteredPatients.Count of @totalPatients patients
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        @if (isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">Loading patients...</p>
+            </div>
+        }
+        else if (!filteredPatients.Any())
+        {
+            <!-- Empty State -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-people display-1 text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">
+                        @if (isFiltered)
+                        {
+                            <text>No patients found matching your criteria</text>
+                        }
+                        else
+                        {
+                            <text>No patients registered yet</text>
+                        }
+                    </h4>
+                    <p class="text-muted mb-4">
+                        @if (isFiltered)
+                        {
+                            <text>Try adjusting your search terms or filters</text>
+                        }
+                        else
+                        {
+                            <text>Start by registering your first patient</text>
+                        }
+                    </p>
+                    <button class="btn btn-primary rounded-pill" @onclick="NavigateToWalkIn">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Register New Patient
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Patient Cards Grid -->
+            <div class="row g-4">
+                @foreach (var patient in paginatedPatients)
+                {
+                    <div class="col-lg-6 col-xl-4">
+                        <div class="card border-0 shadow-sm h-100 patient-card">
+                            <div class="card-body p-4">
+                                <!-- Patient Header -->
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-wrapper me-3">
+                                        @if (!string.IsNullOrEmpty(patient.ProfilePictureUrl))
+                                        {
+                                            <img src="@patient.ProfilePictureUrl" class="rounded-circle" width="50" height="50" alt="Patient Avatar" />
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="bi bi-person fs-5"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 text-primary">@patient.FullName</h6>
+                                        <small class="text-muted">ID: @patient.PatientId</small>
+                                    </div>
+                                
+                                </div>
+
+                                <!-- Patient Info -->
+                                <div class="patient-info">
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-telephone text-muted me-2"></i>
+                                                <small class="text-muted">Phone</small>
+                                                <div class="fw-medium">@(patient.PhoneNumber ?? "Not provided")</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-calendar text-muted me-2"></i>
+                                                <small class="text-muted">Age</small>
+                                                <div class="fw-medium">@GetPatientAge(patient.DateOfBirth)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-gender-ambiguous text-muted me-2"></i>
+                                                <small class="text-muted">Gender</small>
+                                                <div class="fw-medium">@(patient.Gender ?? "Not specified")</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-droplet text-muted me-2"></i>
+                                                <small class="text-muted">Blood Group</small>
+                                                <div class="fw-medium">@(patient.BloodGroup ?? "Unknown")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="info-item">
+                                            <i class="bi bi-geo-alt text-muted me-2"></i>
+                                            <small class="text-muted">Address</small>
+                                            <div class="fw-medium text-truncate">@(patient.Address ?? "Not provided")</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="info-item">
+                                            <i class="bi bi-card-text text-muted me-2"></i>
+                                            <small class="text-muted">CNIC</small>
+                                            <div class="fw-medium">@patient.CNIC</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-grid gap-2">
+                                  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav class="mt-4" aria-label="Patient pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)" disabled="@(currentPage == 1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        </li>
+                        
+                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                            </li>
+                        }
+                        
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)" disabled="@(currentPage == totalPages)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Page @currentPage of @totalPages (@filteredPatients.Count total patients)
+                        </small>
+                    </div>
+                </nav>
+            }
+        }
+    </div>
+</div>
+
+<!-- Patient Details Modal -->
+@if (selectedPatient != null && showPatientModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-circle me-2"></i>
+                        Patient Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="ClosePatientModal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            @if (!string.IsNullOrEmpty(selectedPatient.ProfilePictureUrl))
+                            {
+                                <img src="@selectedPatient.ProfilePictureUrl" class="rounded-circle mb-3" width="120" height="120" alt="Patient Avatar" />
+                            }
+                            else
+                            {
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
+                                    <i class="bi bi-person display-4"></i>
+                                </div>
+                            }
+                            <h5 class="text-primary mb-1">@selectedPatient.FullName</h5>
+                            <p class="text-muted mb-0">Patient ID: @selectedPatient.PatientId</p>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted">Phone Number</label>
+                                    <p class="fw-medium">@(selectedPatient.PhoneNumber ?? "Not provided")</p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted">Date of Birth</label>
+                                    <p class="fw-medium">@(selectedPatient.DateOfBirth?.ToString("MMM dd, yyyy") ?? "Not provided")</p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted">Gender</label>
+                                    <p class="fw-medium">@(selectedPatient.Gender ?? "Not specified")</p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label text-muted">Blood Group</label>
+                                    <p class="fw-medium">@(selectedPatient.BloodGroup ?? "Unknown")</p>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-muted">CNIC</label>
+                                    <p class="fw-medium">@selectedPatient.CNIC</p>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-muted">Address</label>
+                                    <p class="fw-medium">@(selectedPatient.Address ?? "Not provided")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" @onclick="ClosePatientModal">
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill" @onclick="() => ViewAppointmentHistory(selectedPatient.PatientId)">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        View Appointments
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .patient-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .patient-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        border-left-color: var(--bs-primary);
+    }
+    
+    .info-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-item small {
+        display: block;
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .avatar-wrapper {
+        transition: all 0.2s;
+    }
+    
+    .avatar-wrapper:hover {
+        transform: scale(1.05);
+    }
+    
+    .page-link {
+        border-radius: 50%;
+        margin: 0 2px;
+        border: none;
+        color: var(--bs-primary);
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .modal.show {
+        display: block !important;
+    }
+</style>
+
+@code {
+    // State variables
+    private List<PatientProfileDto> allPatients = new();
+    private List<PatientProfileDto> filteredPatients = new();
+    private List<PatientProfileDto> paginatedPatients = new();
+    private PatientProfileDto? selectedPatient;
+    
+    // Search and filter variables (simple fields)
+    private string searchTerm = "";
+    private string selectedGenderFilter = "";
+    private string selectedBloodGroupFilter = "";
+    private bool isFiltered = false;
+    
+    // Pagination variables
+    private int currentPage = 1;
+    private int pageSize = 12;
+    private int totalPages = 1;
+    private int totalPatients = 0;
+    
+    // UI state variables
+    private bool isLoading = true;
+    private bool showPatientModal = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatients();
+    }
+    
+    private async Task LoadPatients()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            allPatients = await ReceptionistService.GetAllPatientsAsync(1, 1000); // Load all patients
+            totalPatients = allPatients.Count;
+            
+            ApplyFiltersAndPagination();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show toast notification
+            Console.WriteLine($"Error loading patients: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void ApplyFiltersAndPagination()
+    {
+        // Start with all patients
+        filteredPatients = allPatients.ToList();
+        
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var search = searchTerm.ToLower();
+            filteredPatients = filteredPatients.Where(p => 
+                p.FullName.ToLower().Contains(search) ||
+                p.CNIC.Contains(search) ||
+                (p.PhoneNumber != null && p.PhoneNumber.Contains(search))
+            ).ToList();
+        }
+        
+        // Apply gender filter
+        if (!string.IsNullOrEmpty(selectedGenderFilter))
+        {
+            filteredPatients = filteredPatients.Where(p => p.Gender == selectedGenderFilter).ToList();
+        }
+        
+        // Apply blood group filter
+        if (!string.IsNullOrEmpty(selectedBloodGroupFilter))
+        {
+            filteredPatients = filteredPatients.Where(p => p.BloodGroup == selectedBloodGroupFilter).ToList();
+        }
+        
+        // Check if any filters are active
+        isFiltered = !string.IsNullOrWhiteSpace(searchTerm) || 
+                     !string.IsNullOrEmpty(selectedGenderFilter) || 
+                     !string.IsNullOrEmpty(selectedBloodGroupFilter);
+        
+        // Calculate pagination
+        totalPages = (int)Math.Ceiling((double)filteredPatients.Count / pageSize);
+        
+        // Ensure current page is valid
+        if (currentPage > totalPages && totalPages > 0)
+        {
+            currentPage = totalPages;
+        }
+        else if (currentPage < 1)
+        {
+            currentPage = 1;
+        }
+        
+        // Apply pagination
+        var skip = (currentPage - 1) * pageSize;
+        paginatedPatients = filteredPatients.Skip(skip).Take(pageSize).ToList();
+        
+        StateHasChanged();
+    }
+    
+    private async Task SearchPatients()
+    {
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+    
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchPatients();
+        }
+    }
+    
+    private void FilterPatients()
+    {
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+    
+    private void ClearSearch()
+    {
+        searchTerm = "";
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+    
+    private void ClearAllFilters()
+    {
+        searchTerm = "";
+        selectedGenderFilter = "";
+        selectedBloodGroupFilter = "";
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+    
+    private async Task RefreshPatients()
+    {
+        await LoadPatients();
+    }
+    
+    private void GoToPage(int pageNumber)
+    {
+        if (pageNumber >= 1 && pageNumber <= totalPages)
+        {
+            currentPage = pageNumber;
+            ApplyFiltersAndPagination();
+        }
+    }
+    
+    private async Task ViewPatientDetails(int patientId)
+    {
+        try
+        {
+            selectedPatient = await ReceptionistService.GetPatientByIdAsync(patientId);
+            showPatientModal = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading patient details: {ex.Message}");
+        }
+    }
+    
+    private void ClosePatientModal()
+    {
+        showPatientModal = false;
+        selectedPatient = null;
+        StateHasChanged();
+    }
+    
+    private async Task ViewAppointmentHistory(int patientId)
+    {
+        // Navigate to appointment history page or show modal
+        // Implementation depends on your routing structure
+        // Example: Navigation.NavigateTo($"/receptionist/patient-appointments/{patientId}");
+        ClosePatientModal();
+    }
+    
+    private void ScheduleAppointment(int patientId)
+    {
+        // Navigate to appointment scheduling page
+        // Example: Navigation.NavigateTo($"/receptionist/schedule-appointment?patientId={patientId}");
+    }
+    
+    private void NavigateToWalkIn()
+    {
+        // Navigate to walk-in registration page
+        // Example: Navigation.NavigateTo("/receptionist/walkin");
+    }
+    
+    private string GetPatientAge(DateTime? dateOfBirth)
+    {
+        if (!dateOfBirth.HasValue)
+            return "Unknown";
+            
+        var today = DateTime.Today;
+        var age = today.Year - dateOfBirth.Value.Year;
+        
+        if (dateOfBirth.Value.Date > today.AddYears(-age))
+            age--;
+            
+        return $"{age} years";
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+    
+    private async Task OnGenderFilterChange(ChangeEventArgs e)
+    {
+        selectedGenderFilter = e.Value?.ToString() ?? "";
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+    
+    private async Task OnBloodGroupFilterChange(ChangeEventArgs e)
+    {
+        selectedBloodGroupFilter = e.Value?.ToString() ?? "";
+        currentPage = 1;
+        ApplyFiltersAndPagination();
+    }
+}

@@ -1,4 +1,4 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlazorApp1.Models.DTOs
 {
@@ -19,5 +19,8 @@ namespace BlazorApp1.Models.DTOs
         public string DoctorName { get; set; } = string.Empty;
         public string PatientName { get; set; } = string.Empty;
         public string? LabTechName { get; set; }
+        
+        // New property for assignment status
+        public string AssignmentStatus { get; set; } = string.Empty; // "Assigned", "Available", "Other"
     }
 }

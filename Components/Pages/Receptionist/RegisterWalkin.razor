@@ -1,547 +1,14 @@
 @page "/receptionist/walkin"
 @rendermode InteractiveServer
 @layout BlazorApp1.Components.Layout.ReceptionistLayout
+@using BlazorApp1.Models.DTOs
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
-
-<div class="walkin-page">
-    <div class="content-wrapper">
-        <!-- Header Banner -->
-        <div class="header-banner">
-            <div class="container">
-                <h1>Register Walk-in Patient</h1>
-                <p class="text-light mb-0">Complete the form below to register a new walk-in patient</p>
-            </div>
-        </div>
-        
-        <div class="card main-card">
-            <!-- Progress Steps -->
-            <div class="stepper-wrapper mb-4">
-                <div class="stepper-progress">
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: @(_currentStep == 1 ? "33%" : _currentStep == 2 ? "67%" : "100%")"></div>
-                    </div>
-                </div>
-                <div class="stepper-items">
-                    <div class="stepper-item @(_currentStep >= 1 ? "active" : "")">
-                        <div class="step-counter">1</div>
-                        <div class="step-name">Patient Information</div>
-                    </div>
-                    <div class="stepper-item @(_currentStep >= 2 ? "active" : "")">
-                        <div class="step-counter">2</div>
-                        <div class="step-name">@(IsNewPatient ? "Create Profile" : "Additional Info")</div>
-                    </div>
-                    <div class="stepper-item @(_currentStep >= 3 ? "active" : "")">
-                        <div class="step-counter">3</div>
-                        <div class="step-name">Appointment Details</div>
-                    </div>
-                </div>
-            </div>
-
-            @if (_currentStep == 1)
-            {
-                <div class="form-section">
-                    <div class="section-header">
-                        <h2>Patient Information</h2>
-                        <p>Enter basic patient details</p>
-                    </div>
-                    
-                    <div class="patient-type-selector mb-4">
-                        <div class="toggle-container">
-                            <div class="toggle-option @(IsNewPatient ? "active" : "")" @onclick="() => PatientTypeChanged(true)">
-                                <i class="fas fa-user-plus"></i> New Patient
-                            </div>
-                            <div class="toggle-option @(!IsNewPatient ? "active" : "")" @onclick="() => PatientTypeChanged(false)">
-                                <i class="fas fa-user-check"></i> Existing Patient
-                            </div>
-                        </div>
-                    </div>
-
-                    @if (!IsNewPatient)
-                    {
-                        <div class="search-module mb-4">
-                            <div class="search-bar">
-                                <i class="fas fa-search search-icon"></i>
-                                <input type="text" placeholder="Search by name, ID, or phone number" 
-                                    @bind="SearchQuery" @bind:event="oninput" @onkeyup="SearchPatients" />
-                                <button class="search-button" @onclick="SearchPatients">Search</button>
-                            </div>
-
-                            @if (SearchResults.Any())
-                            {
-                                <div class="search-results-container">
-                                    <div class="results-header">
-                                        <span>Results (@SearchResults.Count)</span>
-                                    </div>
-                                    <div class="search-results-list">
-                                        @foreach (var patient in SearchResults)
-                                        {
-                                            <div class="patient-result-card @(SelectedPatient?.Id == patient.Id ? "selected" : "")" 
-                                                @onclick="() => SelectPatient(patient)">
-                                                <div class="patient-info">
-                                                    <h4>@patient.Name</h4>
-                                                    <div class="patient-details">
-                                                        <span><i class="fas fa-id-card"></i> @patient.Id</span>
-                                                        <span><i class="fas fa-phone"></i> @patient.Phone</span>
-                                                    </div>
-                                                </div>
-                                                <div class="action-btn">
-                                                    <i class="fas @(SelectedPatient?.Id == patient.Id ? "fa-check-circle" : "fa-arrow-right")"></i>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (IsNewPatient || SelectedPatient != null)
-                    {
-                        <div class="form-grid">
-                            <div class="form-floating @(ValidationErrors.ContainsKey("FirstName") ? "is-invalid" : "")">
-                                <input type="text" id="firstName" class="form-control @(ValidationErrors.ContainsKey("FirstName") ? "is-invalid" : "")"
-                                       @bind="FirstName" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="First Name" />
-                                <label for="firstName">First Name <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("FirstName"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["FirstName"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("LastName") ? "is-invalid" : "")">
-                                <input type="text" id="lastName" class="form-control @(ValidationErrors.ContainsKey("LastName") ? "is-invalid" : "")"
-                                       @bind="LastName" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Last Name" />
-                                <label for="lastName">Last Name <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("LastName"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["LastName"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("DateOfBirth") ? "is-invalid" : "")">
-                                <input type="date" id="dob" class="form-control @(ValidationErrors.ContainsKey("DateOfBirth") ? "is-invalid" : "")"
-                                       @bind="DateOfBirth" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Date of Birth" />
-                                <label for="dob">Date of Birth <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("DateOfBirth"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["DateOfBirth"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("Gender") ? "is-invalid" : "")">
-                                <select id="gender" class="form-control @(ValidationErrors.ContainsKey("Gender") ? "is-invalid" : "")"
-                                        @bind="Gender" disabled="@(!IsNewPatient && SelectedPatient != null)">
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <label for="gender">Gender <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("Gender"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["Gender"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")">
-                                <input type="tel" id="phone" class="form-control @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")"
-                                       @bind="Phone" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Phone Number" />
-                                <label for="phone">Phone Number <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("Phone"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["Phone"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating">
-                                <input type="email" id="email" class="form-control"
-                                       @bind="Email" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Email" />
-                                <label for="email">Email</label>
-                            </div>
-                        </div>
-                    }
-                    <div class="actions-container">
-                        <button class="btn btn-outline" @onclick="ResetForm">
-                            <i class="fas fa-times me-1"></i> Cancel
-                        </button>
-                        <button class="btn btn-primary" @onclick="NextStep">
-                            Continue <i class="fas fa-arrow-right ms-1"></i>
-                        </button>
-                    </div>
-                </div>
-            }
-            else if (_currentStep == 2)
-            {
-                <div class="form-section">
-                    <div class="section-header">
-                        <h2>@(IsNewPatient ? "Create Patient Profile" : "Additional Information")</h2>
-                        <p>@(IsNewPatient ? "Set up a new patient account" : "Provide additional patient details")</p>
-                    </div>
-                    
-                    <div class="form-grid">
-                        @if (IsNewPatient)
-                        {
-                            <div class="form-floating full-width @(ValidationErrors.ContainsKey("Address") ? "is-invalid" : "")">
-                                <input type="text" id="address" class="form-control @(ValidationErrors.ContainsKey("Address") ? "is-invalid" : "")"
-                                       @bind="Address" placeholder="Address" />
-                                <label for="address">Address <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("Address"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["Address"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("City") ? "is-invalid" : "")">
-                                <input type="text" id="city" class="form-control @(ValidationErrors.ContainsKey("City") ? "is-invalid" : "")"
-                                       @bind="City" placeholder="City" />
-                                <label for="city">City <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("City"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["City"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("State") ? "is-invalid" : "")">
-                                <input type="text" id="state" class="form-control @(ValidationErrors.ContainsKey("State") ? "is-invalid" : "")"
-                                       @bind="State" placeholder="State" />
-                                <label for="state">State <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("State"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["State"]</div>
-                                }
-                            </div>
-
-                            <div class="form-floating @(ValidationErrors.ContainsKey("ZipCode") ? "is-invalid" : "")">
-                                <input type="text" id="zipCode" class="form-control @(ValidationErrors.ContainsKey("ZipCode") ? "is-invalid" : "")"
-                                       @bind="ZipCode" placeholder="Zip Code" />
-                                <label for="zipCode">Zip Code <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("ZipCode"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["ZipCode"]</div>
-                                }
-                            </div>
-
-                            <div class="form-card full-width">
-                                <div class="card-header">
-                                    <h3>Account Information</h3>
-                                    <p>Create login credentials for the patient portal</p>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-floating @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")">
-                                        <input type="text" id="username" class="form-control @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")"
-                                               @bind="Username" placeholder="Username" />
-                                        <label for="username">Username <span class="required">*</span></label>
-                                        @if (ValidationErrors.ContainsKey("Username"))
-                                        {
-                                            <div class="invalid-feedback">@ValidationErrors["Username"]</div>
-                                        }
-                                    </div>
-
-                                    <div class="form-floating password-container @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")">
-                                        <input type="@(_showPassword ? "text" : "password")" id="password" 
-                                               class="form-control @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")"
-                                               @bind="Password" placeholder="Password" />
-                                        <label for="password">Password <span class="required">*</span></label>
-                                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility">
-                                            <i class="fas @(_showPassword ? "fa-eye-slash" : "fa-eye")"></i>
-                                        </button>
-                                        @if (ValidationErrors.ContainsKey("Password"))
-                                        {
-                                            <div class="invalid-feedback">@ValidationErrors["Password"]</div>
-                                        }
-                                    </div>
-
-                                    <div class="form-floating @(ValidationErrors.ContainsKey("ConfirmPassword") ? "is-invalid" : "")">
-                                        <input type="password" id="confirmPassword" 
-                                               class="form-control @(ValidationErrors.ContainsKey("ConfirmPassword") ? "is-invalid" : "")"
-                                               @bind="ConfirmPassword" placeholder="Confirm Password" />
-                                        <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
-                                        @if (ValidationErrors.ContainsKey("ConfirmPassword"))
-                                        {
-                                            <div class="invalid-feedback">@ValidationErrors["ConfirmPassword"]</div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-
-                        <div class="form-card full-width">
-                            <div class="card-header">
-                                <h3>Emergency Information</h3>
-                                <p>Provide emergency contact details</p>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-floating @(ValidationErrors.ContainsKey("EmergencyContact") ? "is-invalid" : "")">
-                                    <input type="text" id="emergencyContact" 
-                                           class="form-control @(ValidationErrors.ContainsKey("EmergencyContact") ? "is-invalid" : "")"
-                                           @bind="EmergencyContact" placeholder="Emergency Contact" />
-                                    <label for="emergencyContact">Emergency Contact <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("EmergencyContact"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["EmergencyContact"]</div>
-                                    }
-                                </div>
-
-                                <div class="form-floating @(ValidationErrors.ContainsKey("EmergencyPhone") ? "is-invalid" : "")">
-                                    <input type="tel" id="emergencyPhone" 
-                                           class="form-control @(ValidationErrors.ContainsKey("EmergencyPhone") ? "is-invalid" : "")"
-                                           @bind="EmergencyPhone" placeholder="Emergency Contact Phone" />
-                                    <label for="emergencyPhone">Emergency Contact Phone <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("EmergencyPhone"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["EmergencyPhone"]</div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-card full-width">
-                            <div class="card-header">
-                                <h3>Medical Information</h3>
-                                <p>Provide relevant medical details</p>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-floating">
-                                    <textarea id="allergies" class="form-control" rows="2" 
-                                              style="height: 100px" @bind="Allergies" placeholder="Known Allergies"></textarea>
-                                    <label for="allergies">Known Allergies</label>
-                                </div>
-
-                                <div class="form-floating">
-                                    <textarea id="medicalHistory" class="form-control" rows="3" 
-                                              style="height: 150px" @bind="MedicalHistory" placeholder="Brief Medical History"></textarea>
-                                    <label for="medicalHistory">Brief Medical History</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="actions-container">
-                        <button class="btn btn-outline" @onclick="PreviousStep">
-                            <i class="fas fa-arrow-left me-1"></i> Back
-                        </button>
-                        <button class="btn btn-primary" @onclick="NextStep">
-                            Continue <i class="fas fa-arrow-right ms-1"></i>
-                        </button>
-                    </div>
-                </div>
-            }
-            @if (_currentStep == 3)
-            {
-                <div class="form-section">
-                    <div class="section-header">
-                        <h2>Appointment Details</h2>
-                        <p>Schedule the patient's visit</p>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-card full-width">
-                            <div class="card-header with-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                                <div>
-                                    <h3>Visit Schedule</h3>
-                                    <p>When would the patient like to visit?</p>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-floating @(ValidationErrors.ContainsKey("VisitDate") ? "is-invalid" : "")">
-                                    <input type="date" id="visitDate" class="form-control @(ValidationErrors.ContainsKey("VisitDate") ? "is-invalid" : "")"
-                                           @bind="VisitDate" placeholder="Visit Date" />
-                                    <label for="visitDate">Visit Date <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("VisitDate"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["VisitDate"]</div>
-                                    }
-                                </div>
-
-                                @* <div class="form-floating @(ValidationErrors.ContainsKey("VisitTime") ? "is-invalid" : "")">
-                                    <input type="time" id="visitTime" class="form-control @(ValidationErrors.ContainsKey("VisitTime") ? "is-invalid" : "")"
-                                           @bind="VisitTimeString" placeholder="Visit Time" />
-                                    <label for="visitTime">Visit Time <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("VisitTime"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["VisitTime"]</div>
-                                    }
-                                </div> *@
-                            </div>
-                        </div>
-
-                        <div class="form-card full-width">
-                            <div class="card-header with-icon">
-                                <i class="fas fa-user-md"></i>
-                                <div>
-                                    <h3>Provider Information</h3>
-                                    <p>Which department and doctor should the patient see?</p>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-floating @(ValidationErrors.ContainsKey("Department") ? "is-invalid" : "")">
-                                    <select id="department" class="form-control @(ValidationErrors.ContainsKey("Department") ? "is-invalid" : "")"
-                                            @bind="Department" >
-                                        <option value="">Select Department</option>
-                                        <option value="General Medicine">General Medicine</option>
-                                        <option value="Cardiology">Cardiology</option>
-                                        <option value="Orthopedics">Orthopedics</option>
-                                        <option value="Pediatrics">Pediatrics</option>
-                                        <option value="Dermatology">Dermatology</option>
-                                        <option value="Neurology">Neurology</option>
-                                        <option value="Ophthalmology">Ophthalmology</option>
-                                        <option value="ENT">ENT</option>
-                                    </select>
-                                    <label for="department">Department <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("Department"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["Department"]</div>
-                                    }
-                                </div>
-
-                                <div class="form-floating @(ValidationErrors.ContainsKey("DoctorId") ? "is-invalid" : "")">
-                                    <select id="doctor" class="form-control @(ValidationErrors.ContainsKey("DoctorId") ? "is-invalid" : "")"
-                                            @bind="DoctorId">
-                                        <option value="0">Select Doctor</option>
-                                        @foreach (var doctor in AvailableDoctors)
-                                        {
-                                            <option value="@doctor.Id">@doctor.Name</option>
-                                        }
-                                    </select>
-                                    <label for="doctor">Doctor <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("DoctorId"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["DoctorId"]</div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-card full-width">
-                            <div class="card-header with-icon">
-                                <i class="fas fa-clipboard-list"></i>
-                                <div>
-                                    <h3>Visit Information</h3>
-                                    <p>Why is the patient visiting today?</p>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-floating @(ValidationErrors.ContainsKey("ReasonForVisit") ? "is-invalid" : "")">
-                                    <textarea id="reason" class="form-control @(ValidationErrors.ContainsKey("ReasonForVisit") ? "is-invalid" : "")"
-                                              rows="3" style="height: 120px" @bind="ReasonForVisit" placeholder="Reason for Visit"></textarea>
-                                    <label for="reason">Reason for Visit <span class="required">*</span></label>
-                                    @if (ValidationErrors.ContainsKey("ReasonForVisit"))
-                                    {
-                                        <div class="invalid-feedback">@ValidationErrors["ReasonForVisit"]</div>
-                                    }
-                                </div>
-
-                                <div class="priority-select">
-                                    <label>Priority Level <span class="required">*</span></label>
-                                    <div class="priority-options">
-                                        <div class="priority-option @(Priority == "Normal" ? "active" : "")" @onclick='() => Priority = "Normal"'>
-                                            <div class="priority-badge normal">Normal</div>
-                                            <span>Standard appointment</span>
-                                        </div>
-                                        <div class="priority-option @(Priority == "Urgent" ? "active" : "")" @onclick='() => Priority = "Urgent"'>
-                                            <div class="priority-badge urgent">Urgent</div>
-                                            <span>Needs prompt attention</span>
-                                        </div>
-                                        <div class="priority-option @(Priority == "Emergency" ? "active" : "")" @onclick='() => Priority = "Emergency"'>
-                                            <div class="priority-badge emergency">Emergency</div>
-                                            <span>Requires immediate care</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-card full-width">
-                            <div class="card-header with-icon">
-                                <i class="fas fa-file-medical"></i>
-                                <div>
-                                    <h3>Insurance Information</h3>
-                                    <p>Patient's insurance details (optional)</p>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-floating">
-                                    <input type="text" id="insurance" class="form-control"
-                                           @bind="InsuranceProvider" placeholder="Insurance Provider" />
-                                    <label for="insurance">Insurance Provider</label>
-                                </div>
-
-                                <div class="form-floating">
-                                    <input type="text" id="policyNumber" class="form-control"
-                                           @bind="PolicyNumber" placeholder="Policy Number" />
-                                    <label for="policyNumber">Policy Number</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="actions-container">
-                        <button class="btn btn-outline" @onclick="PreviousStep">
-                            <i class="fas fa-arrow-left me-1"></i> Back
-                        </button>
-                        <button class="btn btn-success" @onclick="SubmitRegistration">
-                            <i class="fas fa-check me-1"></i> Complete Registration
-                        </button>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-</div>
-
-<!-- Success Modal -->
-<div class="modal-overlay @(_showSuccessModal ? "active" : "")" tabindex="-1">
-    <div class="modal-container">
-        <div class="success-modal">
-            <div class="modal-header">
-                <h3>Registration Successful</h3>
-                <button class="close-btn" @onclick="CloseSuccessModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="success-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h2>Walk-in Registration Complete</h2>
-                <div class="success-details">
-                    <div class="patient-summary">
-                        <h4><i class="fas fa-user me-2"></i>Patient Information</h4>
-                        <p>@($"{FirstName} {LastName}")</p>
-                        @if (IsNewPatient)
-                        {
-                            <div class="badge new-patient-badge">
-                                <i class="fas fa-user-plus me-1"></i> New Patient Profile Created
-                            </div>
-                        }
-                    </div>
-                    <div class="appointment-summary">
-                        <h4><i class="fas fa-calendar-check me-2"></i>Appointment Details</h4>
-                        <ul>
-                            <li><span>Doctor:</span> @SelectedDoctor</li>
-                            <li><span>Department:</span> @Department</li>
-                            <li><span>Date:</span> @VisitDate.ToShortDateString()</li>
-<li><span>Time:</span> @VisitTime.Hours.ToString("00"):@VisitTime.Minutes.ToString("00") @(VisitTime.Hours >= 12 ? "PM" : "AM")</li>
-                            <li><span>Priority:</span> <span class="badge priority-@Priority.ToLower()">@Priority</span></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" @onclick="RegisterNewWalkin">
-                    <i class="fas fa-user-plus me-1"></i> Register Another
-                </button>
-                <button class="btn btn-primary" @onclick="GoToDashboard">
-                    <i class="fas fa-th-large me-1"></i> Go to Dashboard
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+@inject BlazorApp1.Services.Interfaces.IReceptionistService ReceptionistService
+@inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
+@using BlazorApp1.Authentication
 <style>
-    /* Global Styles */
+       /* Global Styles */
     .walkin-page {
         min-height: 100vh;
         background-color: #f5f7fa;
@@ -941,7 +408,109 @@
     color: #4a6bcd;
     margin-top: 3px;
 }
+.date-selector {
+    margin-bottom: 30px;
+}
 
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.date-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.date-card:hover:not(:disabled) {
+    border-color: #2a3c8d;
+    box-shadow: 0 2px 8px rgba(42, 60, 141, 0.1);
+}
+
+.date-card.selected {
+    background-color: #2a3c8d;
+    border-color: #2a3c8d;
+    color: white;
+}
+
+.date-card.weekend {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.date-day {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.date-number {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 4px 0;
+}
+
+.date-month {
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+/* Time Slots */
+.time-selector {
+    margin-top: 20px;
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.time-slot {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.time-slot.available:hover {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.time-slot.selected {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.time-slot.taken {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+    cursor: not-allowed;
+}
+
+.loading-slots {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+}
 .card-body {
     padding: 20px;
     display: grid;
@@ -1332,106 +901,606 @@
 .form-section {
     animation: fadeIn 0.4s ease-in-out;
 }
+
 </style>
 
+<div class="walkin-page">
+    <div class="content-wrapper">
+        <!-- Header Banner -->
+        <div class="header-banner">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1>Register Walk-in Patient</h1>
+                        <p class="text-light mb-0">Complete the form below to register a new walk-in patient</p>
+                    </div>
+                    <div class="receptionist-info text-end">
+                        <h4 class="mb-1 fw-bold text-light">Welcome back, @(CurrentReceptionist?.FullName ?? "Receptionist")</h4>
+                        @if (!string.IsNullOrEmpty(CurrentReceptionist?.ProfilePictureUrl))
+                        {
+                            <img src="@CurrentReceptionist.ProfilePictureUrl" class="rounded-circle" width="40" height="40" alt="Profile" />
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card main-card">
+            <!-- Progress Steps -->
+            <div class="stepper-wrapper mb-4">
+                <div class="stepper-progress">
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: @(_currentStep == 1 ? "33%" : _currentStep == 2 ? "67%" : "100%")"></div>
+                    </div>
+                </div>
+                <div class="stepper-items">
+                    <div class="stepper-item @(_currentStep >= 1 ? "active" : "")">
+                        <div class="step-counter">1</div>
+                        <div class="step-name">Patient Information</div>
+                    </div>
+                    <div class="stepper-item @(_currentStep >= 2 ? "active" : "")">
+                        <div class="step-counter">2</div>
+                        <div class="step-name">@(IsNewPatient ? "Create Profile" : "Additional Info")</div>
+                    </div>
+                    <div class="stepper-item @(_currentStep >= 3 ? "active" : "")">
+                        <div class="step-counter">3</div>
+                        <div class="step-name">Appointment Details</div>
+                    </div>
+                </div>
+            </div>
 
+            @if (_currentStep == 1)
+            {
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>Patient Information</h2>
+                        <p>Enter basic patient details</p>
+                    </div>
+                    
+                    <div class="patient-type-selector mb-4">
+                        <div class="toggle-container">
+                            <div class="toggle-option @(IsNewPatient ? "active" : "")" @onclick="() => PatientTypeChanged(true)">
+                                <i class="fas fa-user-plus"></i> New Patient
+                            </div>
+                            <div class="toggle-option @(!IsNewPatient ? "active" : "")" @onclick="() => PatientTypeChanged(false)">
+                                <i class="fas fa-user-check"></i> Existing Patient
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!IsNewPatient)
+                    {
+                        <div class="search-module mb-4">
+                            <div class="search-bar">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" placeholder="Search by name, CNIC, or phone number" 
+                                    @bind="SearchQuery" @bind:event="oninput" @onkeyup="SearchPatients" />
+                                <button class="search-button" @onclick="SearchPatients" disabled="@_isSearching">
+                                    @if (_isSearching)
+                                    {
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    }
+                                    else
+                                    {
+                                        <span>Search</span>
+                                    }
+                                </button>
+                            </div>
+
+                            @if (SearchResults.Any())
+                            {
+                                <div class="search-results-container">
+                                    <div class="results-header">
+                                        <span>Results (@SearchResults.Count)</span>
+                                    </div>
+                                    <div class="search-results-list">
+                                        @foreach (var patient in SearchResults)
+                                        {
+                                            <div class="patient-result-card @(SelectedPatient?.PatientId == patient.PatientId ? "selected" : "")" 
+                                                @onclick="() => SelectPatient(patient)">
+                                                <div class="patient-info">
+                                                    <h4>@patient.FullName</h4>
+                                                    <div class="patient-details">
+                                                        <span><i class="fas fa-id-card"></i> @patient.CNIC</span>
+                                                        <span><i class="fas fa-phone"></i> @patient.PhoneNumber</span>
+                                                    </div>
+                                                </div>
+                                                <div class="action-btn">
+                                                    <i class="fas @(SelectedPatient?.PatientId == patient.PatientId ? "fa-check-circle" : "fa-arrow-right")"></i>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (IsNewPatient || SelectedPatient != null)
+                    {
+                        <div class="form-grid">
+                            <div class="form-floating @(ValidationErrors.ContainsKey("FirstName") ? "is-invalid" : "")">
+                                <input type="text" id="firstName" class="form-control @(ValidationErrors.ContainsKey("FirstName") ? "is-invalid" : "")"
+                                       @bind="FirstName" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="First Name" />
+                                <label for="firstName">First Name <span class="required">*</span></label>
+                                @if (ValidationErrors.ContainsKey("FirstName"))
+                                {
+                                    <div class="invalid-feedback">@ValidationErrors["FirstName"]</div>
+                                }
+                            </div>
+
+                            <div class="form-floating @(ValidationErrors.ContainsKey("LastName") ? "is-invalid" : "")">
+                                <input type="text" id="lastName" class="form-control @(ValidationErrors.ContainsKey("LastName") ? "is-invalid" : "")"
+                                       @bind="LastName" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Last Name" />
+                                <label for="lastName">Last Name <span class="required">*</span></label>
+                                @if (ValidationErrors.ContainsKey("LastName"))
+                                {
+                                    <div class="invalid-feedback">@ValidationErrors["LastName"]</div>
+                                }
+                            </div>
+
+                            <div class="form-floating @(ValidationErrors.ContainsKey("CNIC") ? "is-invalid" : "")">
+                                <input type="text" id="cnic" class="form-control @(ValidationErrors.ContainsKey("CNIC") ? "is-invalid" : "")"
+                                       @bind="CNIC" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="CNIC" />
+                                <label for="cnic">CNIC <span class="required">*</span></label>
+                                @if (ValidationErrors.ContainsKey("CNIC"))
+                                {
+                                    <div class="invalid-feedback">@ValidationErrors["CNIC"]</div>
+                                }
+                            </div>
+
+                            <div class="form-floating @(ValidationErrors.ContainsKey("DateOfBirth") ? "is-invalid" : "")">
+                                <input type="date" id="dob" class="form-control @(ValidationErrors.ContainsKey("DateOfBirth") ? "is-invalid" : "")"
+                                       @bind="DateOfBirth" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Date of Birth" />
+                                <label for="dob">Date of Birth <span class="required">*</span></label>
+                                @if (ValidationErrors.ContainsKey("DateOfBirth"))
+                                {
+                                    <div class="invalid-feedback">@ValidationErrors["DateOfBirth"]</div>
+                                }
+                            </div>
+
+                            <div class="form-floating @(ValidationErrors.ContainsKey("Gender") ? "is-invalid" : "")">
+                                <select id="gender" class="form-control @(ValidationErrors.ContainsKey("Gender") ? "is-invalid" : "")"
+                                        @bind="Gender" disabled="@(!IsNewPatient && SelectedPatient != null)">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <label for="gender">Gender <span class="required">*</span></label>
+                                @if (ValidationErrors.ContainsKey("Gender"))
+                                {
+                                    <div class="invalid-feedback">@ValidationErrors["Gender"]</div>
+                                }
+                            </div>
+
+                            <div class="form-floating @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")">
+                                <input type="tel" id="phone" class="form-control @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")"
+                                       @bind="Phone" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Phone Number" />
+                                <label for="phone">Phone Number <span class="required">*</span></label>
+                                @if (ValidationErrors.ContainsKey("Phone"))
+                                {
+                                    <div class="invalid-feedback">@ValidationErrors["Phone"]</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    <div class="actions-container">
+                        <button class="btn btn-outline" @onclick="ResetForm">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </button>
+                        <button class="btn btn-primary" @onclick="NextStep" disabled="@_isLoading">
+                            @if (_isLoading)
+                            {
+                                <i class="fas fa-spinner fa-spin me-1"></i>
+                            }
+                            Continue <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+            else if (_currentStep == 2)
+            {
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>@(IsNewPatient ? "Create Patient Profile" : "Additional Information")</h2>
+                        <p>@(IsNewPatient ? "Set up a new patient account" : "Provide additional patient details")</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-floating full-width @(ValidationErrors.ContainsKey("Address") ? "is-invalid" : "")">
+                            <input type="text" id="address" class="form-control @(ValidationErrors.ContainsKey("Address") ? "is-invalid" : "")"
+                                   @bind="Address" placeholder="Address" />
+                            <label for="address">Address @(IsNewPatient ? "*" : "")</label>
+                            @if (ValidationErrors.ContainsKey("Address"))
+                            {
+                                <div class="invalid-feedback">@ValidationErrors["Address"]</div>
+                            }
+                        </div>
+
+                        <div class="form-floating @(ValidationErrors.ContainsKey("BloodGroup") ? "is-invalid" : "")">
+                            <select id="bloodGroup" class="form-control @(ValidationErrors.ContainsKey("BloodGroup") ? "is-invalid" : "")"
+                                    @bind="BloodGroup">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                            <label for="bloodGroup">Blood Group</label>
+                            @if (ValidationErrors.ContainsKey("BloodGroup"))
+                            {
+                                <div class="invalid-feedback">@ValidationErrors["BloodGroup"]</div>
+                            }
+                        </div>
+
+                        @if (IsNewPatient)
+                        {
+                            <div class="form-card full-width">
+                                <div class="card-header">
+                                    <h3>Account Information</h3>
+                                    <p>Create login credentials for the patient portal</p>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-floating @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")">
+                                        <input type="text" id="username" class="form-control @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")"
+                                               @bind="Username" placeholder="Username" />
+                                        <label for="username">Username <span class="required">*</span></label>
+                                        @if (ValidationErrors.ContainsKey("Username"))
+                                        {
+                                            <div class="invalid-feedback">@ValidationErrors["Username"]</div>
+                                        }
+                                    </div>
+
+                                    <div class="form-floating password-container @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")">
+                                        <input type="@(_showPassword ? "text" : "password")" id="password" 
+                                               class="form-control @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")"
+                                               @bind="PlainTextPassword" placeholder="Password" />
+                                        <label for="password">Password <span class="required">*</span></label>
+                                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility">
+                                            <i class="fas @(_showPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                                        </button>
+                                        @if (ValidationErrors.ContainsKey("Password"))
+                                        {
+                                            <div class="invalid-feedback">@ValidationErrors["Password"]</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="actions-container">
+                        <button class="btn btn-outline" @onclick="PreviousStep">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </button>
+                        <button class="btn btn-primary" @onclick="NextStep" disabled="@_isLoading">
+                            @if (_isLoading)
+                            {
+                                <i class="fas fa-spinner fa-spin me-1"></i>
+                            }
+                            Continue <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+            @if (_currentStep == 3)
+            {
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>Appointment Details</h2>
+                        <p>Schedule the patient's visit</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-card full-width">
+                            <div class="card-header with-icon">
+                                <i class="fas fa-user-md"></i>
+                                <div>
+                                    <h3>Provider Information</h3>
+                                    <p>Select department and doctor first</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-floating @(ValidationErrors.ContainsKey("Department") ? "is-invalid" : "")">
+                                    <select id="department" class="form-control @(ValidationErrors.ContainsKey("Department") ? "is-invalid" : "")"
+                                            @bind="Department" @bind:after="OnDepartmentChanged">
+                                        <option value="">Select Department</option>
+                                        @foreach (var specialty in AvailableSpecialties)
+                                        {
+                                            <option value="@specialty">@specialty</option>
+                                        }
+                                    </select>
+                                    <label for="department">Department <span class="required">*</span></label>
+                                    @if (ValidationErrors.ContainsKey("Department"))
+                                    {
+                                        <div class="invalid-feedback">@ValidationErrors["Department"]</div>
+                                    }
+                                </div>
+
+                                <div class="form-floating @(ValidationErrors.ContainsKey("DoctorId") ? "is-invalid" : "")">
+                                    <select id="doctor" class="form-control @(ValidationErrors.ContainsKey("DoctorId") ? "is-invalid" : "")"
+                                            @bind="DoctorId" @bind:after="OnDoctorChanged">
+                                        <option value="0">Select Doctor</option>
+                                        @foreach (var doctor in FilteredDoctors)
+                                        {
+                                            <option value="@doctor.DoctorId">@doctor.FullName</option>
+                                        }
+                                    </select>
+                                    <label for="doctor">Doctor <span class="required">*</span></label>
+                                    @if (ValidationErrors.ContainsKey("DoctorId"))
+                                    {
+                                        <div class="invalid-feedback">@ValidationErrors["DoctorId"]</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (DoctorId > 0)
+                        {
+                            <div class="form-card full-width">
+                                <div class="card-header with-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <div>
+                                        <h3>Available Time Slots</h3>
+                                        <p>Select an available date and time</p>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Date Selection -->
+                                    <div class="date-selector">
+                                        <h5>Select Date</h5>
+                                        <div class="calendar-grid">
+                                            @for (int i = 0; i < 14; i++)
+                                            {
+                                                var date = DateTime.Today.AddDays(i);
+                                                var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+                                                var isSelected = VisitDate.Date == date.Date;
+                                                
+                                                <button type="button" 
+                                                        class="date-card @(isSelected ? "selected" : "") @(isWeekend ? "weekend" : "")"
+                                                        @onclick="() => SelectDate(date)"
+                                                        disabled="@isWeekend">
+                                                    <div class="date-day">@date.ToString("ddd")</div>
+                                                    <div class="date-number">@date.Day</div>
+                                                    <div class="date-month">@date.ToString("MMM")</div>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Time Slot Selection -->
+                                    @if (VisitDate != default && VisitDate >= DateTime.Today)
+                                    {
+                                        <div class="time-selector">
+                                            <h5>Available Time Slots for @VisitDate.ToString("MMM dd, yyyy")</h5>
+                                            
+                                            @if (_isLoadingSlots)
+                                            {
+                                                <div class="loading-slots">
+                                                    <i class="fas fa-spinner fa-spin"></i> Loading available slots...
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="time-slots-grid">
+                                                    @foreach (var slot in AvailableTimeSlots)
+                                                    {
+                                                        var isSelected = VisitTime == slot.Time;
+                                                        <button type="button" 
+                                                                class="time-slot @(isSelected ? "selected" : "") @(slot.IsTaken ? "taken" : "available")"
+                                                                @onclick="() => SelectTimeSlot(slot.Time)"
+                                                                disabled="@slot.IsTaken">
+                                                            <i class="fas @(slot.IsTaken ? "fa-times" : "fa-check")"></i>
+                                                            @slot.Time.ToString("hh\\:mm tt")
+                                                        </button>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    @if (ValidationErrors.ContainsKey("VisitTime"))
+                                    {
+                                        <div class="alert alert-danger mt-3">
+                                            @ValidationErrors["VisitTime"]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="actions-container">
+                        <button class="btn btn-outline" @onclick="PreviousStep">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </button>
+                        <button class="btn btn-success" @onclick="SubmitRegistration" disabled="@_isLoading">
+                            @if (_isLoading)
+                            {
+                                <i class="fas fa-spinner fa-spin me-1"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check me-1"></i>
+                            }
+                            Complete Registration
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay @(_showSuccessModal ? "active" : "")" tabindex="-1">
+    <div class="modal-container">
+        <div class="success-modal">
+            <div class="modal-header">
+                <h3>Registration Successful</h3>
+                <button class="close-btn" @onclick="CloseSuccessModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Walk-in Registration Complete</h2>
+                <div class="success-details">
+                    <div class="patient-summary">
+                        <h4><i class="fas fa-user me-2"></i>Patient Information</h4>
+                        <p>@($"{FirstName} {LastName}")</p>
+                        @if (IsNewPatient)
+                        {
+                            <div class="badge new-patient-badge">
+                                <i class="fas fa-user-plus me-1"></i> New Patient Profile Created
+                            </div>
+                        }
+                    </div>
+                    <div class="appointment-summary">
+                        <h4><i class="fas fa-calendar-check me-2"></i>Appointment Details</h4>
+                        <ul>
+                            <li><span>Doctor:</span> @SelectedDoctor</li>
+                            <li><span>Department:</span> @Department</li>
+                            <li><span>Date:</span> @VisitDate.ToShortDateString()</li>
+<li><span>Time:</span> @VisitTime.ToString("hh:mm tt")</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="RegisterNewWalkin">
+                    <i class="fas fa-user-plus me-1"></i> Register Another
+                </button>
+                <button class="btn btn-primary" @onclick="GoToDashboard">
+                    <i class="fas fa-th-large me-1"></i> Go to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="RegisterWalkin.css">
 
 @code {
     // Step control
     private int _currentStep = 1;
     private bool _showSuccessModal = false;
     private bool _showPassword = false;
+    private bool _isLoading = false;
+    private bool _isSearching = false;
+    
+    // Current user session
+    private UserSession? CurrentUserSession;
+    private ReceptionistProfileDto? CurrentReceptionist;
     
     // Patient type selection
     private bool IsNewPatient { get; set; } = true;
     
     // Search functionality
     private string SearchQuery { get; set; } = "";
-    private List<PatientModel> SearchResults { get; set; } = new List<PatientModel>();
-    private PatientModel SelectedPatient { get; set; }
+    private List<PatientProfileDto> SearchResults { get; set; } = new();
+    private PatientProfileDto? SelectedPatient { get; set; }
     
-    // Form fields - Patient Information
+    // Form fields – Patient Information
     private string FirstName { get; set; } = "";
     private string LastName { get; set; } = "";
+    private string CNIC { get; set; } = "";
     private DateTime DateOfBirth { get; set; } = DateTime.Today.AddYears(-30);
     private string Gender { get; set; } = "";
     private string Phone { get; set; } = "";
-    private string Email { get; set; } = "";
-    
-    // Form fields - Patient Profile 
-    private string Address { get; set; } = "";
-    private string City { get; set; } = "";
-    private string State { get; set; } = "";
-    private string ZipCode { get; set; } = "";
     private string Username { get; set; } = "";
-    private string Password { get; set; } = "";
-    private string ConfirmPassword { get; set; } = "";
-    private string EmergencyContact { get; set; } = "";
-    private string EmergencyPhone { get; set; } = "";
-    private string Allergies { get; set; } = "";
-    private string MedicalHistory { get; set; } = "";
+    private string PlainTextPassword { get; set; } = "";
     
-    // Form fields - Appointment Details
+    // Form fields – Additional Info
+    private string Address { get; set; } = "";
+    private string BloodGroup { get; set; } = "";
+    
+    // Form fields – Appointment Details
     private DateTime VisitDate { get; set; } = DateTime.Today;
-    private TimeSpan VisitTime { get; set; } = TimeSpan.FromHours(9);
-    private string VisitTimeString 
-    { 
-        get => $"{VisitTime.Hours:D2}:{VisitTime.Minutes:D2}";
-        set
-        {
-            if (TimeSpan.TryParse(value, out TimeSpan result))
-                VisitTime = result;
-        }
-    }
+    private TimeOnly VisitTime { get; set; } = new TimeOnly(9, 0);
+    
     private string Department { get; set; } = "";
     private int DoctorId { get; set; } = 0;
-    private string ReasonForVisit { get; set; } = "";
-    private string Priority { get; set; } = "Normal";
-    private string InsuranceProvider { get; set; } = "";
-    private string PolicyNumber { get; set; } = "";
     
     // Form validation
-    private Dictionary<string, string> ValidationErrors { get; set; } = new Dictionary<string, string>();
+    private Dictionary<string, string> ValidationErrors { get; set; } = new();
     
-    // Mock data for doctors
-    private List<DoctorModel> AvailableDoctors { get; set; } = new List<DoctorModel>();
-    private string SelectedDoctor => AvailableDoctors.FirstOrDefault(d => d.Id == DoctorId)?.Name ?? "";
+    // Data for dropdowns
+    private List<DoctorProfileDto> AvailableDoctors { get; set; } = new();
+    private List<string> AvailableSpecialties { get; set; } = new();
+    private List<DoctorProfileDto> FilteredDoctors =>
+        AvailableDoctors.Where(d => string.IsNullOrEmpty(Department) || d.Specialty == Department).ToList();
+    private string SelectedDoctor =>
+        AvailableDoctors.FirstOrDefault(d => d.DoctorId == DoctorId)?.FullName ?? "";
     
-    protected override void OnInitialized()
+    // Calendar functionality
+    private bool _isLoadingSlots = false;
+    private List<TimeSlotDto> AvailableTimeSlots { get; set; } = new();
+
+    // Time slot model
+    public class TimeSlotDto
     {
-        LoadMockDoctors();
+        public TimeOnly Time { get; set; }
+        public bool IsTaken { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Load current receptionist session
+            CurrentUserSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (CurrentUserSession != null)
+            {
+                CurrentReceptionist = await ReceptionistService.GetReceptionistProfileAsync(CurrentUserSession.UserId);
+            }
+
+            // Load doctors and specialties
+            await LoadDoctorsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+        }
     }
     
-    private void LoadMockDoctors()
+    private async Task LoadDoctorsAsync()
     {
-        AvailableDoctors = new List<DoctorModel>
+        try
         {
-            new DoctorModel { Id = 1, Name = "Dr. John Smith", Department = "General Medicine" },
-            new DoctorModel { Id = 2, Name = "Dr. Sarah Johnson", Department = "General Medicine" },
-            new DoctorModel { Id = 3, Name = "Dr. Robert Chen", Department = "Cardiology" },
-            new DoctorModel { Id = 4, Name = "Dr. Maria Rodriguez", Department = "Cardiology" },
-            new DoctorModel { Id = 5, Name = "Dr. David Wilson", Department = "Orthopedics" },
-            new DoctorModel { Id = 6, Name = "Dr. Emily Brown", Department = "Orthopedics" },
-            new DoctorModel { Id = 7, Name = "Dr. Michael Lee", Department = "Pediatrics" },
-            new DoctorModel { Id = 8, Name = "Dr. Jessica Taylor", Department = "Pediatrics" },
-            new DoctorModel { Id = 9, Name = "Dr. Thomas Harris", Department = "Dermatology" },
-            new DoctorModel { Id = 10, Name = "Dr. Olivia Martinez", Department = "Dermatology" },
-            new DoctorModel { Id = 11, Name = "Dr. William Clark", Department = "Neurology" },
-            new DoctorModel { Id = 12, Name = "Dr. Sophia White", Department = "Neurology" },
-            new DoctorModel { Id = 13, Name = "Dr. James Anderson", Department = "Ophthalmology" },
-            new DoctorModel { Id = 14, Name = "Dr. Emma Davis", Department = "Ophthalmology" },
-            new DoctorModel { Id = 15, Name = "Dr. Benjamin Moore", Department = "ENT" },
-            new DoctorModel { Id = 16, Name = "Dr. Ava Wilson", Department = "ENT" }
-        };
+            AvailableDoctors = await ReceptionistService.GetAllDoctorsAsync();
+            AvailableSpecialties = AvailableDoctors
+                .Select(d => d.Specialty)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading doctors: {ex.Message}");
+        }
     }
     
     private void PatientTypeChanged(bool isNew)
     {
         IsNewPatient = isNew;
-        @* ResetPatientFields(); *@
+        if (isNew)
+        {
+            SelectedPatient = null;
+            ClearPatientFields();
+        }
+        SearchResults.Clear();
+        ValidationErrors.Clear();
     }
     
-    private void SearchPatients()
+    private async Task SearchPatients()
     {
         if (string.IsNullOrWhiteSpace(SearchQuery))
         {
@@ -1439,87 +1508,109 @@
             return;
         }
         
-        // Simulate database search
-        SearchResults = new List<PatientModel>
+        try
         {
-            new PatientModel 
-            { 
-                Id = "P10001", 
-                Name = "Jane Smith", 
-                DateOfBirth = new DateTime(1985, 5, 12), 
-                Gender = "Female",
-                Phone = "555-123-4567",
-                Email = "jane.smith@email.com",
-                Address = "123 Main St",
-                City = "Springfield",
-                State = "IL",
-                ZipCode = "62704"
-            },
-            new PatientModel 
-            { 
-                Id = "P10002", 
-                Name = "John Doe", 
-                DateOfBirth = new DateTime(1978, 9, 23), 
-                Gender = "Male",
-                Phone = "555-987-6543",
-                Email = "john.doe@email.com",
-                Address = "456 Oak Ave",
-                City = "Springfield",
-                State = "IL",
-                ZipCode = "62704"
-            },
-            new PatientModel 
-            { 
-                Id = "P10003", 
-                Name = "Robert Johnson", 
-                DateOfBirth = new DateTime(1990, 3, 15), 
-                Gender = "Male",
-                Phone = "555-456-7890",
-                Email = "robert.johnson@email.com",
-                Address = "789 Elm St",
-                City = "Springfield",
-                State = "IL",
-                ZipCode = "62704"
-            }
+            _isSearching = true;
+            StateHasChanged();
+            
+            SearchResults = await ReceptionistService.SearchPatientsAsync(SearchQuery);
         }
-        .Where(p => p.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) || 
-                    p.Id.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) || 
-                    p.Phone.Contains(SearchQuery))
-        .ToList();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching patients: {ex.Message}");
+            SearchResults.Clear();
+        }
+        finally
+        {
+            _isSearching = false;
+            StateHasChanged();
+        }
     }
     
-    private void SelectPatient(PatientModel patient)
+    private void SelectPatient(PatientProfileDto patient)
     {
         SelectedPatient = patient;
-        FirstName = patient.Name.Split(' ')[0];
-        LastName = patient.Name.Split(' ').Length > 1 ? patient.Name.Split(' ')[1] : "";
-        DateOfBirth = patient.DateOfBirth;
-        Gender = patient.Gender;
-        Phone = patient.Phone;
-        Email = patient.Email;
-        Address = patient.Address;
-        City = patient.City;
-        State = patient.State;
-        ZipCode = patient.ZipCode;
+        var nameParts = patient.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        FirstName   = nameParts.Length > 0 ? nameParts[0] : "";
+        LastName    = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : "";
+        CNIC        = patient.CNIC;
+        DateOfBirth = patient.DateOfBirth ?? DateTime.Today;
+        Gender      = patient.Gender ?? "";
+        Phone       = patient.PhoneNumber ?? "";
+        Address     = patient.Address ?? "";
+        BloodGroup  = patient.BloodGroup ?? "";
+        Username    = patient.UserName;
     }
     
-    private void NextStep()
+    private async Task NextStep()
     {
         ValidationErrors.Clear();
+        _isLoading = true;
+        StateHasChanged();
         
-        if (_currentStep == 1)
+        try
         {
-            if (!ValidateStep1())
-                return;
+            if (_currentStep == 1)
+            {
+                if (!ValidateStep1())
+                    return;
+            }
+            else if (_currentStep == 2)
+            {
+                if (!ValidateStep2())
+                    return;
+                    
+                // Create patient if new
+                if (IsNewPatient)
+                {
+                    await CreateNewPatientAsync();
+                }
+            }
+            
+            if (_currentStep < 3)
+                _currentStep++;
         }
-        else if (_currentStep == 2)
+        finally
         {
-            if (!ValidateStep2())
-                return;
+            _isLoading = false;
+            StateHasChanged();
         }
-        
-        if (_currentStep < 3)
-            _currentStep++;
+    }
+    
+    private async Task CreateNewPatientAsync()
+    {
+       try
+    {
+        // Check if CNIC already exists
+        var existing = await ReceptionistService.SearchPatientsAsync(CNIC);
+        if (existing.Any(p => p.CNIC == CNIC))
+        {
+            ValidationErrors["CNIC"] = "A patient with this CNIC already exists.";
+            throw new InvalidOperationException("Duplicate CNIC");
+        }
+
+        var createDto = new PatientProfileDto
+        {
+            UserName      = Username,
+            CNIC          = CNIC,
+            PhoneNumber   = Phone,
+            FullName      = $"{FirstName} {LastName}",
+            DateOfBirth   = DateOfBirth,
+            Gender        = Gender,
+            Address       = Address,
+            BloodGroup    = BloodGroup
+        };
+        var newPatientId = await ReceptionistService.RegisterWalkInPatientAsync(createDto, PlainTextPassword);
+
+        SelectedPatient = await ReceptionistService.GetPatientByIdAsync(newPatientId);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error creating patient: {ex.Message}");
+        if (!ValidationErrors.ContainsKey("CNIC"))
+            ValidationErrors["General"] = "Failed to create patient profile. Please try again.";
+        throw;
+    }
     }
     
     private void PreviousStep()
@@ -1528,155 +1619,314 @@
             _currentStep--;
     }
     
+    private void OnDepartmentChanged()
+    {
+        DoctorId = 0; // Reset doctor selection when department changes
+    }
+    
     private bool ValidateStep1()
     {
-        if (string.IsNullOrWhiteSpace(FirstName))
-            ValidationErrors["FirstName"] = "First name is required";
+        bool isValid = true;
+        
+        if (IsNewPatient || SelectedPatient != null)
+        {
+            if (string.IsNullOrWhiteSpace(FirstName))
+            {
+                ValidationErrors["FirstName"] = "First name is required";
+                isValid = false;
+            }
             
-        if (string.IsNullOrWhiteSpace(LastName))
-            ValidationErrors["LastName"] = "Last name is required";
+            if (string.IsNullOrWhiteSpace(LastName))
+            {
+                ValidationErrors["LastName"] = "Last name is required";
+                isValid = false;
+            }
             
-        if (DateOfBirth == DateTime.MinValue || DateOfBirth > DateTime.Today)
-            ValidationErrors["DateOfBirth"] = "Please enter a valid date of birth";
+            if (string.IsNullOrWhiteSpace(CNIC))
+            {
+                ValidationErrors["CNIC"] = "CNIC is required";
+                isValid = false;
+            }
+            else if (CNIC.Length != 13)
+            {
+                ValidationErrors["CNIC"] = "CNIC must be 13 digits";
+                isValid = false;
+            }
             
-        if (string.IsNullOrWhiteSpace(Gender))
-            ValidationErrors["Gender"] = "Gender is required";
+            if (DateOfBirth == default || DateOfBirth > DateTime.Today)
+            {
+                ValidationErrors["DateOfBirth"] = "Please enter a valid date of birth";
+                isValid = false;
+            }
             
-        if (string.IsNullOrWhiteSpace(Phone))
-            ValidationErrors["Phone"] = "Phone number is required";
-        else if (!System.Text.RegularExpressions.Regex.IsMatch(Phone, @"^\d{3}-\d{3}-\d{4}$"))
-            ValidationErrors["Phone"] = "Phone format should be XXX-XXX-XXXX";
+            if (string.IsNullOrWhiteSpace(Gender))
+            {
+                ValidationErrors["Gender"] = "Gender is required";
+                isValid = false;
+            }
             
-        return ValidationErrors.Count == 0;
+            if (string.IsNullOrWhiteSpace(Phone))
+            {
+                ValidationErrors["Phone"] = "Phone number is required";
+                isValid = false;
+            }
+            else if (Phone.Length < 10)
+            {
+                ValidationErrors["Phone"] = "Please enter a valid phone number";
+                isValid = false;
+            }
+        }
+        else if (!IsNewPatient && SelectedPatient == null)
+        {
+            ValidationErrors["General"] = "Please select an existing patient or choose 'New Patient'";
+            isValid = false;
+        }
+        
+        return isValid;
     }
     
     private bool ValidateStep2()
     {
+        bool isValid = true;
+        
         if (IsNewPatient)
         {
             if (string.IsNullOrWhiteSpace(Address))
-                ValidationErrors["Address"] = "Address is required";
-                
-            if (string.IsNullOrWhiteSpace(City))
-                ValidationErrors["City"] = "City is required";
-                
-            if (string.IsNullOrWhiteSpace(State))
-                ValidationErrors["State"] = "State is required";
-                
-            if (string.IsNullOrWhiteSpace(ZipCode))
-                ValidationErrors["ZipCode"] = "Zip code is required";
-                
+            {
+                ValidationErrors["Address"] = "Address is required for new patients";
+                isValid = false;
+            }
+            
             if (string.IsNullOrWhiteSpace(Username))
+            {
                 ValidationErrors["Username"] = "Username is required";
-                
-            if (string.IsNullOrWhiteSpace(Password))
+                isValid = false;
+            }
+            else if (Username.Length < 3)
+            {
+                ValidationErrors["Username"] = "Username must be at least 3 characters";
+                isValid = false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(PlainTextPassword))
+            {
                 ValidationErrors["Password"] = "Password is required";
-            else if (Password.Length < 8)
-                ValidationErrors["Password"] = "Password must be at least 8 characters";
-                
-            if (string.IsNullOrWhiteSpace(ConfirmPassword))
-                ValidationErrors["ConfirmPassword"] = "Please confirm the password";
-            else if (Password != ConfirmPassword)
-                ValidationErrors["ConfirmPassword"] = "Passwords do not match";
+                isValid = false;
+            }
+            else if (PlainTextPassword.Length < 6)
+            {
+                ValidationErrors["Password"] = "Password must be at least 6 characters";
+                isValid = false;
+            }
         }
         
-        if (string.IsNullOrWhiteSpace(EmergencyContact))
-            ValidationErrors["EmergencyContact"] = "Emergency contact name is required";
-            
-        if (string.IsNullOrWhiteSpace(EmergencyPhone))
-            ValidationErrors["EmergencyPhone"] = "Emergency contact phone is required";
-        else if (!System.Text.RegularExpressions.Regex.IsMatch(EmergencyPhone, @"^\d{3}-\d{3}-\d{4}$"))
-            ValidationErrors["EmergencyPhone"] = "Phone format should be XXX-XXX-XXXX";
-            
-        return ValidationErrors.Count == 0;
+        return isValid;
     }
     
     private bool ValidateStep3()
     {
+        bool isValid = true;
+        
         if (VisitDate < DateTime.Today)
+        {
             ValidationErrors["VisitDate"] = "Visit date cannot be in the past";
-            
-        if (VisitTime == TimeSpan.Zero)
+            isValid = false;
+        }
+        
+        if (VisitTime == default)
+        {
             ValidationErrors["VisitTime"] = "Please select a visit time";
-            
+            isValid = false;
+        }
+        
         if (string.IsNullOrWhiteSpace(Department))
-            ValidationErrors["Department"] = "Department is required";
-            
+        {
+            ValidationErrors["Department"] = "Please select a department";
+            isValid = false;
+        }
+        
         if (DoctorId <= 0)
+        {
             ValidationErrors["DoctorId"] = "Please select a doctor";
-            
-        if (string.IsNullOrWhiteSpace(ReasonForVisit))
-            ValidationErrors["ReasonForVisit"] = "Reason for visit is required";
-            
-        return ValidationErrors.Count == 0;
+            isValid = false;
+        }
+        
+        return isValid;
     }
     
-    private void SubmitRegistration()
+    private async Task SubmitRegistration()
     {
         ValidationErrors.Clear();
-        
+
         if (!ValidateStep3())
+        {
+            StateHasChanged();
             return;
+        }
+
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Check if doctor is available at the selected date and time
+            var isSlotTaken = await ReceptionistService.IsDoctorSlotTakenAsync(
+                DoctorId,
+                new DateTime(
+                    VisitDate.Year,
+                    VisitDate.Month,
+                    VisitDate.Day,
+                    VisitTime.Hour,
+                    VisitTime.Minute,
+                    0
+                )
+            );
+
+            if (isSlotTaken)
+            {
+                ValidationErrors["VisitTime"] = "The selected doctor is not available at this time. Please choose another slot.";
+                StateHasChanged();
+                return;
+            }
+
+            // Create the appointment
+            var appointmentDto = new AppointmentDto
+            {
+                PatientId         = SelectedPatient!.PatientId,
+                DoctorId          = DoctorId,
+                ReceptionistId    = CurrentReceptionist!.ReceptionistId,
+                ScheduledDateTime = new DateTime(
+                    VisitDate.Year,
+                    VisitDate.Month,
+                    VisitDate.Day,
+                    VisitTime.Hour,
+                    VisitTime.Minute,
+                    0
+                ),
+                Status = "Pending"
+            };
+
+            await ReceptionistService.CreateAppointmentAsync(appointmentDto);
+
+            // Send notification to the doctor
+            await ReceptionistService.SendNotificationToDoctorAsync(
+                DoctorId,
+                "New Appointment Scheduled",
+                $"A new appointment has been scheduled at {VisitDate:MMM dd, yyyy} {VisitTime:hh\\:mm tt} for patient {SelectedPatient.FullName}."
+            );
+
+            // Show success modal
+            _showSuccessModal = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting registration: {ex.Message}");
+            ValidationErrors["General"] = "Failed to create appointment. Please try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task OnDoctorChanged()
+    {
+        if (DoctorId > 0 && VisitDate != default)
+        {
+            await LoadAvailableSlots();
+        }
+    }
+
+    private async Task SelectDate(DateTime date)
+    {
+        VisitDate = date;
+        VisitTime = default; // Clear selected time
+        
+        if (DoctorId > 0)
+        {
+            await LoadAvailableSlots();
+        }
+        
+        StateHasChanged();
+    }
+
+    private void SelectTimeSlot(TimeOnly time)
+    {
+        VisitTime = time;
+        ValidationErrors.Remove("VisitTime");
+        StateHasChanged();
+    }
+
+    private async Task LoadAvailableSlots()
+    {
+        if (DoctorId <= 0 || VisitDate == default) return;
+        
+        _isLoadingSlots = true;
+        StateHasChanged();
+        
+        try
+        {
+            AvailableTimeSlots.Clear();
             
-        // In a real application, you would save data to database here
-        // For demo purposes, we'll just show success modal
-        _showSuccessModal = true;
+            // Generate time slots (9 AM to 5 PM, 30-minute intervals)
+            var startTime = new TimeOnly(9, 0);
+            var endTime = new TimeOnly(17, 0);
+            
+            for (var time = startTime; time < endTime; time = time.AddMinutes(30))
+            {
+                var appointmentDateTime = new DateTime(
+                    VisitDate.Year, VisitDate.Month, VisitDate.Day,
+                    time.Hour, time.Minute, 0);
+                
+                var isTaken = await ReceptionistService.IsDoctorSlotTakenAsync(DoctorId, appointmentDateTime);
+                
+                AvailableTimeSlots.Add(new TimeSlotDto
+                {
+                    Time = time,
+                    IsTaken = isTaken
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading slots: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingSlots = false;
+            StateHasChanged();
+        }
     }
     
-    private void CloseSuccessModal()
+    private void ClearPatientFields()
     {
-        _showSuccessModal = false;
-    }
-    
-    private void RegisterNewWalkin()
-    {
-        _showSuccessModal = false;
-        ResetForm();
-    }
-    
-    private void GoToDashboard()
-    {
-        NavigationManager.NavigateTo("/receptionist/dashboard");
+        FirstName   = "";
+        LastName    = "";
+        CNIC        = "";
+        DateOfBirth = DateTime.Today.AddYears(-30);
+        Gender      = "";
+        Phone       = "";
+        Username    = "";
+        PlainTextPassword = "";
+        Address     = "";
+        BloodGroup  = "";
     }
     
     private void ResetForm()
     {
         _currentStep = 1;
         IsNewPatient = true;
+        SelectedPatient = null;
         SearchQuery = "";
         SearchResults.Clear();
-        SelectedPatient = null;
+        ClearPatientFields();
         
-        // Reset patient information
-        FirstName = "";
-        LastName = "";
-        DateOfBirth = DateTime.Today.AddYears(-30);
-        Gender = "";
-        Phone = "";
-        Email = "";
-        
-        // Reset patient profile
-        Address = "";
-        City = "";
-        State = "";
-        ZipCode = "";
-        Username = "";
-        Password = "";
-        ConfirmPassword = "";
-        EmergencyContact = "";
-        EmergencyPhone = "";
-        Allergies = "";
-        MedicalHistory = "";
-        
-        // Reset appointment details
+        // Reset appointment fields
         VisitDate = DateTime.Today;
-        VisitTime = TimeSpan.FromHours(9);
+        VisitTime = new TimeOnly(9, 0);
         Department = "";
         DoctorId = 0;
-        ReasonForVisit = "";
-        Priority = "Normal";
-        InsuranceProvider = "";
-        PolicyNumber = "";
         
         ValidationErrors.Clear();
     }
@@ -1686,25 +1936,21 @@
         _showPassword = !_showPassword;
     }
     
-    // Model classes for data handling
-    public class PatientModel
+    private void CloseSuccessModal()
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public DateTime DateOfBirth { get; set; }
-        public string Gender { get; set; }
-        public string Phone { get; set; }
-        public string Email { get; set; }
-        public string Address { get; set; }
-        public string City { get; set; }
-        public string State { get; set; }
-        public string ZipCode { get; set; }
+        _showSuccessModal = false;
     }
     
-    public class DoctorModel
+    private void RegisterNewWalkin()
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Department { get; set; }
+        CloseSuccessModal();
+        ResetForm();
+    }
+    
+    private void GoToDashboard()
+    {
+        CloseSuccessModal();
+        NavigationManager.NavigateTo("/receptionist/dashboard");
     }
 }
+

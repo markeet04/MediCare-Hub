@@ -3,101 +3,158 @@
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject BlazorApp1.Services.ILabTechnicianService LabTechService
+@inject AuthenticationStateProvider AuthStateProvider
+@using BlazorApp1.Models.DTOs
+@using BlazorApp1.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-1 fw-bold">Assigned Tests</h4>
-        <p class="text-muted">View and manage pending lab test assignments</p>
+        <h4 class="mb-1 fw-bold">Lab Test Orders</h4>
+        <p class="text-muted">View available and assigned lab test orders</p>
     </div>
 </div>
 
 <div class="row g-4">
-    <!-- Test List Section -->
-    <div class="col-lg-8">
+    <!-- Test List Section - Made larger -->
+    <div class="col-lg-12">
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">Pending Test Orders</h5>
+                <h5 class="mb-0 fw-bold">Test Orders</h5>
                 <div class="d-flex align-items-center">
-                    <input type="text" class="form-control border-0 bg-light rounded-pill me-2" style="width: 200px;" placeholder="Filter by Patient ID..." @bind="FilterText" @bind:event="oninput" />
+                    <input type="text" class="form-control border-0 bg-light rounded-pill me-2" style="width: 200px;" 
+                           placeholder="Filter by Patient..." @bind="FilterText" @bind:event="oninput" />
                     <select class="form-select border-0 bg-light rounded-pill" style="width: 150px;" @bind="FilterStatus">
-                        <option value="All">All Status</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Urgent">Urgent</option>
+                        <option value="All">All Orders</option>
+                        <option value="Available">Available</option>
+                        <option value="Assigned">My Orders</option>
                     </select>
                 </div>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="px-4 py-3">Patient ID</th>
-                                <th class="px-4 py-3">Test Type</th>
-                                <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3">Assigned Date</th>
-                                <th class="px-4 py-3">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var test in FilteredTests)
-                            {
-                                <tr class="test-row" @onclick="() => ViewTestDetails(test.Id)">
-                                    <td class="px-4 py-3">@test.PatientId</td>
-                                    <td class="px-4 py-3">@test.TestType</td>
-                                    <td class="px-4 py-3">
-                                        <span class="badge @(test.Status == "Urgent" ? "bg-danger" : test.Status == "In Progress" ? "bg-warning" : "bg-teal") text-white">
-                                            @test.Status
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3">@test.AssignedDate.ToString("MMM dd, yyyy")</td>
-                                    <td class="px-4 py-3">
-                                        <button class="btn btn-sm btn-outline-teal rounded-pill px-3" @onclick:stopPropagation="true" @onclick="() => StartTest(test.Id)">Start Test</button>
-                                    </td>
+                @if (IsLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-teal" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (!FilteredOrders.Any())
+                {
+                    <div class="text-center p-4">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No orders found matching your criteria.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="px-4 py-3">Patient</th>
+                                    <th class="px-4 py-3">Test Type</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Order Date</th>
+                                    <th class="px-4 py-3">Assignment</th>
+                                    <th class="px-4 py-3">Actions</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in FilteredOrders)
+                                {
+                                    <tr class="test-row" @onclick="() => ViewOrderDetails(order.LabOrderId)">
+                                        <td class="px-4 py-3">@order.PatientName</td>
+                             
+                                        <td class="px-4 py-3">
+                                            <span class="badge @GetStatusBadgeClass(order.Status) text-white">
+                                                @order.Status
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                                        <td class="px-4 py-3">
+                                            <span class="badge @GetAssignmentBadgeClass(order.AssignmentStatus)">
+                                                @order.AssignmentStatus
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex gap-2" @onclick:stopPropagation="true">
+                                                @if (order.AssignmentStatus == "Available")
+                                                {
+                                                    <button class="btn btn-sm btn-teal rounded-pill px-3" 
+                                                            @onclick="() => ShowClaimModal(order)" 
+                                                            disabled="@IsProcessing">
+                                                        <i class="bi bi-hand-index me-1"></i>Claim
+                                                    </button>
+                                                }
+                                                else if (order.AssignmentStatus == "Assigned" && order.Status == "InProgress")
+                                                {
+                                                    <button class="btn btn-sm btn-success rounded-pill px-3" 
+                                                            @onclick="() => NavigateToSubmitResults(order.LabOrderId)">
+                                                        <i class="bi bi-file-earmark-medical me-1"></i>Submit Results
+                                                    </button>
+                                                }
+                                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" 
+                                                        @onclick="() => ViewOrderDetails(order.LabOrderId)">
+                                                    <i class="bi bi-eye me-1"></i>View
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary and Actions Row - Moved below -->
+<div class="row g-4">
+    <!-- Summary Card -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold">Order Summary</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <h6 class="fw-bold text-success">Available Orders</h6>
+                        <p class="text-muted mb-0">@Orders.Count(o => o.AssignmentStatus == "Available")</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h6 class="fw-bold text-primary">My Assigned Orders</h6>
+                        <p class="text-muted mb-0">@Orders.Count(o => o.AssignmentStatus == "Assigned")</p>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="fw-bold text-warning">In Progress</h6>
+                        <p class="text-muted mb-0">@Orders.Count(o => o.Status == "InProgress" && o.AssignmentStatus == "Assigned")</p>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="fw-bold text-danger">Overdue</h6>
+                        <p class="text-muted mb-0">@Orders.Count(o => IsOverdue(o) && o.AssignmentStatus == "Assigned")</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions and Summary -->
-    <div class="col-lg-4">
-        <!-- Summary Card -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Test Summary</h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="mb-3">
-                    <h6 class="fw-bold">Total Assigned Tests</h6>
-                    <p class="text-muted mb-0">@Tests.Count</p>
-                </div>
-                <div class="mb-3">
-                    <h6 class="fw-bold">Urgent Tests</h6>
-                    <p class="text-muted mb-0">@Tests.Count(t => t.Status == "Urgent")</p>
-                </div>
-                <div class="mb-3">
-                    <h6 class="fw-bold">In Progress</h6>
-                    <p class="text-muted mb-0">@Tests.Count(t => t.Status == "In Progress")</p>
-                </div>
-                <div>
-                    <h6 class="fw-bold">Pending</h6>
-                    <p class="text-muted mb-0">@Tests.Count(t => t.Status == "Pending")</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
+    <!-- Quick Actions -->
+    <div class="col-lg-6">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3 border-0">
                 <h5 class="mb-0 fw-bold">Quick Actions</h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-3">
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToSubmitResults">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" 
+                            @onclick="() => NavigateToSubmitResults()">
                         <span class="d-flex align-items-center">
                             <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
                                 <i class="bi bi-file-earmark-medical text-teal"></i>
@@ -106,7 +163,8 @@
                         </span>
                         <i class="bi bi-chevron-right"></i>
                     </button>
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToCompletedTests">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" 
+                            @onclick="NavigateToCompletedTests">
                         <span class="d-flex align-items-center">
                             <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
                                 <i class="bi bi-check2-circle text-teal"></i>
@@ -115,12 +173,13 @@
                         </span>
                         <i class="bi bi-chevron-right"></i>
                     </button>
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" @onclick="NavigateToEquipment">
+                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" 
+                            @onclick="RefreshOrders">
                         <span class="d-flex align-items-center">
                             <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-gear-wide-connected text-teal"></i>
+                                <i class="bi bi-arrow-clockwise text-teal"></i>
                             </div>
-                            <span>Check Equipment</span>
+                            <span>Refresh Orders</span>
                         </span>
                         <i class="bi bi-chevron-right"></i>
                     </button>
@@ -130,51 +189,457 @@
     </div>
 </div>
 
-@code {
+<!-- Claim Confirmation Modal -->
+<div class="modal fade" id="claimModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Claim Lab Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (SelectedOrder != null)
+                {
+                    <div class="alert alert-info border-0 rounded-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        You are about to claim this lab order and it will be assigned to you.
+                    </div>
+                    
+                    <div class="card bg-light border-0 rounded-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Order Details</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Patient</small>
+                                    <span class="fw-bold">@SelectedOrder.PatientName</span>
+                                </div>
+                               
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Order Date</small>
+                                    <span class="fw-bold">@SelectedOrder.OrderDate.ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Doctor</small>
+                                    <span class="fw-bold">@SelectedOrder.DoctorName</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-teal rounded-pill px-4" @onclick="ClaimOrder" disabled="@IsProcessing">
+                    @if (IsProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    Claim Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- View Details Modal -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-2">
+                <h5 class="modal-title fw-bold">Lab Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (SelectedOrderForView != null)
+                {
+                    <!-- Status Badge -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="badge @GetStatusBadgeClass(SelectedOrderForView.Status) fs-6 px-3 py-2">
+                            @SelectedOrderForView.Status
+                        </span>
+                        <span class="badge @GetAssignmentBadgeClass(SelectedOrderForView.AssignmentStatus) fs-6 px-3 py-2">
+                            @SelectedOrderForView.AssignmentStatus
+                        </span>
+                    </div>
+
+                    <!-- Patient Information -->
+                    <div class="card bg-light border-0 rounded-3 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-teal">
+                                <i class="bi bi-person-circle me-2"></i>Patient Information
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Patient Name</small>
+                                    <span class="fw-bold">@SelectedOrderForView.PatientName</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Patient ID</small>
+                                    <span class="fw-bold">#@SelectedOrderForView.PatientId</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Information -->
+                    <div class="card bg-light border-0 rounded-3 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-teal">
+                                <i class="bi bi-clipboard-data me-2"></i>Order Information
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Order ID</small>
+                                    <span class="fw-bold">#@SelectedOrderForView.LabOrderId</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Order Date</small>
+                                    <span class="fw-bold">@SelectedOrderForView.OrderDate.ToString("MMM dd, yyyy HH:mm")</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Requesting Doctor</small>
+                                    <span class="fw-bold">@SelectedOrderForView.DoctorName</span>
+                                </div>
+                                @if (SelectedOrderForView.AppointmentId.HasValue)
+                                {
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Appointment ID</small>
+                                        <span class="fw-bold">#@SelectedOrderForView.AppointmentId</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assignment Information -->
+                    <div class="card bg-light border-0 rounded-3 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-teal">
+                                <i class="bi bi-person-badge me-2"></i>Assignment Information
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Assignment Status</small>
+                                    <span class="badge @GetAssignmentBadgeClass(SelectedOrderForView.AssignmentStatus)">
+                                        @SelectedOrderForView.AssignmentStatus
+                                    </span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(SelectedOrderForView.LabTechName))
+                                {
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Assigned Lab Technician</small>
+                                        <span class="fw-bold">@SelectedOrderForView.LabTechName</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results and Completion -->
+                    @if (SelectedOrderForView.Status == "Completed" || SelectedOrderForView.Status == "Reported" || !string.IsNullOrEmpty(SelectedOrderForView.Results))
+                    {
+                        <div class="card bg-light border-0 rounded-3 mb-4">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3 text-teal">
+                                    <i class="bi bi-file-earmark-medical me-2"></i>Results & Completion
+                                </h6>
+                                <div class="row g-3">
+                                    @if (SelectedOrderForView.CompletedAt.HasValue)
+                                    {
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Completed Date</small>
+                                            <span class="fw-bold">@SelectedOrderForView.CompletedAt.Value.ToString("MMM dd, yyyy HH:mm")</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(SelectedOrderForView.ReportFilePath))
+                                    {
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Report Status</small>
+                                            <span class="badge bg-success text-white">Report Available</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(SelectedOrderForView.Results))
+                                    {
+                                        <div class="col-12">
+                                            <small class="text-muted d-block">Results</small>
+                                            <div class="bg-white p-3 rounded border mt-1">
+                                                <span class="fw-normal">@SelectedOrderForView.Results</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Timeline/Status Information -->
+                    <div class="card bg-light border-0 rounded-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-teal">
+                                <i class="bi bi-clock-history me-2"></i>Timeline Information
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Current Status</small>
+                                    <span class="badge @GetStatusBadgeClass(SelectedOrderForView.Status)">
+                                        @SelectedOrderForView.Status
+                                    </span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Days Since Order</small>
+                                    <span class="fw-bold @(IsOverdue(SelectedOrderForView) ? "text-danger" : "")">
+                                        @((DateTime.Now - SelectedOrderForView.OrderDate).Days) days
+                                        @if (IsOverdue(SelectedOrderForView))
+                                        {
+                                            <i class="bi bi-exclamation-triangle text-danger ms-1"></i>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer border-0 pt-2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Close
+                </button>
+                @if (SelectedOrderForView != null)
+                {
+                    @if (SelectedOrderForView.AssignmentStatus == "Available")
+                    {
+                        <button class="btn btn-teal rounded-pill px-4" 
+                                @onclick="() => ShowClaimModal(SelectedOrderForView)" 
+                                data-bs-dismiss="modal">
+                            <i class="bi bi-hand-index me-1"></i>Claim Order
+                        </button>
+                    }
+                    else if (SelectedOrderForView.AssignmentStatus == "Assigned" && SelectedOrderForView.Status == "InProgress")
+                    {
+                        <button class="btn btn-success rounded-pill px-4" 
+                                @onclick="() => NavigateToSubmitResults(SelectedOrderForView.LabOrderId)"
+                                data-bs-dismiss="modal">
+                            <i class="bi bi-file-earmark-medical me-1"></i>Submit Results
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {    private LabOrderDto? SelectedOrderForView { get; set; } // Add this property
+
     private string FilterText { get; set; } = "";
     private string FilterStatus { get; set; } = "All";
+    private bool IsLoading { get; set; } = true;
+    private bool IsProcessing { get; set; } = false;
+    private List<LabOrderDto> Orders { get; set; } = new();
+    private LabOrderDto? SelectedOrder { get; set; }
+    private int CurrentLabTechId { get; set; } = 0;
+    private UserSession? CurrentUser { get; set; }
+    private bool _hasRendered = false;
 
-    private List<Test> Tests { get; set; } = new List<Test>
+    protected override async Task OnInitializedAsync()
     {
-        new Test { Id = 1, PatientId = "#2845", TestType = "Complete Blood Count", Status = "Pending", AssignedDate = DateTime.Now.AddHours(-2) },
-        new Test { Id = 2, PatientId = "#3102", TestType = "Urinalysis", Status = "In Progress", AssignedDate = DateTime.Now.AddHours(-5) },
-        new Test { Id = 3, PatientId = "#2956", TestType = "Lipid Panel", Status = "Urgent", AssignedDate = DateTime.Now.AddDays(-1) },
-        new Test { Id = 4, PatientId = "#3210", TestType = "Glucose Test", Status = "Pending", AssignedDate = DateTime.Now.AddHours(-10) }
-    };
+        await GetCurrentUser();
+        await LoadOrders();
+    }
 
-    private List<Test> FilteredTests => Tests
-        .Where(t => string.IsNullOrEmpty(FilterText) || t.PatientId.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
-        .Where(t => FilterStatus == "All" || t.Status == FilterStatus)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _hasRendered = true;
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task GetCurrentUser()
+    {
+        try
+        {
+            if (AuthStateProvider is AuthStateProvider customAuthProvider)
+            {
+                CurrentUser = await customAuthProvider.GetCurrentUserSessionAsync();
+                if (CurrentUser != null)
+                {
+                    CurrentLabTechId = CurrentUser.UserId;
+                    Console.WriteLine($"Current Lab Tech ID: {CurrentLabTechId}, User: {CurrentUser.FullName}");
+                }
+                else
+                {
+                    // If no user session, redirect to login (only after render)
+                    if (_hasRendered)
+                    {
+                        Nav.NavigateTo("/login");
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: try to get from authentication state
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                if (authState.User.Identity?.IsAuthenticated == true)
+                {
+                    var userIdClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (int.TryParse(userIdClaim, out int userId))
+                    {
+                        CurrentLabTechId = userId;
+                        Console.WriteLine($"Current Lab Tech ID from claims: {CurrentLabTechId}");
+                    }
+                }
+                else if (_hasRendered)
+                {
+                    Nav.NavigateTo("/login");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting current user: {ex.Message}");
+            if (_hasRendered)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error loading user information. Please login again.");
+                Nav.NavigateTo("/login");
+            }
+        }
+    }
+
+    private List<LabOrderDto> FilteredOrders => Orders
+        .Where(o => string.IsNullOrEmpty(FilterText) || 
+                   o.PatientName.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
+        .Where(o => FilterStatus == "All" || 
+                   (FilterStatus == "Available" && o.AssignmentStatus == "Available") ||
+                   (FilterStatus == "Assigned" && o.AssignmentStatus == "Assigned"))
+        .OrderBy(o => o.AssignmentStatus == "Assigned" ? 0 : 1)
+        .ThenBy(o => o.OrderDate)
         .ToList();
 
-    private class Test
+    private async Task LoadOrders()
     {
-        public int Id { get; set; }
-        public string PatientId { get; set; }
-        public string TestType { get; set; }
-        public string Status { get; set; }
-        public DateTime AssignedDate { get; set; }
-    }
-
-    private void ViewTestDetails(int testId)
-    {
-        Nav.NavigateTo($"/lab/tests/{testId}");
-    }
-
-    private async Task StartTest(int testId)
-    {
-        var test = Tests.FirstOrDefault(t => t.Id == testId);
-        if (test != null)
+        try
         {
-            test.Status = "In Progress";
-            await JSRuntime.InvokeVoidAsync("alert", $"Test {testId} marked as In Progress.");
+            IsLoading = true;
+            
+            if (CurrentLabTechId == 0)
+            {
+                await GetCurrentUser();
+                if (CurrentLabTechId == 0)
+                {
+                    if (_hasRendered)
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", "User authentication error. Please login again.");
+                        Nav.NavigateTo("/login");
+                    }
+                    return;
+                }
+            }
+            
+            Orders = await LabTechService.GetAvailableAndAssignedOrdersAsync(CurrentLabTechId);
+        }
+        catch (Exception ex)
+        {
+            if (_hasRendered)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error loading orders: {ex.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"Error loading orders: {ex.Message}");
+            }
+        }
+        finally
+        {
+            IsLoading = false;
             StateHasChanged();
         }
     }
 
-    private void NavigateToSubmitResults()
+    private async Task ShowClaimModal(LabOrderDto order)
     {
-        Nav.NavigateTo("/lab/submit-report");
+        if (!_hasRendered) return;
+        
+        SelectedOrder = order;
+        await JSRuntime.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('claimModal')).show()");
+    }
+
+    private async Task ClaimOrder()
+    {
+        if (SelectedOrder == null || CurrentLabTechId == 0 || !_hasRendered) return;
+
+        try
+        {
+            IsProcessing = true;
+            var success = await LabTechService.ClaimLabOrderAsync(SelectedOrder.LabOrderId, CurrentLabTechId);
+            
+            if (success)
+            {
+                await JSRuntime.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('claimModal')).hide()");
+                await JSRuntime.InvokeVoidAsync("alert", "Order claimed successfully!");
+                await LoadOrders(); // Refresh the list
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to claim order. It may have been claimed by another technician.");
+                await LoadOrders(); // Refresh to see current state
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error claiming order: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+            SelectedOrder = null;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshOrders()
+    {
+        await LoadOrders();
+        if (_hasRendered)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Orders refreshed successfully!");
+        }
+    }
+
+    private async Task ViewOrderDetails(int orderId)
+    {
+        if (!_hasRendered) return;
+        
+        try
+        {
+            // Find the order in the current list
+            SelectedOrderForView = Orders.FirstOrDefault(o => o.LabOrderId == orderId);
+            
+            if (SelectedOrderForView != null)
+            {
+                // Show the modal
+                await JSRuntime.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('viewDetailsModal')).show()");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Order details not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading order details: {ex.Message}");
+        }
+    }
+
+    private void NavigateToSubmitResults(int? orderId = null)
+    {
+        if (orderId.HasValue)
+        {
+            Nav.NavigateTo($"/lab/submit-report/{orderId}");
+        }
+        else
+        {
+            Nav.NavigateTo("/lab/submit-report");
+        }
     }
 
     private void NavigateToCompletedTests()
@@ -182,9 +647,48 @@
         Nav.NavigateTo("/lab/completed-tests");
     }
 
-    private void NavigateToEquipment()
+    private string GetTestTypeName(string testType)
     {
-        Nav.NavigateTo("/lab/equipment");
+        return testType switch
+        {
+            "Blood" => "Complete Blood Count",
+            "Urinalysis" => "Urinalysis",
+            "Lipid" => "Lipid Panel",
+            "Glucose" => "Glucose Test",
+            "Xray" => "X-Ray",
+            "MRI" => "MRI Scan",
+            "CT" => "CT Scan",
+            _ => testType
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-warning",
+            "InProgress" => "bg-info",
+            "Completed" => "bg-success",
+            "Reported" => "bg-primary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetAssignmentBadgeClass(string assignmentStatus)
+    {
+        return assignmentStatus switch
+        {
+            "Available" => "bg-success text-white",
+            "Assigned" => "bg-primary text-white",
+            "Other" => "bg-secondary text-white",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    private bool IsOverdue(LabOrderDto order)
+    {
+        return (DateTime.Now - order.OrderDate).TotalDays > 2 && 
+               order.Status != "Completed" && order.Status != "Reported";
     }
 }
 
@@ -224,6 +728,17 @@
         color: white !important;
     }
 
+    .btn-teal {
+        background-color: var(--bs-teal);
+        border-color: var(--bs-teal);
+        color: white;
+    }
+
+    .btn-teal:hover {
+        background-color: var(--bs-teal-dark);
+        border-color: var(--bs-teal-dark);
+    }
+
     .btn-outline-teal {
         color: var(--bs-teal);
         border-color: var(--bs-teal);
@@ -234,12 +749,17 @@
         color: white;
     }
 
-    .badge.bg-teal {
-        background-color: var(--bs-teal) !important;
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
     }
 
-    .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
     }
 </style>
