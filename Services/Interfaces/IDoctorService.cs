@@ -12,9 +12,7 @@ namespace BlazorApp1.Services.Interfaces
         Task<IEnumerable<DoctorNoteDto>> GetDoctorNotesAsync(int doctorId, int? patientId = null);
         Task<int> CreateLabOrderAsync(int doctorId, CreateLabOrderRequest request);
         Task<IEnumerable<LabOrderDto>> GetDoctorLabOrdersAsync(int doctorId, string? status = null);
-        Task<int> CreateAIPredictionAsync(int doctorId, AIPredictionRequest request);
-        Task<IEnumerable<AIPredictionDto>> GetAIPredictionsAsync(int doctorId, int? patientId = null);
-        Task UpdateDoctorProfileAsync(int doctorId, UpdateDoctorProfileRequest request);
+           Task UpdateDoctorProfileAsync(int doctorId, UpdateDoctorProfileRequest request);
         Task<PatientSummaryDto?> GetPatientSummaryAsync(int patientId);
         Task<int> AddPatientHistoryAsync(PatientHistoryDto dto);
         Task UpdatePatientHistoryAsync(PatientHistoryDto dto);

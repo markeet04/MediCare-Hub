@@ -29,18 +29,25 @@ namespace BlazorApp1.Services.Implementations
 {
     const string sql = @"
         INSERT INTO dbo.PatientHistory
-            (PatientId, DoctorId, EncounterDate,
-             Symptoms, Notes,
-             WeightKg, HeightCm, BMI,
-             PulseBPM, BloodPressure, TemperatureC,
-             RespiratoryRate, OxygenSatPct)
-        VALUES
-            (@PatientId, @DoctorId, @EncounterDate,
-             @Symptoms, @Notes,
-             @WeightKg, @HeightCm, @BMI,
-             @PulseBPM, @BloodPressure, @TemperatureC,
-             @RespiratoryRate, @OxygenSatPct);
-        SELECT CAST(SCOPE_IDENTITY() AS INT);
+    (PatientId, DoctorId, EncounterDate,
+     Symptoms, Notes,
+     WeightKg, HeightCm, BMI,
+     PulseBPM, BloodPressure, TemperatureC,
+     RespiratoryRate, OxygenSatPct,
+     Ethnicity, SmokingStatus, TotalCholesterol, HDLCholesterol,
+     DiabetesType, FamilyCVDHistory, OnBPMedication, OnStatin,
+     WaistCm, PhysicalActivity, EatsVegetablesDaily,
+     HighBloodGlucoseHx, FamilyDiabetesHistory, Confusion, BloodUreaMmolPerL)
+VALUES
+    (@PatientId, @DoctorId, @EncounterDate,
+     @Symptoms, @Notes,
+     @WeightKg, @HeightCm, @BMI,
+     @PulseBPM, @BloodPressure, @TemperatureC,
+     @RespiratoryRate, @OxygenSatPct,
+     @Ethnicity, @SmokingStatus, @TotalCholesterol, @HDLCholesterol,
+     @DiabetesType, @FamilyCVDHistory, @OnBPMedication, @OnStatin,
+     @WaistCm, @PhysicalActivity, @EatsVegetablesDaily,
+     @HighBloodGlucoseHx, @FamilyDiabetesHistory, @Confusion, @BloodUreaMmolPerL);
     ";
 
     using var conn = new SqlConnection(_connectionString);
@@ -62,32 +69,42 @@ namespace BlazorApp1.Services.Implementations
     cmd.Parameters.AddWithValue("@TemperatureC", (object?)dto.TemperatureC ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@RespiratoryRate", (object?)dto.RespiratoryRate ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@OxygenSatPct", (object?)dto.OxygenSatPct ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Ethnicity", (object?)dto.Ethnicity ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@SmokingStatus", (object?)dto.SmokingStatus ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@TotalCholesterol", (object?)dto.TotalCholesterol ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@HDLCholesterol", (object?)dto.HDLCholesterol ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@DiabetesType", (object?)dto.DiabetesType ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@FamilyCVDHistory", (object?)dto.FamilyCVDHistory ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@OnBPMedication", (object?)dto.OnBPMedication ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@OnStatin", (object?)dto.OnStatin ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@WaistCm", (object?)dto.WaistCm ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@PhysicalActivity", (object?)dto.PhysicalActivity ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@EatsVegetablesDaily", (object?)dto.EatsVegetablesDaily ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@HighBloodGlucoseHx", (object?)dto.HighBloodGlucoseHx ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@FamilyDiabetesHistory", (object?)dto.FamilyDiabetesHistory ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@Confusion", (object?)dto.Confusion ?? DBNull.Value);
+cmd.Parameters.AddWithValue("@BloodUreaMmolPerL", (object?)dto.BloodUreaMmolPerL ?? DBNull.Value);
 
     var result = await cmd.ExecuteScalarAsync();
     return Convert.ToInt32(result);
 }
  public async Task<IEnumerable<PatientHistoryDto>> GetPatientHistoryAsync(int patientId)
     {
-        const string sql = @"
-            SELECT 
-                HistoryId,
-                PatientId,
-                DoctorId,
-                EncounterDate,
-                Symptoms,
-                Notes,
-                WeightKg,
-                HeightCm,
-                BMI,
-                PulseBPM,
-                BloodPressure,
-                TemperatureC,
-                RespiratoryRate,
-                OxygenSatPct
-            FROM dbo.PatientHistory
-            WHERE PatientId = @PatientId
-            ORDER BY EncounterDate DESC;
-        ";
+        // Replace the SELECT statement with:
+const string sql = @"
+    SELECT 
+        HistoryId, PatientId, DoctorId, EncounterDate,
+        Symptoms, Notes, WeightKg, HeightCm, BMI,
+        PulseBPM, BloodPressure, TemperatureC,
+        RespiratoryRate, OxygenSatPct,
+        Ethnicity, SmokingStatus, TotalCholesterol, HDLCholesterol,
+        DiabetesType, FamilyCVDHistory, OnBPMedication, OnStatin,
+        WaistCm, PhysicalActivity, EatsVegetablesDaily,
+        HighBloodGlucoseHx, FamilyDiabetesHistory, Confusion, BloodUreaMmolPerL
+    FROM dbo.PatientHistory
+    WHERE PatientId = @PatientId
+    ORDER BY EncounterDate DESC;
+";
 
         var historyList = new List<PatientHistoryDto>();
 
@@ -102,40 +119,56 @@ namespace BlazorApp1.Services.Implementations
         {
             historyList.Add(new PatientHistoryDto
             {
-                HistoryId       = reader.GetInt32(reader.GetOrdinal("HistoryId")),
-                PatientId       = reader.GetInt32(reader.GetOrdinal("PatientId")),
-                DoctorId        = reader.GetInt32(reader.GetOrdinal("DoctorId")),
-                EncounterDate   = reader.GetDateTime(reader.GetOrdinal("EncounterDate")),
-                Symptoms        = reader.IsDBNull(reader.GetOrdinal("Symptoms"))
-                                     ? null 
+                HistoryId = reader.GetInt32(reader.GetOrdinal("HistoryId")),
+                PatientId = reader.GetInt32(reader.GetOrdinal("PatientId")),
+                DoctorId = reader.GetInt32(reader.GetOrdinal("DoctorId")),
+                EncounterDate = reader.GetDateTime(reader.GetOrdinal("EncounterDate")),
+                Symptoms = reader.IsDBNull(reader.GetOrdinal("Symptoms"))
+                                     ? null
                                      : reader.GetString(reader.GetOrdinal("Symptoms")),
-                Notes           = reader.IsDBNull(reader.GetOrdinal("Notes"))
-                                     ? null 
+                Notes = reader.IsDBNull(reader.GetOrdinal("Notes"))
+                                     ? null
                                      : reader.GetString(reader.GetOrdinal("Notes")),
-                WeightKg        = reader.IsDBNull(reader.GetOrdinal("WeightKg"))
-                                     ? (decimal?)null 
+                WeightKg = reader.IsDBNull(reader.GetOrdinal("WeightKg"))
+                                     ? (decimal?)null
                                      : reader.GetDecimal(reader.GetOrdinal("WeightKg")),
-                HeightCm        = reader.IsDBNull(reader.GetOrdinal("HeightCm"))
-                                     ? (decimal?)null 
+                HeightCm = reader.IsDBNull(reader.GetOrdinal("HeightCm"))
+                                     ? (decimal?)null
                                      : reader.GetDecimal(reader.GetOrdinal("HeightCm")),
-                BMI             = reader.IsDBNull(reader.GetOrdinal("BMI"))
-                                     ? (decimal?)null 
+                BMI = reader.IsDBNull(reader.GetOrdinal("BMI"))
+                                     ? (decimal?)null
                                      : reader.GetDecimal(reader.GetOrdinal("BMI")),
-                PulseBPM        = reader.IsDBNull(reader.GetOrdinal("PulseBPM"))
-                                     ? (int?)null 
+                PulseBPM = reader.IsDBNull(reader.GetOrdinal("PulseBPM"))
+                                     ? (int?)null
                                      : reader.GetInt32(reader.GetOrdinal("PulseBPM")),
-                BloodPressure   = reader.IsDBNull(reader.GetOrdinal("BloodPressure"))
-                                     ? null 
+                BloodPressure = reader.IsDBNull(reader.GetOrdinal("BloodPressure"))
+                                     ? null
                                      : reader.GetString(reader.GetOrdinal("BloodPressure")),
-                TemperatureC    = reader.IsDBNull(reader.GetOrdinal("TemperatureC"))
-                                     ? (decimal?)null 
+                TemperatureC = reader.IsDBNull(reader.GetOrdinal("TemperatureC"))
+                                     ? (decimal?)null
                                      : reader.GetDecimal(reader.GetOrdinal("TemperatureC")),
                 RespiratoryRate = reader.IsDBNull(reader.GetOrdinal("RespiratoryRate"))
-                                     ? (int?)null 
+                                     ? (int?)null
                                      : reader.GetInt32(reader.GetOrdinal("RespiratoryRate")),
-                OxygenSatPct    = reader.IsDBNull(reader.GetOrdinal("OxygenSatPct"))
-                                     ? (decimal?)null 
-                                     : reader.GetDecimal(reader.GetOrdinal("OxygenSatPct"))
+                OxygenSatPct = reader.IsDBNull(reader.GetOrdinal("OxygenSatPct"))
+                                     ? (decimal?)null
+                                     : reader.GetDecimal(reader.GetOrdinal("OxygenSatPct")),
+                                     // Add these after the existing property assignments
+Ethnicity = reader.IsDBNull(reader.GetOrdinal("Ethnicity")) ? null : reader.GetString(reader.GetOrdinal("Ethnicity")),
+SmokingStatus = reader.IsDBNull(reader.GetOrdinal("SmokingStatus")) ? null : reader.GetString(reader.GetOrdinal("SmokingStatus")),
+TotalCholesterol = reader.IsDBNull(reader.GetOrdinal("TotalCholesterol")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("TotalCholesterol")),
+HDLCholesterol = reader.IsDBNull(reader.GetOrdinal("HDLCholesterol")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("HDLCholesterol")),
+DiabetesType = reader.IsDBNull(reader.GetOrdinal("DiabetesType")) ? null : reader.GetString(reader.GetOrdinal("DiabetesType")),
+FamilyCVDHistory = reader.IsDBNull(reader.GetOrdinal("FamilyCVDHistory")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("FamilyCVDHistory")),
+OnBPMedication = reader.IsDBNull(reader.GetOrdinal("OnBPMedication")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("OnBPMedication")),
+OnStatin = reader.IsDBNull(reader.GetOrdinal("OnStatin")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("OnStatin")),
+WaistCm = reader.IsDBNull(reader.GetOrdinal("WaistCm")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("WaistCm")),
+PhysicalActivity = reader.IsDBNull(reader.GetOrdinal("PhysicalActivity")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("PhysicalActivity")),
+EatsVegetablesDaily = reader.IsDBNull(reader.GetOrdinal("EatsVegetablesDaily")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("EatsVegetablesDaily")),
+HighBloodGlucoseHx = reader.IsDBNull(reader.GetOrdinal("HighBloodGlucoseHx")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("HighBloodGlucoseHx")),
+FamilyDiabetesHistory = reader.IsDBNull(reader.GetOrdinal("FamilyDiabetesHistory")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("FamilyDiabetesHistory")),
+Confusion = reader.IsDBNull(reader.GetOrdinal("Confusion")) ? (bool?)null : reader.GetBoolean(reader.GetOrdinal("Confusion")),
+BloodUreaMmolPerL = reader.IsDBNull(reader.GetOrdinal("BloodUreaMmolPerL")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("BloodUreaMmolPerL"))
             });
         }
 
@@ -143,46 +176,47 @@ namespace BlazorApp1.Services.Implementations
     }
     
 public async Task UpdatePatientHistoryAsync(PatientHistoryDto dto)
-        {
-            const string sql = @"
-        UPDATE dbo.PatientHistory
-        SET 
-            EncounterDate   = @EncounterDate,
-            Symptoms        = @Symptoms,
-            Notes           = @Notes,
-            WeightKg        = @WeightKg,
-            HeightCm        = @HeightCm,
-            BMI             = @BMI,
-            PulseBPM        = @PulseBPM,
-            BloodPressure   = @BloodPressure,
-            TemperatureC    = @TemperatureC,
+{
+    const string sql = @"
+        UPDATE dbo.PatientHistory SET
+            EncounterDate = @EncounterDate,
+            Symptoms = @Symptoms,
+            Notes = @Notes,
+            WeightKg = @WeightKg,
+            HeightCm = @HeightCm,
+            BMI = @BMI,
+            PulseBPM = @PulseBPM,
+            BloodPressure = @BloodPressure,
+            TemperatureC = @TemperatureC,
             RespiratoryRate = @RespiratoryRate,
-            OxygenSatPct    = @OxygenSatPct
+            OxygenSatPct = @OxygenSatPct,
+            Ethnicity = @Ethnicity,
+            SmokingStatus = @SmokingStatus,
+            TotalCholesterol = @TotalCholesterol,
+            HDLCholesterol = @HDLCholesterol,
+            DiabetesType = @DiabetesType,
+            FamilyCVDHistory = @FamilyCVDHistory,
+            OnBPMedication = @OnBPMedication,
+            OnStatin = @OnStatin,
+            WaistCm = @WaistCm,
+            PhysicalActivity = @PhysicalActivity,
+            EatsVegetablesDaily = @EatsVegetablesDaily,
+            HighBloodGlucoseHx = @HighBloodGlucoseHx,
+            FamilyDiabetesHistory = @FamilyDiabetesHistory,
+            Confusion = @Confusion,
+            BloodUreaMmolPerL = @BloodUreaMmolPerL
         WHERE HistoryId = @HistoryId;
     ";
 
-            using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+    using var conn = new SqlConnection(_connectionString);
+    await conn.OpenAsync();
 
-            using var cmd = new SqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@HistoryId", dto.HistoryId);
-            cmd.Parameters.AddWithValue("@EncounterDate", dto.EncounterDate);
-
-            // For each nullable field, use DBNull if null:
-            cmd.Parameters.AddWithValue("@Symptoms", (object?)dto.Symptoms ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Notes", (object?)dto.Notes ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@WeightKg", (object?)dto.WeightKg ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@HeightCm", (object?)dto.HeightCm ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@BMI", (object?)dto.BMI ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@PulseBPM", (object?)dto.PulseBPM ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@BloodPressure", (object?)dto.BloodPressure ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@TemperatureC", (object?)dto.TemperatureC ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@RespiratoryRate", (object?)dto.RespiratoryRate ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@OxygenSatPct", (object?)dto.OxygenSatPct ?? DBNull.Value);
-
-            await cmd.ExecuteNonQueryAsync();
-        }
-
+    using var cmd = new SqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@HistoryId", dto.HistoryId);
+    // Add all the same parameters as in AddPatientHistoryAsync
+    
+    await cmd.ExecuteNonQueryAsync();
+}
         public async Task<DoctorProfileDto?> GetDoctorProfileAsync(int doctorId)
         {
             const string sql = @"
@@ -730,70 +764,7 @@ public async Task UpdatePatientHistoryAsync(PatientHistoryDto dto)
             }
         }
 
-        public async Task<int> CreateAIPredictionAsync(int doctorId, AIPredictionRequest request)
-        {
-            using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            
-            try
-            {
-                // Call external AI service
-                var aiResponse = await CallAIPredictionServiceAsync(request);
-                
-                // Save to database
-                const string sql = @"
-                    INSERT INTO dbo.AIPredictions (DoctorId, PatientId, PredictionType, Data, CreatedAt)
-                    VALUES (@DoctorId, @PatientId, @PredictionType, @Data, @CreatedAt);
-                    SELECT CAST(SCOPE_IDENTITY() AS INT);";
-
-                using var connection = new SqlConnection(_connectionString);
-                using var command = new SqlCommand(sql, connection);
-                
-                command.Parameters.Add("@DoctorId", SqlDbType.Int).Value = doctorId;
-                command.Parameters.Add("@PatientId", SqlDbType.Int).Value = request.PatientId;
-                command.Parameters.Add("@PredictionType", SqlDbType.NVarChar, 20).Value = request.PredictionType;
-                command.Parameters.Add("@Data", SqlDbType.NVarChar, -1).Value = aiResponse;
-                command.Parameters.Add("@CreatedAt", SqlDbType.DateTime2).Value = DateTime.UtcNow;
-                
-                await connection.OpenAsync();
-                var predictionId = await command.ExecuteScalarAsync();
-                
-                transaction.Complete();
-                return Convert.ToInt32(predictionId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating AI prediction for DoctorId: {DoctorId}, PatientId: {PatientId}", 
-                    doctorId, request.PatientId);
-                throw new InvalidOperationException("Error creating AI prediction", ex);
-            }
-        }
-
-        private async Task<string> CallAIPredictionServiceAsync(AIPredictionRequest request)
-        {
-            try
-            {
-                var requestData = new
-                {
-                    patientId = request.PatientId,
-                    predictionType = request.PredictionType,
-                    inputData = request.InputData
-                };
-
-                var jsonContent = JsonSerializer.Serialize(requestData);
-                var httpContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-
-                // Replace with your actual AI service endpoint
-                var response = await _httpClient.PostAsync("/api/ai/predict", httpContent);
-                response.EnsureSuccessStatusCode();
-
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error calling AI prediction service");
-                throw new InvalidOperationException("AI service unavailable", ex);
-            }
-        }
+      
 
     public async Task MarkNotificationAsReadAsync(int notificationId)
     {

@@ -27,7 +27,9 @@ builder.Services.AddControllers();
 
 // Register services
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddScoped<ICurb65Service, Curb65Service>();
+builder.Services.AddScoped<IQriskService, QriskService>();
+builder.Services.AddScoped<IFindriscService, FindriscService>();
 builder.Services.AddScoped<ILabTechnicianService, LabTechnicianService>();
 builder.Services.AddScoped<IReceptionistService,ReceptionistService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
