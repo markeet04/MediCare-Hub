@@ -652,36 +652,77 @@ public async Task UpdatePatientHistoryAsync(PatientHistoryDto dto)
             }
         }
 
+public async Task<int> CreateLabOrderAsync(int doctorId, CreateLabOrderRequest request)
+{
+    const string sql = @"
+        INSERT INTO dbo.LabOrders (AppointmentId, DoctorId, PatientId, OrderDate, Status)
+        VALUES (@AppointmentId, @DoctorId, @PatientId, @OrderDate, 'Pending');
+        SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
-        public async Task<int> CreateLabOrderAsync(int doctorId, CreateLabOrderRequest request)
+    try
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand(sql, connection);
+        command.Parameters.Add("@AppointmentId", SqlDbType.Int).Value = (object?)request.AppointmentId ?? DBNull.Value;
+        command.Parameters.Add("@DoctorId", SqlDbType.Int).Value = doctorId;
+        command.Parameters.Add("@PatientId", SqlDbType.Int).Value = request.PatientId;
+        command.Parameters.Add("@OrderDate", SqlDbType.DateTime2).Value = DateTime.UtcNow;
+
+        var labOrderIdObj = await command.ExecuteScalarAsync();
+        int labOrderId = Convert.ToInt32(labOrderIdObj);
+
+        // Notify lab technician(s) about the new lab order
+        await NotifyLabTechOnNewLabOrderAsync(request.PatientId, labOrderId);
+
+        return labOrderId;
+    }
+    catch (SqlException ex)
+    {
+        _logger.LogError(ex, "Database error creating lab order for DoctorId: {DoctorId}, PatientId: {PatientId}", 
+            doctorId, request.PatientId);
+        throw new InvalidOperationException("Error creating lab order", ex);
+    }
+}
+
+
+public async Task NotifyLabTechOnNewLabOrderAsync(int patientId, int labOrderId)
+{
+    // Example: Notify all lab techs (or filter as needed)
+    const string getLabTechsSql = @"
+        SELECT lt.LabTechId
+        FROM dbo.LabTechnicianProfiles lt
+        INNER JOIN dbo.Users u ON lt.LabTechId = u.UserId";
+        // WHERE u.IsActive = 1"; // Or your own logic for active lab techs
+
+    using var connection = new SqlConnection(_connectionString);
+    await connection.OpenAsync();
+
+    var labTechIds = new List<int>();
+    using (var cmd = new SqlCommand(getLabTechsSql, connection))
+    using (var reader = await cmd.ExecuteReaderAsync())
+    {
+        while (await reader.ReadAsync())
         {
-            const string sql = @"
-                INSERT INTO dbo.LabOrders (AppointmentId, DoctorId, PatientId, OrderDate, Status)
-                VALUES (@AppointmentId, @DoctorId, @PatientId, @OrderDate, 'Pending');
-                SELECT CAST(SCOPE_IDENTITY() AS INT);";
-
-            try
-            {
-                using var connection = new SqlConnection(_connectionString);
-                using var command = new SqlCommand(sql, connection);
-                
-                command.Parameters.Add("@AppointmentId", SqlDbType.Int).Value = (object?)request.AppointmentId ?? DBNull.Value;
-                command.Parameters.Add("@DoctorId", SqlDbType.Int).Value = doctorId;
-                command.Parameters.Add("@PatientId", SqlDbType.Int).Value = request.PatientId;
-                command.Parameters.Add("@OrderDate", SqlDbType.DateTime2).Value = DateTime.UtcNow;
-                
-                await connection.OpenAsync();
-                var labOrderId = await command.ExecuteScalarAsync();
-                
-                return Convert.ToInt32(labOrderId);
-            }
-            catch (SqlException ex)
-            {
-                _logger.LogError(ex, "Database error creating lab order for DoctorId: {DoctorId}, PatientId: {PatientId}", 
-                    doctorId, request.PatientId);
-                throw new InvalidOperationException("Error creating lab order", ex);
-            }
+            labTechIds.Add(reader.GetInt32(0));
         }
+    }
+
+    foreach (var labTechId in labTechIds)
+    {
+        const string notificationSql = @"
+            INSERT INTO Notifications (UserId, Title, Message, IsRead, CreatedAt)
+            VALUES (@UserId, @Title, @Message, 0, GETDATE())";
+
+        using var notifyCmd = new SqlCommand(notificationSql, connection);
+        notifyCmd.Parameters.AddWithValue("@UserId", labTechId);
+        notifyCmd.Parameters.AddWithValue("@Title", "New Lab Order Assigned");
+        notifyCmd.Parameters.AddWithValue("@Message", $"A new lab order (Order #{labOrderId}) has been created and is available for processing.");
+
+        await notifyCmd.ExecuteNonQueryAsync();
+    }
+}
 
 
         public async Task<IEnumerable<LabOrderDto>> GetDoctorLabOrdersAsync(int doctorId, string? status = null)

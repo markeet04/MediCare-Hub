@@ -16,6 +16,8 @@ namespace BlazorApp1.Services.Interfaces
         Task<PatientSummaryDto?> GetPatientSummaryAsync(int patientId);
         Task<int> AddPatientHistoryAsync(PatientHistoryDto dto);
         Task UpdatePatientHistoryAsync(PatientHistoryDto dto);
+         Task NotifyLabTechOnNewLabOrderAsync(int patientId, int labOrderId);
+
         Task<IEnumerable<PatientHistoryDto>> GetPatientHistoryAsync(int patientId);
 Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int adminId);
     Task MarkNotificationAsReadAsync(int notificationId);

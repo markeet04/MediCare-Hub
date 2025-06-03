@@ -124,7 +124,6 @@
                     </span>
                 }
             </button>
-            
             <!-- Notifications Dropdown -->
             @if (ShowNotifications)
             {
@@ -138,7 +137,6 @@
                             </button>
                         }
                     </div>
-                    
                     @if (Notifications != null && Notifications.Any())
                     {
                         @foreach (var notification in Notifications)
@@ -169,24 +167,65 @@
                 </div>
             }
         </div>
-        
-        <!-- Profile Avatar -->
-        <div class="d-flex align-items-center me-3">
-            @if (!string.IsNullOrEmpty(CurrentReceptionist?.ProfilePictureUrl))
+        <!-- Profile Avatar with Dropdown -->
+        <div class="position-relative me-3">
+            <button class="btn p-0 border-0 bg-transparent d-flex align-items-center" @onclick="ToggleUserMenu">
+                <div class="d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(CurrentReceptionist?.ProfilePictureUrl))
+                    {
+                        <img src="@CurrentReceptionist.ProfilePictureUrl" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                    }
+                    else if (CurrentReceptionist != null)
+                    {
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                            <span class="fw-bold">@GetInitials(CurrentReceptionist.FullName)</span>
+                        </div>
+                    }
+                    <div class="text-start d-none d-md-block">
+                        <div class="fw-semibold">@CurrentReceptionist?.FullName</div>
+                        <small class="text-muted">Receptionist</small>
+                    </div>
+                    <i class="bi bi-chevron-down ms-2"></i>
+                </div>
+            </button>
+            @if (ShowUserMenu)
             {
-                <img src="@CurrentReceptionist.ProfilePictureUrl" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-            }
-            else if (CurrentReceptionist != null)
-            {
-                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                    <span class="fw-bold">@GetInitials(CurrentReceptionist.FullName)</span>
+                <div class="position-absolute end-0 mt-2 bg-white rounded-3 shadow-lg border" style="width: 220px; z-index: 1050;">
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(CurrentReceptionist?.ProfilePictureUrl))
+                            {
+                                <img src="@CurrentReceptionist.ProfilePictureUrl" alt="Profile" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            }
+                            else if (CurrentReceptionist != null)
+                            {
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <span class="fw-bold">@GetInitials(CurrentReceptionist.FullName)</span>
+                                </div>
+                            }
+                            <div>
+                                <div class="fw-semibold">@CurrentReceptionist?.FullName</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-2">
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" @onclick="GoToProfile">
+                            <i class="bi bi-person me-3"></i>
+                            <span>Profile</span>
+                        </button>
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" @onclick="GoToSettings">
+                            <i class="bi bi-gear me-3"></i>
+                            <span>Settings</span>
+                        </button>
+                        <hr class="my-2">
+                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0 text-danger" @onclick="Logout">
+                            <i class="bi bi-box-arrow-right me-3"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
                 </div>
             }
         </div>
-        
-        <button class="btn btn-primary rounded-pill px-4" @onclick="RefreshDashboard">
-            <i class="bi bi-arrow-clockwise me-2"></i> Refresh
-        </button>
     </div>
 </div>
 
@@ -244,25 +283,6 @@
                 <div class="mt-3 d-flex align-items-center text-success">
                     <i class="bi bi-arrow-up me-1"></i>
                     <span>Registered patients</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" >
-            <div class="position-absolute bg-info bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-calendar2-week fs-4 text-info"></i>
-                    </div>
-                    <h6 class="text-muted mb-0">Available Slots</h6>
-                </div>
-                <h2 class="mb-0 fw-bold counter">@AvailableSlotsCount</h2>
-                <div class="mt-3 d-flex align-items-center text-info">
-                    <i class="bi bi-arrow-right me-1"></i>
-                    <span>For today</span>
                 </div>
             </div>
         </div>
@@ -426,41 +446,6 @@
             </div>
         </div>
         
-        <!-- Doctor Availability -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Doctor Availability</h5>
-            </div>
-            <div class="card-body p-0">
-                @if (AvailableDoctors != null && AvailableDoctors.Any())
-                {
-                    <div class="list-group list-group-flush">
-                        @foreach (var doctor in AvailableDoctors.Take(5))
-                        {
-                            <div class="list-group-item p-3 d-flex align-items-center availability-item">
-                                <div class="rounded-circle @GetAvailabilityColor(doctor.AvailableSlots) me-3" style="width: 10px; height: 10px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0">@doctor.FullName</h6>
-                                        <span class="badge bg-light text-dark">@doctor.Specialty</span>
-                                    </div>
-                                    <p class="text-muted small mb-0">@GetAvailabilityText(doctor.AvailableSlots)</p>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center p-4 text-muted">
-                        <i class="bi bi-person-x fs-1 mb-3"></i>
-                        <p class="mb-0">No doctor information available</p>
-                    </div>
-                }
-            </div>
-        
-        </div>
-        
         <!-- Today's Schedule -->
      
     </div>
@@ -474,20 +459,19 @@
     private List<NotificationDto>? Notifications { get; set; }
     private List<AppointmentDto>? RecentAppointments { get; set; }
     private List<AppointmentDto>? FilteredAppointments { get; set; }
-    private List<DoctorAvailabilityDto>? AvailableDoctors { get; set; }
     
     // Statistics
     private int TodayAppointmentsCount { get; set; }
     private int PendingAppointmentsCount { get; set; }
     private int TotalPatientsCount { get; set; }
-    private int AvailableSlotsCount { get; set; }
     private int UnreadCount { get; set; }
     
     // UI State
     private string AppointmentFilter { get; set; } = "all";
     private bool ShowNotifications { get; set; }
     private bool IsLoading { get; set; } = true;
-    
+    private bool ShowUserMenu { get; set; } = false;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -530,29 +514,16 @@ var pendingCount      = await ReceptionistService.GetPendingAppointmentsCountAsy
 var totalPatients     = await ReceptionistService.GetTotalPatientsCountAsync();
 var recentAppointments = await ReceptionistService.GetRecentAppointmentsAsync(5);
 var notifications      = await ReceptionistService.GetReceptionistNotificationsAsync(CurrentUserSession.UserId, 5);
-var doctors            = await ReceptionistService.GetAllDoctorsAsync();
 
-// Then assign:
-TodayAppointmentsCount = todayCount;
-PendingAppointmentsCount = pendingCount;
-TotalPatientsCount = totalPatients;
-RecentAppointments = recentAppointments;
-Notifications = notifications;
-AvailableDoctors = doctors
-    .Select(d => new DoctorAvailabilityDto {
-        FullName      = d.FullName,
-        Specialty     = d.Specialty,
-        AvailableSlots = new Random().Next(0, 5)
-    })
-    .ToList();
-
-
+            // Then assign:
+            TodayAppointmentsCount = todayCount;
+            PendingAppointmentsCount = pendingCount;
+            TotalPatientsCount = totalPatients;
+            RecentAppointments = recentAppointments;
+            Notifications = notifications;
             
             // Calculate unread notifications count
             UnreadCount = Notifications?.Count(n => !n.IsRead) ?? 0;
-            
-            // Calculate available slots (simplified)
-            AvailableSlotsCount = new Random().Next(5, 15);
             
             // Set filtered appointments
             FilterAppointments();
@@ -591,6 +562,12 @@ AvailableDoctors = doctors
     private void ToggleNotifications()
     {
         ShowNotifications = !ShowNotifications;
+    }
+    
+    private void ToggleUserMenu()
+    {
+        ShowUserMenu = !ShowUserMenu;
+        ShowNotifications = false;
     }
     
     private async Task MarkNotificationAsRead(int notificationId)
@@ -637,6 +614,31 @@ AvailableDoctors = doctors
         }
     }
     
+    private void GoToProfile()
+    {
+        Nav.NavigateTo("/receptionist/profile");
+        ShowUserMenu = false;
+    }
+
+    private void GoToSettings()
+    {
+        Nav.NavigateTo("/receptionist/settings");
+        ShowUserMenu = false;
+    }
+    
+    private async Task Logout()
+    {
+        try
+        {
+            await AuthStateProvider.MarkUserAsLoggedOutAsync();
+            Nav.NavigateTo("/", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+        }
+    }
+
     // Helper methods
     private string GetInitials(string? fullName)
     {
@@ -693,27 +695,6 @@ AvailableDoctors = doctors
             "cancelled" => "bi-x-circle",
             "completed" => "bi-check-circle-fill",
             _ => "bi-circle"
-        };
-    }
-    
-    private string GetAvailabilityColor(int availableSlots)
-    {
-        return availableSlots switch
-        {
-            0 => "bg-danger",
-            1 => "bg-warning",
-            >= 2 and <= 3 => "bg-info",
-            _ => "bg-success"
-        };
-    }
-    
-    private string GetAvailabilityText(int availableSlots)
-    {
-        return availableSlots switch
-        {
-            0 => "No slots available",
-            1 => "1 slot available",
-            _ => $"{availableSlots} slots available"
         };
     }
     

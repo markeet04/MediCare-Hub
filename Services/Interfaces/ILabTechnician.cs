@@ -27,7 +27,9 @@ namespace BlazorApp1.Services
         Task<int> GetLabTechIdFromUserIdAsync(int userId);
         Task<bool> SendNotificationToDoctorAsync(int doctorId, string message, int orderId);
         Task<List<LabOrderDto>> GetAvailableLabOrdersAsync(int labTechId);
-
+        Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int labTechId);
+        Task MarkNotificationAsReadAsync(int notificationId);
+        Task MarkAllNotificationsAsReadAsync(int labTechId);
         // File handling
         Task<string> SaveReportFileAsync(IFormFile file, int orderId);
         Task<bool> DeleteReportFileAsync(string filePath);

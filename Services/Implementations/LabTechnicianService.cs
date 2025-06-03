@@ -720,5 +720,69 @@ private static string HashPassword(string password)
             };
         }
         
+        public async Task<IEnumerable<NotificationDto>> GetNotificationsAsync(int labTechId)
+        {
+            var notifications = new List<NotificationDto>();
+
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"
+        SELECT NotificationId, UserId, Title, Message, IsRead, CreatedAt
+        FROM dbo.Notifications
+        WHERE UserId = @LabTechId
+        ORDER BY CreatedAt DESC;";
+
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@LabTechId", labTechId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                notifications.Add(new NotificationDto
+                {
+                    NotificationId = reader.GetInt32(reader.GetOrdinal("NotificationId")),
+                    UserId         = reader.GetInt32(reader.GetOrdinal("UserId")),
+                    Title          = reader.IsDBNull(reader.GetOrdinal("Title")) ? null : reader.GetString(reader.GetOrdinal("Title")),
+                    Message        = reader.IsDBNull(reader.GetOrdinal("Message")) ? null : reader.GetString(reader.GetOrdinal("Message")),
+                    IsRead         = reader.GetBoolean(reader.GetOrdinal("IsRead")),
+                    CreatedAt      = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                });
+            }
+
+            return notifications;
+        }
+
+        public async Task MarkNotificationAsReadAsync(int notificationId)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"
+        UPDATE dbo.Notifications
+        SET IsRead = 1
+        WHERE NotificationId = @NotificationId;";
+
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@NotificationId", notificationId);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task MarkAllNotificationsAsReadAsync(int labTechId)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"
+        UPDATE dbo.Notifications
+        SET IsRead = 1
+        WHERE UserId = @LabTechId AND IsRead = 0;";
+
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@LabTechId", labTechId);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 }

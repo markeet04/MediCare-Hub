@@ -179,16 +179,12 @@ namespace BlazorApp1.Helpers
                 else if (waistCircumference > 102m) points += 4;
             }
 
-            // 4) Daily physical activity:
-            //    Yes → 0; No → 2
+   
             if (!dailyPhysicalActivity) points += 2;
 
-            // 5) Eats vegetables/fruits daily:
-            //    Yes → 0; No → 1
+
             if (!eatsVegetablesDaily) points += 1;
 
-            // 6) Takes blood pressure medication:
-            //    Yes → 2; No → 0
             if (takesBloodPressureMedication) points += 2;
 
             // 7) History of high blood glucose:
