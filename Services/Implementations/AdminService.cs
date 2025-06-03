@@ -1384,204 +1384,221 @@ public class YourReportRowDto
             return stats;
         }
 
-        private async Task<Dictionary<string, object>> GatherPatientStatisticsReportDataAsync(
-            SqlConnection conn, SqlTransaction transaction, GenerateReportRequestDto dto)
+      // ...existing code...
+private async Task<Dictionary<string, object>> GatherPatientStatisticsReportDataAsync(
+    SqlConnection conn, SqlTransaction transaction, GenerateReportRequestDto dto)
+{
+    var data = new Dictionary<string, object>();
+    var dateFilter = BuildDateFilter("u.CreatedAt", dto.StartDate, dto.EndDate);
+
+    // Get patient details (fixed columns and join)
+    var patientsSql = $@"
+        SELECT 
+            p.PatientId, 
+            u.FullName, 
+            u.UserName, 
+            u.CNIC, 
+            u.PhoneNumber, 
+            u.ProfilePictureUrl,
+            p.DateOfBirth, 
+            p.Gender, 
+            p.Address, 
+            p.BloodGroup,
+            u.CreatedAt as RegistrationDate
+        FROM dbo.PatientProfiles p
+        INNER JOIN dbo.Users u ON p.PatientId = u.UserId
+        {dateFilter}
+        ORDER BY u.CreatedAt DESC";
+
+    using var cmd = new SqlCommand(patientsSql, conn, transaction);
+    AddDateParameters(cmd, dto.StartDate, dto.EndDate);
+
+    var patients = new List<Dictionary<string, object>>();
+    using var reader = await cmd.ExecuteReaderAsync();
+
+    while (await reader.ReadAsync())
+    {
+        var patient = new Dictionary<string, object>();
+        for (int i = 0; i < reader.FieldCount; i++)
         {
-            var data = new Dictionary<string, object>();
-            var dateFilter = BuildDateFilter("u.CreatedAt", dto.StartDate, dto.EndDate);
-            
-            // Get patient details
-            var patientsSql = $@"
-                SELECT 
-                    p.PatientId, p.FirstName, p.LastName, p.Email, p.Phone,
-                    p.DateOfBirth, p.Gender, p.Address,
-                    u.CreatedAt as RegistrationDate
-                FROM dbo.PatientProfiles p
-                INNER JOIN dbo.Users u ON p.UserId = u.UserId
-                {dateFilter}
-                ORDER BY u.CreatedAt DESC";
-
-            using var cmd = new SqlCommand(patientsSql, conn, transaction);
-            AddDateParameters(cmd, dto.StartDate, dto.EndDate);
-
-            var patients = new List<Dictionary<string, object>>();
-            using var reader = await cmd.ExecuteReaderAsync();
-            
-            while (await reader.ReadAsync())
-            {
-                var patient = new Dictionary<string, object>();
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    patient[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                }
-                patients.Add(patient);
-            }
-            reader.Close();
-
-            // Get gender distribution
-            var genderSql = $@"
-                SELECT 
-                    p.Gender,
-                    COUNT(*) as Count
-                FROM dbo.PatientProfiles p
-                INNER JOIN dbo.Users u ON p.UserId = u.UserId
-                {dateFilter}
-                GROUP BY p.Gender";
-
-            using var genderCmd = new SqlCommand(genderSql, conn, transaction);
-            AddDateParameters(genderCmd, dto.StartDate, dto.EndDate);
-            
-            var genderStats = new List<Dictionary<string, object>>();
-            using var genderReader = await genderCmd.ExecuteReaderAsync();
-            
-            while (await genderReader.ReadAsync())
-            {
-                genderStats.Add(new Dictionary<string, object>
-                {
-                    ["Gender"] = genderReader["Gender"]?.ToString() ?? "Unknown",
-                    ["Count"] = genderReader["Count"]
-                });
-            }
-
-            data["Patients"] = patients;
-            data["TotalCount"] = patients.Count;
-            data["GenderDistribution"] = genderStats;
-
-            return data;
+            patient[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
         }
+        patients.Add(patient);
+    }
+    reader.Close();
 
-        private async Task<Dictionary<string, object>> GatherAppointmentsReportDataAsync(
-            SqlConnection conn, SqlTransaction transaction, GenerateReportRequestDto dto)
+    // Get gender distribution (no change needed)
+    var genderSql = $@"
+        SELECT 
+            p.Gender,
+            COUNT(*) as Count
+        FROM dbo.PatientProfiles p
+        INNER JOIN dbo.Users u ON p.PatientId = u.UserId
+        {dateFilter}
+        GROUP BY p.Gender";
+
+    using var genderCmd = new SqlCommand(genderSql, conn, transaction);
+    AddDateParameters(genderCmd, dto.StartDate, dto.EndDate);
+
+    var genderStats = new List<Dictionary<string, object>>();
+    using var genderReader = await genderCmd.ExecuteReaderAsync();
+
+    while (await genderReader.ReadAsync())
+    {
+        genderStats.Add(new Dictionary<string, object>
         {
-            var dateFilter = BuildDateFilter("a.AppointmentDate", dto.StartDate, dto.EndDate);
-            
-            var appointmentsSql = $@"
-                SELECT 
-                    a.AppointmentId, a.AppointmentDate, a.Status, a.Notes,
-                    p.FirstName + ' ' + p.LastName as PatientName,
-                    d.FirstName + ' ' + d.LastName as DoctorName,
-                    d.Specialization
-                FROM dbo.Appointments a
-                INNER JOIN dbo.PatientProfiles p ON a.PatientId = p.PatientId
-                INNER JOIN dbo.DoctorProfiles d ON a.DoctorId = d.DoctorId
-                {dateFilter}
-                ORDER BY a.AppointmentDate DESC";
+            ["Gender"] = genderReader["Gender"]?.ToString() ?? "Unknown",
+            ["Count"] = genderReader["Count"]
+        });
+    }
 
-            using var cmd = new SqlCommand(appointmentsSql, conn, transaction);
-            AddDateParameters(cmd, dto.StartDate, dto.EndDate);
+    data["Patients"] = patients;
+    data["TotalCount"] = patients.Count;
+    data["GenderDistribution"] = genderStats;
 
-            var appointments = new List<Dictionary<string, object>>();
-            using var reader = await cmd.ExecuteReaderAsync();
-            
-            while (await reader.ReadAsync())
-            {
-                var appointment = new Dictionary<string, object>();
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    appointment[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                }
-                appointments.Add(appointment);
-            }
-            reader.Close();
+    return data;
+}
 
-            // Get status distribution
-            var statusSql = $@"
-                SELECT 
-                    a.Status,
-                    COUNT(*) as Count
-                FROM dbo.Appointments a
-                {dateFilter}
-                GROUP BY a.Status";
 
-            using var statusCmd = new SqlCommand(statusSql, conn, transaction);
-            AddDateParameters(statusCmd, dto.StartDate, dto.EndDate);
-            
-            var statusStats = new List<Dictionary<string, object>>();
-            using var statusReader = await statusCmd.ExecuteReaderAsync();
-            
-            while (await statusReader.ReadAsync())
-            {
-                statusStats.Add(new Dictionary<string, object>
-                {
-                    ["Status"] = statusReader["Status"]?.ToString() ?? "Unknown",
-                    ["Count"] = statusReader["Count"]
-                });
-            }
+   private async Task<Dictionary<string, object>> GatherAppointmentsReportDataAsync(
+    SqlConnection conn, SqlTransaction transaction, GenerateReportRequestDto dto)
+{
+    var dateFilter = BuildDateFilter("a.ScheduledDateTime", dto.StartDate, dto.EndDate);
 
-            return new Dictionary<string, object>
-            {
-                ["Appointments"] = appointments,
-                ["TotalCount"] = appointments.Count,
-                ["StatusDistribution"] = statusStats
-            };
-        }
+    var appointmentsSql = $@"
+        SELECT 
+            a.AppointmentId, 
+            a.ScheduledDateTime, 
+            a.Status, 
+            -- a.Notes, -- Remove this if not in your schema
+            up.FullName AS PatientName,
+            ud.FullName AS DoctorName,
+            dp.Specialty AS Specialization
+        FROM dbo.Appointments a
+        INNER JOIN dbo.PatientProfiles pp ON a.PatientId = pp.PatientId
+        INNER JOIN dbo.Users up ON pp.PatientId = up.UserId
+        INNER JOIN dbo.DoctorProfiles dp ON a.DoctorId = dp.DoctorId
+        INNER JOIN dbo.Users ud ON dp.DoctorId = ud.UserId
+        {dateFilter}
+        ORDER BY a.ScheduledDateTime DESC";
 
-        private async Task<Dictionary<string, object>> GatherLabOrdersReportDataAsync(
-            SqlConnection conn, SqlTransaction transaction, GenerateReportRequestDto dto)
+    using var cmd = new SqlCommand(appointmentsSql, conn, transaction);
+    AddDateParameters(cmd, dto.StartDate, dto.EndDate);
+
+    var appointments = new List<Dictionary<string, object>>();
+    using var reader = await cmd.ExecuteReaderAsync();
+
+    while (await reader.ReadAsync())
+    {
+        var appointment = new Dictionary<string, object>();
+        for (int i = 0; i < reader.FieldCount; i++)
         {
-            var dateFilter = BuildDateFilter("lr.TestDate", dto.StartDate, dto.EndDate);
-            
-            var labOrdersSql = $@"
-                SELECT 
-                    lr.LabResultId, lr.TestName, lr.Result, lr.ReferenceRange,
-                    lr.Status, lr.TestDate, lr.Notes,
-                    p.FirstName + ' ' + p.LastName as PatientName,
-                    lt.FirstName + ' ' + lt.LastName as LabTechName
-                FROM dbo.LabResults lr
-                INNER JOIN dbo.PatientProfiles p ON lr.PatientId = p.PatientId
-                INNER JOIN dbo.LabTechnicianProfiles lt ON lr.LabTechId = lt.LabTechId
-                {dateFilter}
-                ORDER BY lr.TestDate DESC";
-
-            using var cmd = new SqlCommand(labOrdersSql, conn, transaction);
-            AddDateParameters(cmd, dto.StartDate, dto.EndDate);
-
-            var labOrders = new List<Dictionary<string, object>>();
-            using var reader = await cmd.ExecuteReaderAsync();
-            
-            while (await reader.ReadAsync())
-            {
-                var result = new Dictionary<string, object>();
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    result[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                }
-                labOrders.Add(result);
-            }
-            reader.Close();
-
-            // Get test type distribution
-            var testTypeSql = $@"
-                SELECT 
-                    lr.TestName,
-                    COUNT(*) as Count
-                FROM dbo.LabResults lr
-                {dateFilter}
-                GROUP BY lr.TestName
-                ORDER BY COUNT(*) DESC";
-
-            using var testCmd = new SqlCommand(testTypeSql, conn, transaction);
-            AddDateParameters(testCmd, dto.StartDate, dto.EndDate);
-            
-            var testStats = new List<Dictionary<string, object>>();
-            using var testReader = await testCmd.ExecuteReaderAsync();
-            
-            while (await testReader.ReadAsync())
-            {
-                testStats.Add(new Dictionary<string, object>
-                {
-                    ["TestName"] = testReader["TestName"]?.ToString() ?? "Unknown",
-                    ["Count"] = testReader["Count"]
-                });
-            }
-
-            return new Dictionary<string, object>
-            {
-                ["LabOrders"] = labOrders,
-                ["TotalCount"] = labOrders.Count,
-                ["TestTypeDistribution"] = testStats
-            };
+            appointment[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
         }
+        appointments.Add(appointment);
+    }
+    reader.Close();
+
+    // Get status distribution
+    var statusSql = $@"
+        SELECT 
+            a.Status,
+            COUNT(*) as Count
+        FROM dbo.Appointments a
+        {dateFilter}
+        GROUP BY a.Status";
+
+    using var statusCmd = new SqlCommand(statusSql, conn, transaction);
+    AddDateParameters(statusCmd, dto.StartDate, dto.EndDate);
+
+    var statusStats = new List<Dictionary<string, object>>();
+    using var statusReader = await statusCmd.ExecuteReaderAsync();
+
+    while (await statusReader.ReadAsync())
+    {
+        statusStats.Add(new Dictionary<string, object>
+        {
+            ["Status"] = statusReader["Status"]?.ToString() ?? "Unknown",
+            ["Count"] = statusReader["Count"]
+        });
+    }
+
+    return new Dictionary<string, object>
+    {
+        ["Appointments"] = appointments,
+        ["TotalCount"] = appointments.Count,
+        ["StatusDistribution"] = statusStats
+    };
+}
+
+   private async Task<Dictionary<string, object>> GatherLabOrdersReportDataAsync(
+    SqlConnection conn, SqlTransaction transaction, GenerateReportRequestDto dto)
+{
+    var dateFilter = BuildDateFilter("lo.OrderDate", dto.StartDate, dto.EndDate);
+
+    var labOrdersSql = $@"
+        SELECT 
+            lo.LabOrderId, lo.Status, lo.OrderDate,
+            lo.Results, lo.ReportFilePath, lo.CompletedAt,
+            up.FullName AS PatientName,
+            ut.FullName AS LabTechName
+        FROM dbo.LabOrders lo
+        INNER JOIN dbo.PatientProfiles pp ON lo.PatientId = pp.PatientId
+        INNER JOIN dbo.Users up ON pp.PatientId = up.UserId
+        LEFT JOIN dbo.LabTechnicianProfiles ltp ON lo.LabTechId = ltp.LabTechId
+        LEFT JOIN dbo.Users ut ON ltp.LabTechId = ut.UserId
+        {dateFilter}
+        ORDER BY lo.OrderDate DESC";
+
+    using var cmd = new SqlCommand(labOrdersSql, conn, transaction);
+    AddDateParameters(cmd, dto.StartDate, dto.EndDate);
+
+    var labOrders = new List<Dictionary<string, object>>();
+    using var reader = await cmd.ExecuteReaderAsync();
+
+    while (await reader.ReadAsync())
+    {
+        var result = new Dictionary<string, object>();
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            result[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+        }
+        labOrders.Add(result);
+    }
+    reader.Close();
+
+    // Example: Group by Status instead of TestName
+    var testTypeSql = $@"
+        SELECT 
+            lo.Status,
+            COUNT(*) as Count
+        FROM dbo.LabOrders lo
+        {dateFilter}
+        GROUP BY lo.Status
+        ORDER BY COUNT(*) DESC";
+
+    using var testCmd = new SqlCommand(testTypeSql, conn, transaction);
+    AddDateParameters(testCmd, dto.StartDate, dto.EndDate);
+
+    var testStats = new List<Dictionary<string, object>>();
+    using var testReader = await testCmd.ExecuteReaderAsync();
+
+    while (await testReader.ReadAsync())
+    {
+        testStats.Add(new Dictionary<string, object>
+        {
+            ["Status"] = testReader["Status"]?.ToString() ?? "Unknown",
+            ["Count"] = testReader["Count"]
+        });
+    }
+
+    return new Dictionary<string, object>
+    {
+        ["LabOrders"] = labOrders,
+        ["TotalCount"] = labOrders.Count,
+        ["TestTypeDistribution"] = testStats
+    };
+}
 
         private string BuildDateFilter(string dateColumn, DateTime? startDate, DateTime? endDate)
         {
@@ -1717,71 +1734,73 @@ public class YourReportRowDto
             }
         }
 
-        private void GeneratePatientStatisticsContent(ColumnDescriptor col, Dictionary<string, object> data)
+      // ...existing code...
+private void GeneratePatientStatisticsContent(ColumnDescriptor col, Dictionary<string, object> data)
+{
+    var patients = (List<Dictionary<string, object>>)data["Patients"];
+    var genderStats = (List<Dictionary<string, object>>)data["GenderDistribution"];
+    
+    col.Item().Text($"Patient Statistics - Total: {data["TotalCount"]}").SemiBold().FontSize(16);
+    col.Item().PaddingVertical(0.25f, Unit.Centimetre);
+
+    // Gender distribution
+    if (genderStats.Any())
+    {
+        col.Item().Text("Gender Distribution").SemiBold().FontSize(14);
+        foreach (var stat in genderStats)
         {
-            var patients = (List<Dictionary<string, object>>)data["Patients"];
-            var genderStats = (List<Dictionary<string, object>>)data["GenderDistribution"];
-            
-            col.Item().Text($"Patient Statistics - Total: {data["TotalCount"]}").SemiBold().FontSize(16);
-            col.Item().PaddingVertical(0.25f, Unit.Centimetre);
-
-            // Gender distribution
-            if (genderStats.Any())
-            {
-                col.Item().Text("Gender Distribution").SemiBold().FontSize(14);
-                foreach (var stat in genderStats)
-                {
-                    col.Item().Text($"{stat["Gender"]}: {stat["Count"]} patients").FontSize(12);
-                }
-                col.Item().PaddingVertical(0.5f, Unit.Centimetre);
-            }
-
-            // Patient list
-            if (patients.Any())
-            {
-                col.Item().Text("Patient List").SemiBold().FontSize(14);
-                col.Item().PaddingVertical(0.25f, Unit.Centimetre);
-
-                col.Item().Table(table =>
-                {
-                    table.ColumnsDefinition(columns =>
-                    {
-                        columns.RelativeColumn(2); // Name
-                        columns.RelativeColumn(2); // Email
-                        columns.RelativeColumn(1); // Gender
-                        columns.RelativeColumn(1); // Age
-                        columns.RelativeColumn(1); // Registration
-                    });
-
-                    table.Header(header =>
-                    {
-                        header.Cell().Element(CellStyle).Text("Name").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Email").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Gender").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Age").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Registered").SemiBold();
-                    });
-
-                    foreach (var patient in patients.Take(50))
-                    {
-                        var age = patient["DateOfBirth"] != null 
-                            ? DateTime.Now.Year - ((DateTime)patient["DateOfBirth"]).Year 
-                            : 0;
-
-                        table.Cell().Element(CellStyle).Text($"{patient["FirstName"]} {patient["LastName"]}").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(patient["Email"]?.ToString() ?? "").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(patient["Gender"]?.ToString() ?? "").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(age > 0 ? age.ToString() : "").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(((DateTime)patient["RegistrationDate"]).ToString("yyyy-MM-dd")).FontSize(10);
-                    }
-                });
-
-                if (patients.Count > 50)
-                {
-                    col.Item().PaddingTop(0.5f, Unit.Centimetre).Text($"Note: Showing first 50 of {patients.Count} patients").FontSize(10).Italic();
-                }
-            }
+            col.Item().Text($"{stat["Gender"]}: {stat["Count"]} patients").FontSize(12);
         }
+        col.Item().PaddingVertical(0.5f, Unit.Centimetre);
+    }
+
+    // Patient list
+    if (patients.Any())
+    {
+        col.Item().Text("Patient List").SemiBold().FontSize(14);
+        col.Item().PaddingVertical(0.25f, Unit.Centimetre);
+
+        col.Item().Table(table =>
+        {
+            table.ColumnsDefinition(columns =>
+            {
+                columns.RelativeColumn(2); // Name
+                columns.RelativeColumn(2); // UserName
+                columns.RelativeColumn(1); // Gender
+                columns.RelativeColumn(1); // Age
+                columns.RelativeColumn(1); // Registration
+            });
+
+            table.Header(header =>
+            {
+                header.Cell().Element(CellStyle).Text("Name").SemiBold();
+                header.Cell().Element(CellStyle).Text("UserName").SemiBold();
+                header.Cell().Element(CellStyle).Text("Gender").SemiBold();
+                header.Cell().Element(CellStyle).Text("Age").SemiBold();
+                header.Cell().Element(CellStyle).Text("Registered").SemiBold();
+            });
+
+            foreach (var patient in patients.Take(50))
+            {
+                var age = patient["DateOfBirth"] != null 
+                    ? DateTime.Now.Year - ((DateTime)patient["DateOfBirth"]).Year 
+                    : 0;
+
+                table.Cell().Element(CellStyle).Text(patient["FullName"]?.ToString() ?? "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(patient["UserName"]?.ToString() ?? "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(patient["Gender"]?.ToString() ?? "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(age > 0 ? age.ToString() : "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(patient["RegistrationDate"] != null ? ((DateTime)patient["RegistrationDate"]).ToString("yyyy-MM-dd") : "").FontSize(10);
+            }
+        });
+
+        if (patients.Count > 50)
+        {
+            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text($"Note: Showing first 50 of {patients.Count} patients").FontSize(10).Italic();
+        }
+    }
+}
+// ...existing code...
 
         private void GenerateAppointmentsContent(ColumnDescriptor col, Dictionary<string, object> data)
         {
@@ -1826,13 +1845,19 @@ public class YourReportRowDto
                         header.Cell().Element(CellStyle).Text("Status").SemiBold();
                     });
 
-                    foreach (var appointment in appointments.Take(100))
-                    {
-                        table.Cell().Element(CellStyle).Text(((DateTime)appointment["AppointmentDate"]).ToString("yyyy-MM-dd HH:mm")).FontSize(10);
-                        table.Cell().Element(CellStyle).Text(appointment["PatientName"]?.ToString() ?? "").FontSize(10);
-                        table.Cell().Element(CellStyle).Text($"{appointment["DoctorName"]} ({appointment["Specialization"]})").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(appointment["Status"]?.ToString() ?? "").FontSize(10);
-                    }
+                 // ...existing code...
+foreach (var appointment in appointments.Take(100))
+{
+    table.Cell().Element(CellStyle).Text(
+        appointment["ScheduledDateTime"] != null
+            ? ((DateTime)appointment["ScheduledDateTime"]).ToString("yyyy-MM-dd HH:mm")
+            : ""
+    ).FontSize(10);
+    table.Cell().Element(CellStyle).Text(appointment["PatientName"]?.ToString() ?? "").FontSize(10);
+    table.Cell().Element(CellStyle).Text($"{appointment["DoctorName"]} ({appointment["Specialization"]})").FontSize(10);
+    table.Cell().Element(CellStyle).Text(appointment["Status"]?.ToString() ?? "").FontSize(10);
+}
+// ...existing code...
                 });
 
                 if (appointments.Count > 100)
@@ -1842,64 +1867,64 @@ public class YourReportRowDto
             }
         }
 
-        private void GenerateLabOrdersContent(ColumnDescriptor col, Dictionary<string, object> data)
+  private void GenerateLabOrdersContent(ColumnDescriptor col, Dictionary<string, object> data)
+{
+    var labOrders = (List<Dictionary<string, object>>)data["LabOrders"];
+    var testStats = (List<Dictionary<string, object>>)data["TestTypeDistribution"];
+    
+    col.Item().Text($"Lab Orders Report - Total: {data["TotalCount"]}").SemiBold().FontSize(16);
+    col.Item().PaddingVertical(0.25f, Unit.Centimetre);
+
+    // Status distribution (instead of test type)
+    if (testStats.Any())
+    {
+        col.Item().Text("Lab Orders by Status").SemiBold().FontSize(14);
+        foreach (var stat in testStats.Take(10))
         {
-            var labOrders = (List<Dictionary<string, object>>)data["LabOrders"];
-            var testStats = (List<Dictionary<string, object>>)data["TestTypeDistribution"];
-            
-            col.Item().Text($"Lab Orders Report - Total: {data["TotalCount"]}").SemiBold().FontSize(16);
-            col.Item().PaddingVertical(0.25f, Unit.Centimetre);
-
-            // Test type distribution
-            if (testStats.Any())
-            {
-                col.Item().Text("Most Common Tests").SemiBold().FontSize(14);
-                foreach (var stat in testStats.Take(10))
-                {
-                    col.Item().Text($"{stat["TestName"]}: {stat["Count"]} orders").FontSize(12);
-                }
-                col.Item().PaddingVertical(0.5f, Unit.Centimetre);
-            }
-
-            // Lab orders list
-            if (labOrders.Any())
-            {
-                col.Item().Text("Lab Order Details").SemiBold().FontSize(14);
-                col.Item().PaddingVertical(0.25f, Unit.Centimetre);
-
-                col.Item().Table(table =>
-                {
-                    table.ColumnsDefinition(columns =>
-                    {
-                        columns.RelativeColumn(1); // Date
-                        columns.RelativeColumn(2); // Patient
-                        columns.RelativeColumn(2); // Test
-                        columns.RelativeColumn(1); // Status
-                    });
-
-                    table.Header(header =>
-                    {
-                        header.Cell().Element(CellStyle).Text("Date").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Patient").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Test").SemiBold();
-                        header.Cell().Element(CellStyle).Text("Status").SemiBold();
-                    });
-
-                    foreach (var order in labOrders.Take(100))
-                    {
-                        table.Cell().Element(CellStyle).Text(((DateTime)order["TestDate"]).ToString("yyyy-MM-dd")).FontSize(10);
-                        table.Cell().Element(CellStyle).Text(order["PatientName"]?.ToString() ?? "").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(order["TestName"]?.ToString() ?? "").FontSize(10);
-                        table.Cell().Element(CellStyle).Text(order["Status"]?.ToString() ?? "").FontSize(10);
-                    }
-                });
-
-                if (labOrders.Count > 100)
-                {
-                    col.Item().PaddingTop(0.5f, Unit.Centimetre).Text($"Note: Showing first 100 of {labOrders.Count} lab orders").FontSize(10).Italic();
-                }
-            }
+            col.Item().Text($"{stat["Status"]}: {stat["Count"]} orders").FontSize(12);
         }
+        col.Item().PaddingVertical(0.5f, Unit.Centimetre);
+    }
+
+    // Lab orders list
+    if (labOrders.Any())
+    {
+        col.Item().Text("Lab Order Details").SemiBold().FontSize(14);
+        col.Item().PaddingVertical(0.25f, Unit.Centimetre);
+
+        col.Item().Table(table =>
+        {
+            table.ColumnsDefinition(columns =>
+            {
+                columns.RelativeColumn(1); // Date
+                columns.RelativeColumn(2); // Patient
+                columns.RelativeColumn(2); // Lab Tech
+                columns.RelativeColumn(1); // Status
+            });
+
+            table.Header(header =>
+            {
+                header.Cell().Element(CellStyle).Text("Date").SemiBold();
+                header.Cell().Element(CellStyle).Text("Patient").SemiBold();
+                header.Cell().Element(CellStyle).Text("Lab Tech").SemiBold();
+                header.Cell().Element(CellStyle).Text("Status").SemiBold();
+            });
+
+            foreach (var order in labOrders.Take(100))
+            {
+                table.Cell().Element(CellStyle).Text(order["OrderDate"] != null ? ((DateTime)order["OrderDate"]).ToString("yyyy-MM-dd") : "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(order["PatientName"]?.ToString() ?? "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(order["LabTechName"]?.ToString() ?? "").FontSize(10);
+                table.Cell().Element(CellStyle).Text(order["Status"]?.ToString() ?? "").FontSize(10);
+            }
+        });
+
+        if (labOrders.Count > 100)
+        {
+            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text($"Note: Showing first 100 of {labOrders.Count} lab orders").FontSize(10).Italic();
+        }
+    }
+}
 
         private static IContainer CellStyle(IContainer container)
         {
