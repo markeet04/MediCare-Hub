@@ -7,6 +7,8 @@
 @using System
 @using System.Threading.Tasks
 @using System.Security.Claims
+@using BlazorApp1.Models.DTOs
+@inject BlazorApp1.Services.Interfaces.IPatientService PatientService
 @inject ProtectedSessionStorage SessionStorage
 @inject ProtectedLocalStorage LocalStorage
 @inject NavigationManager NavigationManager
@@ -334,15 +336,74 @@
                             <input type="text" @bind="signupCNIC" placeholder="CNIC (e.g., 12345-1234567-1)" maxlength="15" />
                         </div>
                     </div>
+                    <!-- Add these form fields AFTER the existing Phone Number field in your signup form -->
+
+<!-- Date of Birth -->
+<div class="form-group">
+    <div class="input-wrapper">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 3H18V1H16V3H8V1H6V3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V8H19V19Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <input type="date" @bind="dateOfBirth" />
+    </div>
+</div>
+
+<!-- Gender -->
+<div class="form-group">
+    <div class="input-wrapper">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <select @bind="gender">
+            <option value="">Select Gender (optional)</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+    </div>
+</div>
+
+<!-- Address -->
+<div class="form-group">
+    <div class="input-wrapper">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.3639 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <input type="text" @bind="address" placeholder="Address (optional)" />
+    </div>
+</div>
+
+<!-- Blood Group -->
+<div class="form-group">
+    <div class="input-wrapper">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.27 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.27 18.6 15.36 13.45 20.03L12 21.35Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <select @bind="bloodGroup">
+            <option value="">Select Blood Group (optional)</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+        </select>
+    </div>
+</div>
                     
                     <div class="form-group">
                         <div class="input-wrapper">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M22 16.92V13.92C22 13.42 21.78 12.95 21.41 12.65L19.59 11.35C19.22 11.05 18.78 11.05 18.41 11.35L16.59 12.65C16.22 12.95 16 13.42 16 13.92V16.92C16 17.42 16.22 17.89 16.59 18.19L18.41 19.49C18.78 19.79 19.22 19.79 19.59 19.49L21.41 18.19C21.78 17.89 22 17.42 22 16.92Z" stroke="#919191" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <input type="tel" @bind="signupPhone" placeholder="Phone Number (optional)" />
+                            <input type="tel" @bind="signupPhone" placeholder="Phone Number " />
                         </div>
                     </div>
+                    
                     
                     <button type="button" class="submit-button" @onclick="HandleSignup" disabled="@isLoading">
                         @if (isLoading)
@@ -418,6 +479,10 @@
     private string signupEmail = string.Empty;
     private string signupCNIC = string.Empty;
     private string signupPhone = string.Empty;
+    private DateTime? dateOfBirth;
+    private string? gender = "";
+    private string? address = "";
+    private string? bloodGroup = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -582,50 +647,91 @@
         }
     }
 
-    private async Task HandleSignup()
+  private async Task HandleSignup()
+{
+    if (isLoading) return;
+
+    // Validate required fields
+    if (string.IsNullOrWhiteSpace(fullName) || 
+        string.IsNullOrWhiteSpace(signupUsername) || 
+        string.IsNullOrWhiteSpace(signupPassword) || 
+        string.IsNullOrWhiteSpace(signupEmail) || 
+        string.IsNullOrWhiteSpace(signupCNIC))
     {
-        if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(signupUsername) || 
-            string.IsNullOrWhiteSpace(signupPassword) || string.IsNullOrWhiteSpace(signupEmail) || 
-            string.IsNullOrWhiteSpace(signupCNIC))
-        {
-            ShowError("Please fill in all required fields.");
-            return;
-        }
+        ShowError("Please fill in all required fields.");
+        return;
+    }
 
-        if (signupPassword.Length < 6)
-        {
-            ShowError("Password must be at least 6 characters long.");
-            return;
-        }
+    // Validate email format
+    if (!IsValidEmail(signupEmail))
+    {
+        ShowError("Please enter a valid email address.");
+        return;
+    }
 
-        if (!IsValidEmail(signupEmail))
-        {
-            ShowError("Please enter a valid email address.");
-            return;
-        }
+    // Validate CNIC format
+    if (!IsValidCNIC(signupCNIC))
+    {
+        ShowError("Please enter a valid CNIC (format: 12345-1234567-1).");
+        return;
+    }
 
-        if (!IsValidCNIC(signupCNIC))
-        {
-            ShowError("Please enter a valid CNIC (e.g., 12345-1234567-1).");
-            return;
-        }
+    // Validate password length
+    if (signupPassword.Length < 6)
+    {
+        ShowError("Password must be at least 6 characters long.");
+        return;
+    }
 
-        isLoading = true;
-        ClearError();
+    isLoading = true;
+    ClearError();
 
-        try
+    try
+    {
+        var createPatientDto = new CreatePatientDto
         {
-            // For now, show success message since patient registration isn't fully implemented
-            ShowError("Patient registration is not yet available. Please contact reception to create an account.");
-        }
-        catch (Exception ex)
-        {
-            ShowError($"Registration failed: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-        }
+            UserName = signupUsername,
+            CNIC = signupCNIC,
+            PhoneNumber = string.IsNullOrWhiteSpace(signupPhone) ? null : signupPhone,
+            FullName = fullName,
+            ProfilePictureUrl = null,
+            DateOfBirth = dateOfBirth,
+            Gender = string.IsNullOrWhiteSpace(gender) ? null : gender,
+            Address = string.IsNullOrWhiteSpace(address) ? null : address,
+            BloodGroup = string.IsNullOrWhiteSpace(bloodGroup) ? null : bloodGroup
+        };
+
+        // Create the patient account
+        await PatientService.CreatePatientAsync(createPatientDto, signupPassword);
+
+        // Show success message and switch to login
+        ShowError("Account created successfully! Please log in.");
+        isSigningUp = false;
+        isLoginVisible = true;
+        ClearSignupForm();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Signup error: {ex.Message}");
+        ShowError("Failed to create account. Please try again.");
+    }
+    finally
+    {
+        isLoading = false;
+    }
+}
+     private void ClearSignupForm()
+    {
+        fullName = "";
+        signupUsername = "";
+        signupPassword = "";
+        signupEmail = "";
+        signupCNIC = "";
+        signupPhone = "";
+        dateOfBirth = null;
+        gender = "";
+        address = "";
+        bloodGroup = "";
     }
 
     // Fixed navigation method - now async and with better role handling

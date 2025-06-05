@@ -1,0 +1,254 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="d-flex flex-column min-vh-100">
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <!-- Brand Logo -->
+            <a class="navbar-brand fw-bold text-primary d-flex align-items-center" href="/patient/dashboard">
+                <i class="bi bi-hospital fs-4 me-2"></i>
+                <span class="brand-text">HMS Patient Portal</span>
+            </a>
+            
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler border-0 p-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar Items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item mx-2">
+                        <a class="nav-link nav-link-custom @(Nav.Uri.Contains("/dashboard") ? "active" : "")" href="/patient/home">
+                            <i class="bi bi-house me-1"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item mx-2">
+                        <a class="nav-link nav-link-custom @(Nav.Uri.Contains("/appointments") ? "active" : "")" href="/patient/appointments">
+                            <i class="bi bi-calendar-week me-1"></i>
+                            <span class="nav-text">Appointments</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item mx-2">
+                        <a class="nav-link nav-link-custom @(Nav.Uri.Contains("/prescriptions") ? "active" : "")" href="/patient/book-appointment">
+                            <i class="bi bi-calendar-week me-1"></i>
+                            <span class="nav-text">Book Appointment</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item mx-2">
+                        <a class="nav-link nav-link-custom @(Nav.Uri.Contains("/medical-records") ? "active" : "")" href="/patient/medical-records">
+                            <i class="bi bi-file-medical me-1"></i>
+                            <span class="nav-text">Medical Records</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Right Side Items -->
+             
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 bg-light">
+        @Body
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-white border-top mt-auto">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <small class="text-muted">&copy; 2025 Hospital Management System. All rights reserved.</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        <a href="/privacy" class="text-decoration-none text-muted me-3">Privacy Policy</a>
+                        <a href="/terms" class="text-decoration-none text-muted">Terms of Service</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    :root {
+        --bs-primary: #3a87ad;
+        --bs-primary-rgb: 58, 135, 173;
+        --bs-secondary: #6caed9;
+        --bs-secondary-rgb: 108, 174, 217;
+        --bs-primary-subtle: #e8f4f9;
+    }
+    
+    body {
+        font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .navbar {
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    .navbar-brand {
+        transition: all 0.2s ease;
+    }
+    
+    .navbar-brand:hover {
+        transform: scale(1.02);
+    }
+    
+    .brand-text {
+        font-size: 1.1rem;
+    }
+    
+    .nav-link-custom {
+        position: relative;
+        border-radius: 25px;
+        padding: 0.5rem 1rem !important;
+        transition: all 0.3s ease;
+        color: #6c757d !important;
+        font-weight: 500;
+    }
+    
+    .nav-link-custom:hover {
+        background-color: var(--bs-primary-subtle);
+        color: var(--bs-primary) !important;
+        transform: translateY(-1px);
+    }
+    
+    .nav-link-custom.active {
+        background-color: var(--bs-primary);
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+    }
+    
+    .nav-link-custom.active:hover {
+        background-color: var(--bs-primary);
+        color: white !important;
+    }
+    
+    .nav-text {
+        font-size: 0.95rem;
+    }
+    
+    .notification-badge {
+        font-size: 0.65rem;
+        padding: 0.25em 0.5em;
+    }
+    
+    .avatar-wrapper {
+        transition: all 0.2s ease;
+    }
+    
+    .avatar-wrapper:hover {
+        transform: scale(1.05);
+    }
+    
+    .dropdown-menu {
+        animation: fadeInUp 0.2s ease;
+        border: none;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .btn {
+        transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .bg-primary {
+        background-color: var(--bs-primary) !important;
+    }
+    
+    .text-primary {
+        color: var(--bs-primary) !important;
+    }
+    
+    .bg-primary-subtle {
+        background-color: var(--bs-primary-subtle) !important;
+    }
+    
+    /* Mobile Responsive */
+    @@media (max-width: 991.98px) {
+        .brand-text {
+            font-size: 1rem;
+        }
+        
+        .nav-text {
+            font-size: 0.9rem;
+        }
+        
+        .navbar-nav {
+            padding-top: 1rem;
+        }
+        
+        .nav-link-custom {
+            margin: 0.25rem 0;
+        }
+    }
+    
+    @@media (max-width: 575.98px) {
+        .brand-text {
+            display: none;
+        }
+        
+        .navbar-brand::after {
+            content: "HMS";
+            font-size: 1rem;
+            margin-left: 0.5rem;
+        }
+    }
+</style>
+
+<!-- Bootstrap JavaScript for navbar functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-collapse navbar on mobile when clicking links
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        const navLinks = document.querySelectorAll('.nav-link-custom');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 992) {
+                    const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                        toggle: false
+                    });
+                    bsCollapse.hide();
+                }
+            });
+        });
+        
+        // Smooth scroll behavior for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    });
+</script>

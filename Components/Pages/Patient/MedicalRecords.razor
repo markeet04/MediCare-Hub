@@ -1,0 +1,573 @@
+@page "/patient/medical-records"
+@rendermode InteractiveServer
+@layout BlazorApp1.Components.Layout.PatientLayout
+@using BlazorApp1.Models.DTOs;
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject BlazorApp1.Services.Interfaces.IPatientService PatientService
+@inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
+
+<!-- Header Section -->
+<section class="records-header py-4 bg-primary bg-opacity-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <div class="header-icon bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-medical text-primary fs-3"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 fw-bold mb-1 text-dark">Medical Records</h1>
+                        <p class="text-muted mb-0">Your medical history and encounters</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Medical Records List -->
+<section class="py-4">
+    <div class="container">
+        @if (isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">Loading your medical records...</p>
+            </div>
+        }
+        else if (patientHistories == null || !patientHistories.Any())
+        {
+            <div class="text-center py-5">
+                <div class="empty-state">
+                    <i class="bi bi-file-medical text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">No medical records found</h5>
+                    <p class="text-muted">No medical history has been recorded yet.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var history in patientHistories.OrderByDescending(h => h.EncounterDate))
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card border-0 shadow-sm rounded-4 h-100 encounter-card" 
+                             style="cursor: pointer;" 
+                             @onclick="() => OpenEncounterModal(history)">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="record-icon bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-file-text text-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-1">Doctor Encounter</h6>
+                                        <p class="text-muted small mb-0">
+                                            <i class="bi bi-calendar me-1"></i>
+                                            @history.EncounterDate.ToString("MMM dd, yyyy")
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Preview Information -->
+                                @if (!string.IsNullOrEmpty(history.Symptoms))
+                                {
+                                    <div class="mb-2">
+                                        <small class="text-muted fw-bold">Symptoms</small>
+                                        <p class="mb-0 text-truncate">@(history.Symptoms.Length > 60 ? history.Symptoms.Substring(0, 60) + "..." : history.Symptoms)</p>
+                                    </div>
+                                }
+                                
+                                <!-- Vitals Preview -->
+                                @if (HasVitals(history))
+                                {
+                                    <div class="vitals-preview mt-3">
+                                        <small class="text-muted fw-bold d-block mb-2">Vitals</small>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @if (history.WeightKg.HasValue)
+                                            {
+                                                <span class="badge bg-light text-dark">Weight: @history.WeightKg kg</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(history.BloodPressure))
+                                            {
+                                                <span class="badge bg-light text-dark">BP: @history.BloodPressure</span>
+                                            }
+                                            @if (history.TemperatureC.HasValue)
+                                            {
+                                                <span class="badge bg-light text-dark">Temp: @history.TemperatureC°C</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                
+                                <div class="mt-3 pt-2 border-top">
+                                    <small class="text-primary fw-bold">
+                                        <i class="bi bi-eye me-1"></i>
+                                        Click to view details
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Encounter Details Modal -->
+<div class="modal fade" id="encounterModal" tabindex="-1" aria-labelledby="encounterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="encounterModalLabel">
+                    <i class="bi bi-file-medical me-2"></i>
+                    Medical Encounter Details
+                </h5>
+                <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (selectedHistory != null)
+                {
+                    <div class="encounter-details">
+                        <!-- Encounter Date -->
+                        <div class="info-section mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="section-icon bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                    <i class="bi bi-calendar text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Encounter Date</h6>
+                                    <p class="mb-0">@selectedHistory.EncounterDate.ToString("MMMM dd, yyyy")</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Symptoms -->
+                        @if (!string.IsNullOrEmpty(selectedHistory.Symptoms))
+                        {
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="section-icon bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-2">Symptoms</h6>
+                                        <p class="mb-0">@selectedHistory.Symptoms</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        
+                        <!-- Notes -->
+                        @if (!string.IsNullOrEmpty(selectedHistory.Notes))
+                        {
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="section-icon bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-file-text text-info"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-2">Doctor's Notes</h6>
+                                        <p class="mb-0">@selectedHistory.Notes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        
+                        <!-- Vital Signs -->
+                        @if (HasVitals(selectedHistory))
+                        {
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="section-icon bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-heart-pulse text-success"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0">Vital Signs</h6>
+                                </div>
+                                <div class="row g-3">
+                                    @if (selectedHistory.WeightKg.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Weight</small>
+                                                <div class="fw-bold">@selectedHistory.WeightKg kg</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.HeightCm.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Height</small>
+                                                <div class="fw-bold">@selectedHistory.HeightCm cm</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.BMI.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">BMI</small>
+                                                <div class="fw-bold">@selectedHistory.BMI.Value.ToString("F1")</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(selectedHistory.BloodPressure))
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Blood Pressure</small>
+                                                <div class="fw-bold">@selectedHistory.BloodPressure</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.PulseBPM.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Pulse</small>
+                                                <div class="fw-bold">@selectedHistory.PulseBPM BPM</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.TemperatureC.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Temperature</small>
+                                                <div class="fw-bold">@selectedHistory.TemperatureC°C</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.RespiratoryRate.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Respiratory Rate</small>
+                                                <div class="fw-bold">@selectedHistory.RespiratoryRate /min</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.OxygenSatPct.HasValue)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="vital-card bg-light p-3 rounded">
+                                                <small class="text-muted">Oxygen Saturation</small>
+                                                <div class="fw-bold">@selectedHistory.OxygenSatPct%</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        
+                        <!-- Additional Health Information -->
+                        @if (HasAdditionalHealthInfo(selectedHistory))
+                        {
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="section-icon bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-clipboard-data text-secondary"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0">Additional Health Information</h6>
+                                </div>
+                                <div class="row g-3">
+                                    @if (!string.IsNullOrEmpty(selectedHistory.Ethnicity))
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-light p-3 rounded">
+                                                <small class="text-muted">Ethnicity</small>
+                                                <div class="fw-bold">@selectedHistory.Ethnicity</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(selectedHistory.SmokingStatus))
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-light p-3 rounded">
+                                                <small class="text-muted">Smoking Status</small>
+                                                <div class="fw-bold">@selectedHistory.SmokingStatus</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.TotalCholesterol.HasValue)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-light p-3 rounded">
+                                                <small class="text-muted">Total Cholesterol</small>
+                                                <div class="fw-bold">@selectedHistory.TotalCholesterol</div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (selectedHistory.HDLCholesterol.HasValue)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-light p-3 rounded">
+                                                <small class="text-muted">HDL Cholesterol</small>
+                                                <div class="fw-bold">@selectedHistory.HDLCholesterol</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .records-header {
+        background: linear-gradient(135deg, rgba(0, 71, 171, 0.08) 0%, rgba(147, 197, 253, 0.03) 100%);
+    }
+    
+    .encounter-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 71, 171, 0.1);
+    }
+    
+    .encounter-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 71, 171, 0.15) !important;
+    }
+    
+    .record-icon, .section-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .encounter-card:hover .record-icon {
+        background: rgba(0, 71, 171, 0.2) !important;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0047AB 0%, #3b82f6 50%, #60a5fa 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3);
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0047AB 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 71, 171, 0.4);
+    }
+    
+    .btn-outline-primary {
+        border-color: #0047AB;
+        color: #0047AB;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #0047AB;
+        border-color: #0047AB;
+        color: white;
+    }
+    
+    .badge.bg-primary {
+        background: linear-gradient(135deg, #0047AB, #3b82f6) !important;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid rgba(0, 71, 171, 0.1);
+        background: linear-gradient(135deg, rgba(0, 71, 171, 0.05) 0%, rgba(147, 197, 253, 0.02) 100%);
+        border-radius: 1rem 1rem 0 0;
+    }
+    
+    .info-section {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 1rem;
+    }
+    
+    .info-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .vitals-preview .badge {
+        font-size: 0.7rem;
+    }
+    
+    .empty-state {
+        padding: 2rem;
+    }
+    
+    .vital-card, .info-card {
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    @@media (max-width: 767.98px) {
+        .modal-dialog {
+            margin: 1rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .encounter-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+@code {
+    private bool isLoading = true;
+    private List<PatientHistoryDto>? patientHistories;
+    private PatientHistoryDto? selectedHistory;
+    private int currentPatientId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var userSession = await AuthStateProvider.GetCurrentUserSessionAsync();
+            if (userSession != null)
+            {
+                var patientProfile = await PatientService.GetPatientByUserIdAsync(userSession.UserId);
+                if (patientProfile != null)
+                {
+                    currentPatientId = patientProfile.PatientId;
+                    await LoadMedicalRecords();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading medical records: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMedicalRecords()
+    {
+        try
+        {
+            patientHistories = await PatientService.GetAllPatientHistoriesAsync(currentPatientId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading patient histories: {ex.Message}");
+            patientHistories = new List<PatientHistoryDto>();
+        }
+    }
+
+    private async Task OpenEncounterModal(PatientHistoryDto history)
+    {
+        selectedHistory = history;
+        StateHasChanged(); // Ensure the modal content is updated
+        
+        try
+        {
+            // Try Bootstrap 5 first
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                const modal = document.getElementById('encounterModal');
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                    // Fallback to jQuery/Bootstrap 4
+                    $(modal).modal('show');
+                } else {
+                    // Manual fallback
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                    document.body.classList.add('modal-open');
+                }
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening modal: {ex.Message}");
+            // Fallback: try to show modal manually
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                const modal = document.getElementById('encounterModal');
+                modal.style.display = 'block';
+                modal.classList.add('show');
+                document.body.classList.add('modal-open');
+            ");
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                const modal = document.getElementById('encounterModal');
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    if (bsModal) {
+                        bsModal.hide();
+                    }
+                } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                    // Fallback to jQuery/Bootstrap 4
+                    $(modal).modal('hide');
+                } else {
+                    // Manual fallback
+                    modal.style.display = 'none';
+                    modal.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                }
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error closing modal: {ex.Message}");
+            // Fallback: try to hide modal manually
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                const modal = document.getElementById('encounterModal');
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                document.body.classList.remove('modal-open');
+            ");
+        }
+    }
+
+    private bool HasVitals(PatientHistoryDto history)
+    {
+        return history?.WeightKg.HasValue == true ||
+               history?.HeightCm.HasValue == true ||
+               history?.BMI.HasValue == true ||
+               !string.IsNullOrEmpty(history?.BloodPressure) ||
+               history?.PulseBPM.HasValue == true ||
+               history?.TemperatureC.HasValue == true ||
+               history?.RespiratoryRate.HasValue == true ||
+               history?.OxygenSatPct.HasValue == true;
+    }
+
+    private bool HasAdditionalHealthInfo(PatientHistoryDto history)
+    {
+        return !string.IsNullOrEmpty(history?.Ethnicity) ||
+               !string.IsNullOrEmpty(history?.SmokingStatus) ||
+               history?.TotalCholesterol.HasValue == true ||
+               history?.HDLCholesterol.HasValue == true ||
+               !string.IsNullOrEmpty(history?.DiabetesType) ||
+               history?.FamilyCVDHistory.HasValue == true ||
+               history?.OnBPMedication.HasValue == true ||
+               history?.OnStatin.HasValue == true ||
+               history?.WaistCm.HasValue == true ||
+               history?.PhysicalActivity.HasValue == true ||
+               history?.EatsVegetablesDaily.HasValue == true ||
+               history?.HighBloodGlucoseHx.HasValue == true ||
+               history?.FamilyDiabetesHistory.HasValue == true ||
+               history?.Confusion.HasValue == true ||
+               history?.BloodUreaMmolPerL.HasValue == true;
+    }
+}

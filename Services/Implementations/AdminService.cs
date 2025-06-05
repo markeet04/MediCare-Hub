@@ -109,13 +109,13 @@ public async Task<DoctorProfileDto> GetDoctorByIdAsync(int doctorId)
 
     var sql = @"
         SELECT 
-    dp.DoctorId AS DoctorId,
-    u.UserName, u.CNIC, u.PhoneNumber, u.FullName, u.ProfilePictureUrl,
-    dp.Specialty, dp.Qualifications
-FROM dbo.DoctorProfiles dp
-INNER JOIN dbo.Users u ON dp.DoctorId = u.UserId
-WHERE dp.DoctorId = @DoctorId
-";
+            dp.DoctorId AS DoctorId,
+            u.UserName, u.CNIC, u.PhoneNumber, u.FullName, u.ProfilePictureUrl,
+            dp.Specialty, dp.Qualifications, dp.ConsultationFee
+        FROM dbo.DoctorProfiles dp
+        INNER JOIN dbo.Users u ON dp.DoctorId = u.UserId
+        WHERE dp.DoctorId = @DoctorId
+    ";
 
     using var cmd = new SqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@DoctorId", doctorId);
@@ -127,21 +127,24 @@ WHERE dp.DoctorId = @DoctorId
     return new DoctorProfileDto
     {
         DoctorId         = reader.GetInt32(reader.GetOrdinal("DoctorId")),
-        UserName       = reader.GetString(reader.GetOrdinal("UserName")),
-        CNIC           = reader.GetString(reader.GetOrdinal("CNIC")),
-        PhoneNumber    = reader.IsDBNull(reader.GetOrdinal("PhoneNumber"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("PhoneNumber")),
-        FullName       = reader.GetString(reader.GetOrdinal("FullName")),
+        UserName         = reader.GetString(reader.GetOrdinal("UserName")),
+        CNIC             = reader.GetString(reader.GetOrdinal("CNIC")),
+        PhoneNumber      = reader.IsDBNull(reader.GetOrdinal("PhoneNumber"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+        FullName         = reader.GetString(reader.GetOrdinal("FullName")),
         ProfilePictureUrl = reader.IsDBNull(reader.GetOrdinal("ProfilePictureUrl"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("ProfilePictureUrl")),
-        Specialty      = reader.IsDBNull(reader.GetOrdinal("Specialty"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("Specialty")),
-        Qualifications = reader.IsDBNull(reader.GetOrdinal("Qualifications"))
-                            ? null
-                            : reader.GetString(reader.GetOrdinal("Qualifications"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("ProfilePictureUrl")),
+        Specialty        = reader.IsDBNull(reader.GetOrdinal("Specialty"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("Specialty")),
+        Qualifications   = reader.IsDBNull(reader.GetOrdinal("Qualifications"))
+                                ? null
+                                : reader.GetString(reader.GetOrdinal("Qualifications")),
+        ConsultationFee  = reader.IsDBNull(reader.GetOrdinal("ConsultationFee"))
+                                ? null
+                                : reader.GetDecimal(reader.GetOrdinal("ConsultationFee"))
     };
 }
 
@@ -314,13 +317,15 @@ public async Task<LabTechProfileDto> GetLabTechByIdAsync(int labTechId)
 
                 // Create doctor profile
                 var profileSql = @"
-            INSERT INTO dbo.DoctorProfiles (DoctorId, Specialty, Qualifications)
-            VALUES (@DoctorId, @Specialty, @Qualifications)";
+            INSERT INTO dbo.DoctorProfiles (DoctorId, Specialty, Qualifications,ConsultationFee)
+            VALUES (@DoctorId, @Specialty, @Qualifications, @ConsultationFee)";
 
                 using var profileCmd = new SqlCommand(profileSql, conn, transaction);
                 profileCmd.Parameters.AddWithValue("@DoctorId", userId);
                 profileCmd.Parameters.AddWithValue("@Specialty", (object?)dto.Specialty ?? DBNull.Value);
                 profileCmd.Parameters.AddWithValue("@Qualifications", (object?)dto.Qualifications ?? DBNull.Value);
+                profileCmd.Parameters.AddWithValue("@ConsultationFee", (object?)dto.ConsultationFee ?? DBNull.Value);
+
                 await profileCmd.ExecuteNonQueryAsync();
 
                 transaction.Commit();
@@ -637,13 +642,17 @@ public async Task ChangePasswordAsync(EditAdminPasswordDto dto)
                 var profileSql = @"
             UPDATE dbo.DoctorProfiles 
             SET Specialty = @Specialty,
-                Qualifications = @Qualifications
+            Qualifications = @Qualifications,
+            ConsultationFee = @ConsultationFee
+
             WHERE DoctorId = @DoctorId";
 
                 using var profileCmd = new SqlCommand(profileSql, conn, transaction);
                 profileCmd.Parameters.AddWithValue("@DoctorId", dto.DoctorId);
                 profileCmd.Parameters.AddWithValue("@Specialty", (object?)dto.Specialty ?? DBNull.Value);
                 profileCmd.Parameters.AddWithValue("@Qualifications", (object?)dto.Qualifications ?? DBNull.Value);
+                profileCmd.Parameters.AddWithValue("@ConsultationFee", (object?)dto.ConsultationFee ?? DBNull.Value);
+
                 await profileCmd.ExecuteNonQueryAsync();
 
                 transaction.Commit();

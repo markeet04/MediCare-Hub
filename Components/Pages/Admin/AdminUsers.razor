@@ -207,35 +207,39 @@ else
                     <button type="button" class="btn-close btn-close-white" @onclick="CloseUserForm"></button>
                 </div>
                 <div class="modal-body">
-                    @if (selectedRole == UserRole.Doctor)
-                    {
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter full name" @bind="doctorDto.FullName" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="doctorDto.CNIC" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="doctorDto.PhoneNumber" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Username <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter username" @bind="doctorDto.UserName" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Specialty <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="e.g., Cardiology, Neurology" @bind="doctorDto.Specialty" />
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Qualifications</label>
-                                <textarea class="form-control bg-light" rows="3" placeholder="Enter qualifications and degrees" @bind="doctorDto.Qualifications"></textarea>
-                            </div>
-                        </div>
-                    }
+               @if (selectedRole == UserRole.Doctor)
+{
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input class="form-control bg-light" placeholder="Enter full name" @bind="doctorDto.FullName" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">CNIC <span class="text-danger">*</span></label>
+            <input class="form-control bg-light" placeholder="Enter CNIC" @bind="doctorDto.CNIC" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+            <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="doctorDto.PhoneNumber" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Username <span class="text-danger">*</span></label>
+            <input class="form-control bg-light" placeholder="Enter username" @bind="doctorDto.UserName" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Specialty <span class="text-danger">*</span></label>
+            <input class="form-control bg-light" placeholder="e.g., Cardiology, Neurology" @bind="doctorDto.Specialty" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Consultation Fee</label>
+            <input type="number" class="form-control bg-light" placeholder="Enter consultation fee" @bind="doctorDto.ConsultationFee" step="0.01" min="0" />
+        </div>
+        <div class="col-12">
+            <label class="form-label">Qualifications</label>
+            <textarea class="form-control bg-light" rows="3" placeholder="Enter qualifications and degrees" @bind="doctorDto.Qualifications"></textarea>
+        </div>
+    </div>
+    }
                     else if (selectedRole == UserRole.Patient)
                     {
                         <div class="row g-3">
@@ -576,7 +580,8 @@ private string newUserName = "";
                             PhoneNumber = doctorDto.PhoneNumber,
                             UserName = doctorDto.UserName,
                             Specialty = doctorDto.Specialty,
-                            Qualifications = doctorDto.Qualifications
+                            Qualifications = doctorDto.Qualifications,
+                            ConsultationFee = doctorDto.ConsultationFee
                         };
                         await AdminService.UpdateDoctorAsync(doctorUpdateDto);
                         successMessage = "Doctor updated successfully!";
@@ -775,7 +780,9 @@ private void CloseTempPasswordModal()
                     PhoneNumber = doctor.PhoneNumber,
                     UserName = doctor.UserName,
                     Specialty = doctor.Specialty,
-                    Qualifications = doctor.Qualifications
+                    Qualifications = doctor.Qualifications,
+                    ConsultationFee = doctor.ConsultationFee
+
                 };
                 break;
                 

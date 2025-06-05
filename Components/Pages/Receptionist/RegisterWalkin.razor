@@ -1370,6 +1370,8 @@
                             <li><span>Department:</span> @Department</li>
                             <li><span>Date:</span> @VisitDate.ToShortDateString()</li>
 <li><span>Time:</span> @VisitTime.ToString("hh:mm tt")</li>
+    <li><span>Consultation Fee:</span> @(SelectedDoctorFee.HasValue ? SelectedDoctorFee.Value.ToString("C") : "N/A")</li>
+
                         </ul>
                     </div>
                 </div>
@@ -1389,6 +1391,7 @@
 
 @code {
     // Step control
+    private decimal? SelectedDoctorFee { get; set; }
     private int _currentStep = 1;
     private bool _showSuccessModal = false;
     private bool _showPassword = false;
@@ -1803,7 +1806,9 @@
                     VisitTime.Minute,
                     0
                 ),
-                Status = "Pending"
+                Status = "Pending",
+                ConsultationFee = SelectedDoctorFee // <-- Add this line
+
             };
 
             await ReceptionistService.CreateAppointmentAsync(appointmentDto);
@@ -1830,13 +1835,22 @@
         }
     }
     
-    private async Task OnDoctorChanged()
+   private async Task OnDoctorChanged()
+{
+    if (DoctorId > 0)
     {
-        if (DoctorId > 0 && VisitDate != default)
+        var doctor = AvailableDoctors.FirstOrDefault(d => d.DoctorId == DoctorId);
+        SelectedDoctorFee = doctor?.ConsultationFee;
+        if (VisitDate != default)
         {
             await LoadAvailableSlots();
         }
     }
+    else
+    {
+        SelectedDoctorFee = null;
+    }
+}
 
     private async Task SelectDate(DateTime date)
     {

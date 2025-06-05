@@ -370,10 +370,8 @@ else
                   notifications = await DoctorService.GetNotificationsAsync(userSession.UserId);
                 unreadNotificationCount = notifications?.Count(n => !n.IsRead) ?? 0;
 
-            // Load today's appointments
             TodayAppointments = (await DoctorService.GetTodayAppointmentsAsync(CurrentDoctor.DoctorId)).ToList();
 
-            // Load assigned patients count (optional - you may need to add this method to your service)
             try
             {
                 var assignedPatients = await DoctorService.GetAssignedPatientsAsync(CurrentDoctor.DoctorId);
@@ -381,13 +379,11 @@ else
             }
             catch
             {
-                // If this method fails, just keep the count at 0
                 AssignedPatientsCount = 0;
             }
         }
         catch (Exception ex)
         {
-            // Handle errors
             ErrorMessage = $"An error occurred while loading the dashboard: {ex.Message}";
             Console.WriteLine($"Dashboard loading error: {ex}");
         }

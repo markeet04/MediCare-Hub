@@ -15,10 +15,13 @@ namespace BlazorApp1.Models.DTOs
 
         // Navigation properties
         public string PatientName { get; set; } = string.Empty;
+        public decimal? ConsultationFee { get; set; }
+
         public string DoctorName { get; set; } = string.Empty;
         public string? ReceptionistName { get; set; }
         public string? PatientPhone { get; set; }
         public int? PatientAge { get; set; }
         public string? PatientGender { get; set; }
+        public string Department { get; set; } = string.Empty;
     }
 }

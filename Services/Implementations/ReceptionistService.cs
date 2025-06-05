@@ -63,7 +63,7 @@ namespace BlazorApp1.Services.Implementations
             const string sql = @"
                 SELECT TOP (@Count)
                     a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId,
-                    a.ScheduledDateTime, a.Status, a.CreatedAt, a.UpdatedAt,
+                    a.ScheduledDateTime, a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                     pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                     du.FullName AS DoctorName,
                     ru.FullName AS ReceptionistName,
@@ -215,7 +215,7 @@ namespace BlazorApp1.Services.Implementations
         {
             const string sql = @"
                 SELECT 
-                    dp.DoctorId, dp.Specialty, dp.Qualifications,
+                    dp.DoctorId, dp.Specialty, dp.Qualifications, dp.ConsultationFee,
                     u.UserName, u.CNIC, u.PhoneNumber, u.FullName, u.ProfilePictureUrl
                 FROM dbo.DoctorProfiles dp
                 INNER JOIN dbo.Users u ON dp.DoctorId = u.UserId
@@ -272,7 +272,7 @@ public async Task SendNotificationToDoctorAsync(int doctorId, string title, stri
         {
             const string sql = @"
                 SELECT 
-                    dp.DoctorId, dp.Specialty, dp.LicenseNumber, dp.Experience, dp.Qualification,
+                    dp.DoctorId, dp.Specialty, dp.LicenseNumber, dp.Experience, dp.Qualification, dp.ConsultationFee,
                     u.UserName, u.CNIC, u.PhoneNumber, u.FullName, u.ProfilePictureUrl
                 FROM dbo.DoctorProfiles dp
                 INNER JOIN dbo.Users u ON dp.DoctorId = u.UserId
@@ -538,7 +538,8 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
                 DoctorName = reader.GetString(reader.GetOrdinal("DoctorName")),
                 ReceptionistName = reader.IsDBNull(reader.GetOrdinal("ReceptionistName")) ? null : reader.GetString(reader.GetOrdinal("ReceptionistName")),
                 PatientGender = reader.IsDBNull(reader.GetOrdinal("PatientGender")) ? null : reader.GetString(reader.GetOrdinal("PatientGender")),
-                PatientAge = reader.IsDBNull(reader.GetOrdinal("PatientAge")) ? null : reader.GetInt32(reader.GetOrdinal("PatientAge"))
+                PatientAge = reader.IsDBNull(reader.GetOrdinal("PatientAge")) ? null : reader.GetInt32(reader.GetOrdinal("PatientAge")),
+                ConsultationFee = reader.IsDBNull(reader.GetOrdinal("ConsultationFee")) ? null : reader.GetDecimal(reader.GetOrdinal("ConsultationFee"))
             };
         }
 
@@ -570,7 +571,8 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
                 CNIC = reader.GetString(reader.GetOrdinal("CNIC")),
                 PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
                 FullName = reader.GetString(reader.GetOrdinal("FullName")),
-                ProfilePictureUrl = reader.IsDBNull(reader.GetOrdinal("ProfilePictureUrl")) ? null : reader.GetString(reader.GetOrdinal("ProfilePictureUrl"))
+                ProfilePictureUrl = reader.IsDBNull(reader.GetOrdinal("ProfilePictureUrl")) ? null : reader.GetString(reader.GetOrdinal("ProfilePictureUrl")),
+                ConsultationFee = reader.IsDBNull(reader.GetOrdinal("ConsultationFee")) ? null : reader.GetDecimal(reader.GetOrdinal("ConsultationFee"))
             };
         }
         // Missing methods for ReceptionistService.cs
@@ -605,7 +607,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,
@@ -638,7 +640,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,
@@ -670,7 +672,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,
@@ -702,7 +704,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,
@@ -734,7 +736,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,
@@ -766,7 +768,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,
@@ -845,26 +847,28 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
             return rowsAffected > 0;
         }
 
-        public async Task<int> CreateAppointmentAsync(AppointmentDto appointment)
-        {
-            const string sql = @"
-        INSERT INTO dbo.Appointments (PatientId, DoctorId, ReceptionistId, ScheduledDateTime, Status, CreatedAt, UpdatedAt)
-        VALUES (@PatientId, @DoctorId, @ReceptionistId, @ScheduledDateTime, @Status, SYSUTCDATETIME(), SYSUTCDATETIME());
+      public async Task<int> CreateAppointmentAsync(AppointmentDto appointment)
+{
+    const string sql = @"
+        INSERT INTO dbo.Appointments 
+            (PatientId, DoctorId, ReceptionistId, ScheduledDateTime, Status, ConsultationFee, CreatedAt, UpdatedAt)
+        VALUES 
+            (@PatientId, @DoctorId, @ReceptionistId, @ScheduledDateTime, @Status, @ConsultationFee, SYSUTCDATETIME(), SYSUTCDATETIME());
         SELECT SCOPE_IDENTITY();";
 
-            using var connection = new SqlConnection(_connectionString);
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@PatientId", appointment.PatientId);
-            command.Parameters.AddWithValue("@DoctorId", appointment.DoctorId);
-            command.Parameters.AddWithValue("@ReceptionistId", (object?)appointment.ReceptionistId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@ScheduledDateTime", appointment.ScheduledDateTime);
-            command.Parameters.AddWithValue("@Status", appointment.Status);
+    using var connection = new SqlConnection(_connectionString);
+    using var command = new SqlCommand(sql, connection);
+    command.Parameters.AddWithValue("@PatientId", appointment.PatientId);
+    command.Parameters.AddWithValue("@DoctorId", appointment.DoctorId);
+    command.Parameters.AddWithValue("@ReceptionistId", (object?)appointment.ReceptionistId ?? DBNull.Value);
+    command.Parameters.AddWithValue("@ScheduledDateTime", appointment.ScheduledDateTime);
+    command.Parameters.AddWithValue("@Status", appointment.Status);
+    command.Parameters.AddWithValue("@ConsultationFee", (object?)appointment.ConsultationFee ?? DBNull.Value);
 
-            await connection.OpenAsync();
-            var newIdObj = await command.ExecuteScalarAsync();
-            return Convert.ToInt32(newIdObj);
-        }
-
+    await connection.OpenAsync();
+    var newIdObj = await command.ExecuteScalarAsync();
+    return Convert.ToInt32(newIdObj);
+}
         public async Task<bool> CancelAppointmentAsync(int appointmentId, int receptionistId)
         {
             const string sql = @"
@@ -979,7 +983,7 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
         {
             const string sql = @"
         SELECT a.AppointmentId, a.PatientId, a.DoctorId, a.ReceptionistId, a.ScheduledDateTime, 
-               a.Status, a.CreatedAt, a.UpdatedAt,
+               a.Status, a.CreatedAt, a.UpdatedAt,a.ConsultationFee,
                pu.FullName AS PatientName, pu.PhoneNumber AS PatientPhone,
                pp.Gender AS PatientGender,
                DATEDIFF(YEAR, pp.DateOfBirth, GETDATE()) AS PatientAge,

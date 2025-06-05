@@ -36,7 +36,6 @@ namespace BlazorApp1.Authentication
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging
                 Console.WriteLine($"AuthStateProvider error: {ex.Message}");
                 return await Task.FromResult(new AuthenticationState(_anonymous));
             }
