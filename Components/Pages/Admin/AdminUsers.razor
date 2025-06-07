@@ -15,9 +15,7 @@
         <p class="text-muted">Add, edit or remove system users</p>
     </div>
     <div>
-        <button class="btn btn-outline-primary rounded-pill shadow-sm px-3 me-2" @onclick="GenerateReport" disabled="@isLoading">
-            <i class="bi bi-file-earmark-text me-2"></i>Generate Report
-        </button>
+     
         <button class="btn btn-primary rounded-pill shadow-sm px-4" @onclick="ShowRoleSelectionModal" disabled="@isLoading">
             <i class="bi bi-person-plus me-2"></i>Add New User
         </button>
@@ -45,12 +43,15 @@ else
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold">User List (@users.Count() users)</h5>
-            <div class="input-group" style="max-width: 300px;">
-                <span class="input-group-text bg-light border-end-0 text-muted">
-                    <i class="bi bi-search"></i>
-                </span>
-                <input type="text" class="form-control bg-light border-start-0" placeholder="Search users..." @bind="searchTerm" @oninput="FilterUsers">
-            </div>
+     <div class="input-group" style="max-width: 300px;">
+    <button class="input-group-text bg-light border-end-0 text-muted"
+            type="button"
+            @onclick="FilterUsers"
+            title="Search">
+        <i class="bi bi-search"></i>
+    </button>
+    <input type="text" class="form-control bg-light border-start-0" placeholder="Search users..." @bind="searchTerm" @oninput="FilterUsers">
+</div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -213,22 +214,42 @@ else
         <div class="col-md-6">
             <label class="form-label">Full Name <span class="text-danger">*</span></label>
             <input class="form-control bg-light" placeholder="Enter full name" @bind="doctorDto.FullName" />
+            @if (!string.IsNullOrEmpty(doctorFullNameError))
+            {
+                <div class="text-danger small">@doctorFullNameError</div>
+            }
         </div>
         <div class="col-md-6">
             <label class="form-label">CNIC <span class="text-danger">*</span></label>
             <input class="form-control bg-light" placeholder="Enter CNIC" @bind="doctorDto.CNIC" />
+            @if (!string.IsNullOrEmpty(doctorCnicError))
+            {
+                <div class="text-danger small">@doctorCnicError</div>
+            }
         </div>
         <div class="col-md-6">
             <label class="form-label">Phone Number <span class="text-danger">*</span></label>
             <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="doctorDto.PhoneNumber" />
+            @if (!string.IsNullOrEmpty(doctorPhoneError))
+            {
+                <div class="text-danger small">@doctorPhoneError</div>
+            }
         </div>
         <div class="col-md-6">
             <label class="form-label">Username <span class="text-danger">*</span></label>
             <input class="form-control bg-light" placeholder="Enter username" @bind="doctorDto.UserName" />
+            @if (!string.IsNullOrEmpty(doctorUsernameError))
+            {
+                <div class="text-danger small">@doctorUsernameError</div>
+            }
         </div>
         <div class="col-md-6">
             <label class="form-label">Specialty <span class="text-danger">*</span></label>
             <input class="form-control bg-light" placeholder="e.g., Cardiology, Neurology" @bind="doctorDto.Specialty" />
+            @if (!string.IsNullOrEmpty(doctorSpecialtyError))
+            {
+                <div class="text-danger small">@doctorSpecialtyError</div>
+            }
         </div>
         <div class="col-md-6">
             <label class="form-label">Consultation Fee</label>
@@ -243,99 +264,139 @@ else
                     else if (selectedRole == UserRole.Patient)
                     {
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter full name" @bind="patientDto.FullName" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="patientDto.CNIC" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="patientDto.PhoneNumber" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Username <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter username" @bind="patientDto.UserName" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control bg-light" @bind="patientDto.DateOfBirth" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Gender <span class="text-danger">*</span></label>
-                                <select class="form-select bg-light" @bind="patientDto.Gender">
-                                    <option value="">-- Select Gender --</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Blood Group</label>
-                                <select class="form-select bg-light" @bind="patientDto.BloodGroup">
-                                    <option value="">-- Select Blood Group --</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Address</label>
-                                <textarea class="form-control bg-light" rows="2" placeholder="Enter complete address" @bind="patientDto.Address"></textarea>
-                            </div>
+                       
+<div class="col-md-6">
+    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" @bind="patientDto.FullName" />
+    @if (!string.IsNullOrEmpty(patientFullNameError))
+    {
+        <div class="text-danger small">@patientFullNameError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">CNIC <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" @bind="patientDto.CNIC" />
+    @if (!string.IsNullOrEmpty(patientCnicError))
+    {
+        <div class="text-danger small">@patientCnicError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" @bind="patientDto.PhoneNumber" />
+    @if (!string.IsNullOrEmpty(patientPhoneError))
+    {
+        <div class="text-danger small">@patientPhoneError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Username <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" @bind="patientDto.UserName" />
+    @if (!string.IsNullOrEmpty(patientUsernameError))
+    {
+        <div class="text-danger small">@patientUsernameError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+    <input type="date" class="form-control bg-light" @bind="patientDto.DateOfBirth" />
+    @if (!string.IsNullOrEmpty(patientDobError))
+    {
+        <div class="text-danger small">@patientDobError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Gender <span class="text-danger">*</span></label>
+    <select class="form-select bg-light" @bind="patientDto.Gender">
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+    @if (!string.IsNullOrEmpty(patientGenderError))
+    {
+        <div class="text-danger small">@patientGenderError</div>
+    }
+</div>
                         </div>
                     }
                     else if (selectedRole == UserRole.Receptionist)
                     {
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter full name" @bind="receptionistDto.FullName" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="receptionistDto.CNIC" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="receptionistDto.PhoneNumber" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Username <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter username" @bind="receptionistDto.UserName" />
-                            </div>
+            
+<div class="col-md-6">
+    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" placeholder="Enter full name" @bind="receptionistDto.FullName" />
+    @if (!string.IsNullOrEmpty(receptionistFullNameError))
+    {
+        <div class="text-danger small">@receptionistFullNameError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">CNIC <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" placeholder="Enter CNIC" @bind="receptionistDto.CNIC" />
+    @if (!string.IsNullOrEmpty(receptionistCnicError))
+    {
+        <div class="text-danger small">@receptionistCnicError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+    <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="receptionistDto.PhoneNumber" />
+    @if (!string.IsNullOrEmpty(receptionistPhoneError))
+    {
+        <div class="text-danger small">@receptionistPhoneError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Username <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" placeholder="Enter username" @bind="receptionistDto.UserName" />
+    @if (!string.IsNullOrEmpty(receptionistUsernameError))
+    {
+        <div class="text-danger small">@receptionistUsernameError</div>
+    }
+</div>
                         </div>
                     }
                     else if (selectedRole == UserRole.LabTechnician)
                     {
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter full name" @bind="labTechnicianDto.FullName" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">CNIC <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter CNIC" @bind="labTechnicianDto.CNIC" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="labTechnicianDto.PhoneNumber" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Username <span class="text-danger">*</span></label>
-                                <input class="form-control bg-light" placeholder="Enter username" @bind="labTechnicianDto.UserName" />
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Qualifications</label>
-                                <textarea class="form-control bg-light" rows="3" placeholder="Enter qualifications" @bind="labTechnicianDto.Qualifications"></textarea>
-                            </div>
+                           
+<div class="col-md-6">
+    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" placeholder="Enter full name" @bind="labTechnicianDto.FullName" />
+    @if (!string.IsNullOrEmpty(labTechFullNameError))
+    {
+        <div class="text-danger small">@labTechFullNameError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">CNIC <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" placeholder="Enter CNIC" @bind="labTechnicianDto.CNIC" />
+    @if (!string.IsNullOrEmpty(labTechCnicError))
+    {
+        <div class="text-danger small">@labTechCnicError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+    <input type="tel" class="form-control bg-light" placeholder="Enter phone number" @bind="labTechnicianDto.PhoneNumber" />
+    @if (!string.IsNullOrEmpty(labTechPhoneError))
+    {
+        <div class="text-danger small">@labTechPhoneError</div>
+    }
+</div>
+<div class="col-md-6">
+    <label class="form-label">Username <span class="text-danger">*</span></label>
+    <input class="form-control bg-light" placeholder="Enter username" @bind="labTechnicianDto.UserName" />
+    @if (!string.IsNullOrEmpty(labTechUsernameError))
+    {
+        <div class="text-danger small">@labTechUsernameError</div>
+    }
+</div>
+<div class="col-12">
+    <label class="form-label">Qualifications</label>
+    <textarea class="form-control bg-light" rows="3" placeholder="Enter qualifications" @bind="labTechnicianDto.Qualifications"></textarea>
+</div>
                         </div>
                     }
                 </div>
@@ -451,7 +512,14 @@ private string newUserName = "";
     private CreateReceptionistDto receptionistDto = new();
     private CreateLabTechDto labTechnicianDto = new();
     private Dictionary<int, string> userRoles = new Dictionary<int, string>();
+        // ...existing code...
+private string patientFullNameError, patientCnicError, patientPhoneError, patientUsernameError, patientDobError, patientGenderError;
+private string receptionistFullNameError, receptionistCnicError, receptionistPhoneError, receptionistUsernameError;
+private string labTechFullNameError, labTechCnicError, labTechPhoneError, labTechUsernameError;
+// ...existing code...
 
+    // Add these fields to your @code section:
+private string doctorFullNameError, doctorCnicError, doctorPhoneError, doctorUsernameError, doctorSpecialtyError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -718,12 +786,78 @@ private string newUserName = "";
     }
     catch (Exception ex)
     {
+         var msg = ex.Message ?? "";
+    if (msg.Contains("duplicate key", StringComparison.OrdinalIgnoreCase))
+    {
+        if (msg.Contains("CNIC", StringComparison.OrdinalIgnoreCase))
+        {
+            switch (selectedRole)
+            {
+                case UserRole.Doctor:
+                    doctorCnicError = "This CNIC is already registered.";
+                    break;
+                case UserRole.Patient:
+                    patientCnicError = "This CNIC is already registered.";
+                    break;
+                case UserRole.Receptionist:
+                    receptionistCnicError = "This CNIC is already registered.";
+                    break;
+                case UserRole.LabTechnician:
+                    labTechCnicError = "This CNIC is already registered.";
+                    break;
+            }
+        }
+        else if (msg.Contains("UserName", StringComparison.OrdinalIgnoreCase))
+        {
+            switch (selectedRole)
+            {
+                case UserRole.Doctor:
+                    doctorUsernameError = "This username is already taken.";
+                    break;
+                case UserRole.Patient:
+                    patientUsernameError = "This username is already taken.";
+                    break;
+                case UserRole.Receptionist:
+                    receptionistUsernameError = "This username is already taken.";
+                    break;
+                case UserRole.LabTechnician:
+                    labTechUsernameError = "This username is already taken.";
+                    break;
+            }
+        }
+        else
+        {
+            // If not sure, show a generic error on both fields
+            switch (selectedRole)
+            {
+                case UserRole.Doctor:
+                    doctorCnicError = "Duplicate CNIC or Username.";
+                    doctorUsernameError = "Duplicate CNIC or Username.";
+                    break;
+                case UserRole.Patient:
+                    patientCnicError = "Duplicate CNIC or Username.";
+                    patientUsernameError = "Duplicate CNIC or Username.";
+                    break;
+                case UserRole.Receptionist:
+                    receptionistCnicError = "Duplicate CNIC or Username.";
+                    receptionistUsernameError = "Duplicate CNIC or Username.";
+                    break;
+                case UserRole.LabTechnician:
+                    labTechCnicError = "Duplicate CNIC or Username.";
+                    labTechUsernameError = "Duplicate CNIC or Username.";
+                    break;
+            }
+        }
+    }
+    else
+    {
         errorMessage = $"Error {(editing ? "updating" : "creating")} user: {ex.Message}";
     }
-    finally
-    {
-        isProcessing = false;
-    }
+}
+finally
+{
+    isProcessing = false;
+}
 }
 
 private void CloseTempPasswordModal()
@@ -929,123 +1063,152 @@ private async Task DeleteUser(UserDto user)
     #endregion
 
     #region Validation Methods
-    
-    private bool ValidateDoctorDto()
+
+private bool IsValidCnic(string cnic)
+{
+    // CNIC: 5 digits - 7 digits - 1 digit
+    return System.Text.RegularExpressions.Regex.IsMatch(cnic ?? "", @"^\d{5}-\d{7}-\d{1}$");
+}
+
+private bool IsValidPhone(string phone)
+{
+    // Phone: 11 digits, starts with 0
+    return System.Text.RegularExpressions.Regex.IsMatch(phone ?? "", @"^0\d{10}$");
+}
+
+private bool IsValidUsername(string username)
+{
+    return !string.IsNullOrWhiteSpace(username) && username.Length >= 5;
+}
+
+private bool ValidateDoctorDto()
+{
+    doctorFullNameError = doctorCnicError = doctorPhoneError = doctorUsernameError = doctorSpecialtyError = null;
+    bool valid = true;
+
+    if (string.IsNullOrWhiteSpace(doctorDto.FullName))
     {
-        if (string.IsNullOrWhiteSpace(doctorDto.FullName))
-        {
-            errorMessage = "Full Name is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(doctorDto.CNIC))
-        {
-            errorMessage = "CNIC is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(doctorDto.PhoneNumber))
-        {
-            errorMessage = "Phone Number is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(doctorDto.UserName))
-        {
-            errorMessage = "Username is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(doctorDto.Specialty))
-        {
-            errorMessage = "Specialty is required.";
-            return false;
-        }
-        return true;
+        doctorFullNameError = "Full Name is required.";
+        valid = false;
     }
-    
-    private bool ValidatePatientDto()
+    if (!IsValidCnic(doctorDto.CNIC))
     {
-        if (string.IsNullOrWhiteSpace(patientDto.FullName))
-        {
-            errorMessage = "Full Name is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(patientDto.CNIC))
-        {
-            errorMessage = "CNIC is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(patientDto.PhoneNumber))
-        {
-            errorMessage = "Phone Number is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(patientDto.UserName))
-        {
-            errorMessage = "Username is required.";
-            return false;
-        }
-        if (patientDto.DateOfBirth == null)
-        {
-            errorMessage = "Date of Birth is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(patientDto.Gender))
-        {
-            errorMessage = "Gender is required.";
-            return false;
-        }
-        return true;
+        doctorCnicError = "CNIC must be in the format 12345-1234567-1.";
+        valid = false;
     }
-    
+    if (!IsValidPhone(doctorDto.PhoneNumber))
+    {
+        doctorPhoneError = "Phone Number must be 11 digits and start with 0.";
+        valid = false;
+    }
+    if (!IsValidUsername(doctorDto.UserName))
+    {
+        doctorUsernameError = "Username must be at least 5 characters long.";
+        valid = false;
+    }
+    if (string.IsNullOrWhiteSpace(doctorDto.Specialty))
+    {
+        doctorSpecialtyError = "Specialty is required.";
+        valid = false;
+    }
+    return valid;
+}
+
+private bool ValidatePatientDto()
+{
+    patientFullNameError = patientCnicError = patientPhoneError = patientUsernameError = patientDobError = patientGenderError = null;
+    bool valid = true;
+
+    if (string.IsNullOrWhiteSpace(patientDto.FullName))
+    {
+        patientFullNameError = "Full Name is required.";
+        valid = false;
+    }
+    if (!IsValidCnic(patientDto.CNIC))
+    {
+        patientCnicError = "CNIC must be in the format 12345-1234567-1.";
+        valid = false;
+    }
+    if (!IsValidPhone(patientDto.PhoneNumber))
+    {
+        patientPhoneError = "Phone Number must be 11 digits and start with 0.";
+        valid = false;
+    }
+    if (!IsValidUsername(patientDto.UserName))
+    {
+        patientUsernameError = "Username must be at least 5 characters long.";
+        valid = false;
+    }
+    if (patientDto.DateOfBirth == null)
+    {
+        patientDobError = "Date of Birth is required.";
+        valid = false;
+    }
+    if (string.IsNullOrWhiteSpace(patientDto.Gender))
+    {
+        patientGenderError = "Gender is required.";
+        valid = false;
+    }
+    return valid;
+}
+
 private bool ValidateReceptionistDto()
+{
+    receptionistFullNameError = receptionistCnicError = receptionistPhoneError = receptionistUsernameError = null;
+    bool valid = true;
+
+    if (string.IsNullOrWhiteSpace(receptionistDto.FullName))
     {
-        if (string.IsNullOrWhiteSpace(receptionistDto.FullName))
-        {
-            errorMessage = "Full Name is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(receptionistDto.CNIC))
-        {
-            errorMessage = "CNIC is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(receptionistDto.PhoneNumber))
-        {
-            errorMessage = "Phone Number is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(receptionistDto.UserName))
-        {
-            errorMessage = "Username is required.";
-            return false;
-        }
-        return true;
+        receptionistFullNameError = "Full Name is required.";
+        valid = false;
     }
-    
-    private bool ValidateLabTechnicianDto()
+    if (!IsValidCnic(receptionistDto.CNIC))
     {
-        if (string.IsNullOrWhiteSpace(labTechnicianDto.FullName))
-        {
-            errorMessage = "Full Name is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(labTechnicianDto.CNIC))
-        {
-            errorMessage = "CNIC is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(labTechnicianDto.PhoneNumber))
-        {
-            errorMessage = "Phone Number is required.";
-            return false;
-        }
-        if (string.IsNullOrWhiteSpace(labTechnicianDto.UserName))
-        {
-            errorMessage = "Username is required.";
-            return false;
-        }
-        return true;
+        receptionistCnicError = "CNIC must be in the format 12345-1234567-1.";
+        valid = false;
     }
-    
-    #endregion
+    if (!IsValidPhone(receptionistDto.PhoneNumber))
+    {
+        receptionistPhoneError = "Phone Number must be 11 digits and start with 0.";
+        valid = false;
+    }
+    if (!IsValidUsername(receptionistDto.UserName))
+    {
+        receptionistUsernameError = "Username must be at least 5 characters long.";
+        valid = false;
+    }
+    return valid;
+}
+
+private bool ValidateLabTechnicianDto()
+{
+    labTechFullNameError = labTechCnicError = labTechPhoneError = labTechUsernameError = null;
+    bool valid = true;
+
+    if (string.IsNullOrWhiteSpace(labTechnicianDto.FullName))
+    {
+        labTechFullNameError = "Full Name is required.";
+        valid = false;
+    }
+    if (!IsValidCnic(labTechnicianDto.CNIC))
+    {
+        labTechCnicError = "CNIC must be in the format 12345-1234567-1.";
+        valid = false;
+    }
+    if (!IsValidPhone(labTechnicianDto.PhoneNumber))
+    {
+        labTechPhoneError = "Phone Number must be 11 digits and start with 0.";
+        valid = false;
+    }
+    if (!IsValidUsername(labTechnicianDto.UserName))
+    {
+        labTechUsernameError = "Username must be at least 5 characters long.";
+        valid = false;
+    }
+    return valid;
+}
+
+#endregion
 
     #region Utility Methods
     
