@@ -13,13 +13,19 @@
             <!-- Brand Logo -->
             <span class="navbar-brand fw-bold text-teal d-flex align-items-center">
                 <i class="bi bi-heart-pulse fs-4 me-2"></i>
-                <span>Doctor Portal</span>
+                <span>MediCare-Hub Doctor</span>
             </span>
             
             <!-- Search Box - Hidden on mobile -->
             <div class="d-none d-md-block position-relative search-container">
-                <input type="search" class="form-control bg-light border-0 rounded-pill" placeholder="Search patients..." />
+                <input type="search" id="searchInput" class="form-control bg-light border-0 rounded-pill" placeholder="Search pages..." autocomplete="off" />
                 <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
+                <!-- Search Results Dropdown -->
+                <div id="searchResults" class="position-absolute top-100 start-0 w-100 bg-white border rounded-3 shadow-lg mt-1 d-none" style="z-index: 1050;">
+                    <div class="p-2" id="searchResultsContent">
+                        <!-- Search results will be populated here -->
+                    </div>
+                </div>
             </div>
             
             <!-- Right Side Nav Items -->
@@ -28,9 +34,6 @@
                 <button class="btn btn-light rounded-circle d-md-none me-2" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSearchCollapse" aria-expanded="false" aria-controls="mobileSearchCollapse">
                     <i class="bi bi-search"></i>
                 </button>
-                
-               
-        
             </div>
         </div>
     </nav>
@@ -39,8 +42,14 @@
     <div class="collapse" id="mobileSearchCollapse">
         <div class="container-fluid py-2 bg-white border-bottom">
             <div class="position-relative">
-                <input type="search" class="form-control bg-light border-0 rounded-pill" placeholder="Search patients..." />
+                <input type="search" id="mobileSearchInput" class="form-control bg-light border-0 rounded-pill" placeholder="Search pages..." autocomplete="off" />
                 <i class="bi bi-search position-absolute end-0 top-50 translate-middle-y me-3 text-muted"></i>
+                <!-- Mobile Search Results Dropdown -->
+                <div id="mobileSearchResults" class="position-absolute top-100 start-0 w-100 bg-white border rounded-3 shadow-lg mt-1 d-none" style="z-index: 1050;">
+                    <div class="p-2" id="mobileSearchResultsContent">
+                        <!-- Search results will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -61,43 +70,43 @@
             <div class="p-2 sidebar-content">
                 <ul class="nav flex-column">
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/dashboard") ? "active bg-white text-teal" : "")" href="/doctor/dashboard">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/dashboard") ? "active bg-white text-teal" : "")" href="/doctor/dashboard" data-page-title="Dashboard">
                             <i class="bi bi-grid-1x2 me-3"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/patients") ? "active bg-white text-teal" : "")" href="/doctor/patients">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/patients") ? "active bg-white text-teal" : "")" href="/doctor/patients" data-page-title="Patients">
                             <i class="bi bi-people me-3"></i>
                             <span>Patients</span>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/treatments") ? "active bg-white text-teal" : "")" href="/doctor/treatments">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/treatments") ? "active bg-white text-teal" : "")" href="/doctor/treatments" data-page-title="Treatment Plans">
                             <i class="bi bi-clipboard2-pulse me-3"></i>
                             <span>Treatment Plans</span>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/appointments") ? "active bg-white text-teal" : "")" href="/doctor/appointments">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/appointments") ? "active bg-white text-teal" : "")" href="/doctor/appointments" data-page-title="Appointments">
                             <i class="bi bi-calendar-check me-3"></i>
                             <span>Appointments</span>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/ai-predictions") ? "active bg-white text-teal" : "")" href="/doctor/ai-predictions">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/ai-predictions") ? "active bg-white text-teal" : "")" href="/doctor/ai-predictions" data-page-title="AI Predictions">
                             <i class="bi bi-robot me-3"></i>
                             <span>AI Predictions</span>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/laborders") ? "active bg-white text-teal" : "")" href="/doctor/laborders">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/laborders") ? "active bg-white text-teal" : "")" href="/doctor/laborders" data-page-title="Lab Orders">
                              <i class="bi bi-clipboard2-pulse me-3"></i>
                             <span>Lab Orders</span>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/profile") ? "active bg-white text-teal" : "")" href="/doctor/profile">
+                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/profile") ? "active bg-white text-teal" : "")" href="/doctor/profile" data-page-title="Profile">
                             <i class="bi bi-person-circle me-3"></i>
                             <span>Profile</span>
                         </a>
@@ -105,13 +114,13 @@
                 </ul>
                 
                 <div class="mt-4 p-3">
-                    <div class="card bg-teal-subtle border-0 rounded-4 text-teal p-3">
+                    <div class="card bg-white-subtle border-0 rounded-4 text-teal p-3">
                         <div class="text-center mb-3">
                             <i class="bi bi-chat-dots display-5"></i>
                         </div>
                         <h6 class="text-center mb-2">Need Assistance?</h6>
-                        <p class="small text-center mb-3">Consult with specialists</p>
-                        <button class="btn btn-white text-teal shadow-sm w-100 rounded-pill">Request Consultation</button>
+                        <p class="small text-center mb-3">Contact IT support team</p>
+                        <button class="btn btn-white text-teal shadow-sm w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#contactModal">Contact Support</button>
                     </div>
                 </div>
             </div>
@@ -128,9 +137,101 @@
     <!-- Overlay for mobile sidebar -->
     <div id="sidebarOverlay" class="position-fixed top-0 start-0 h-100 w-100 bg-dark bg-opacity-50 d-none" style="z-index: 1029;"></div>
 
+    <!-- Contact Support Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-teal text-white border-0">
+                    <h5 class="modal-title d-flex align-items-center" id="contactModalLabel">
+                        <i class="bi bi-headset me-2"></i>
+                        IT Support Contacts
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Get in touch with our IT support team for technical assistance.</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-teal rounded-circle p-2 me-3">
+                                            <i class="bi bi-person-fill text-white"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">Qasim Maajid</h6>
+                                            <p class="text-muted small mb-1">Senior IT Administrator</p>
+                                            <a href="mailto:qasimmaajid04@medicare-hub.com" class="text-teal text-decoration-none">
+                                                <i class="bi bi-envelope me-1"></i>qasimmaajid04@medicare-hub.com
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success rounded-circle p-2 me-3">
+                                            <i class="bi bi-person-fill text-white"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">Bilal Adnan</h6>
+                                            <p class="text-muted small mb-1">IT Support Specialist</p>
+                                            <a href="mailto:bilal.adnan@medicare-hub.com" class="text-teal text-decoration-none">
+                                                <i class="bi bi-envelope me-1"></i>bilal.adnan@medicare-hub.com
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-warning rounded-circle p-2 me-3">
+                                            <i class="bi bi-person-fill text-white"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">Bhatti chor san</h6>
+                                            <p class="text-muted small mb-1">chor operations</p>
+                                            <a href="mailto:mtb@medicare-hub.com" class="text-teal text-decoration-none">
+                                                <i class="bi bi-envelope me-1"></i>mtb@medicare-hub.com
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-teal bg-opacity-10 rounded-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-info-circle text-teal me-2"></i>
+                            <div>
+                                <small class="text-muted">
+                                    <strong>Office Hours:</strong> Monday - Friday, 8:00 AM - 6:00 PM<br>
+                                    <strong>Emergency Support:</strong> Available 24/7 for critical issues
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="py-3 text-center text-muted border-top">
-        <small>&copy; 2025 Hospital Management System | Doctor Portal</small>
+        <small>&copy; 2025 MediCare-Hub | Doctor Portal</small>
     </footer>
 </div>
 
@@ -228,10 +329,40 @@
         width: 400px;
     }
     
+    /* Search results styling */
+    .search-result-item {
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .search-result-item:hover {
+        background-color: var(--bs-teal);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .search-result-item i {
+        width: 20px;
+    }
+    
     /* Bootstrap overrides */
     .btn-primary {
         background-color: var(--bs-teal);
         border-color: var(--bs-teal);
+    }
+    
+    /* Modal enhancements */
+    .modal-content {
+        border-radius: 1rem;
+    }
+    
+    .modal-header {
+        border-radius: 1rem 1rem 0 0;
     }
     
     /* Responsive styles */
@@ -277,13 +408,97 @@
     }
 </style>
 
-<!-- Script for enabling tooltips and responsive sidebar -->
+<!-- Script for enabling tooltips, responsive sidebar, and search functionality -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Enable tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Define searchable pages for doctor portal
+        const pages = [
+            { title: 'Dashboard', url: '/doctor/dashboard', icon: 'bi-grid-1x2', description: 'Doctor dashboard with patient overview' },
+            { title: 'Patients', url: '/doctor/patients', icon: 'bi-people', description: 'Manage and view patient records' },
+            { title: 'Treatment Plans', url: '/doctor/treatments', icon: 'bi-clipboard2-pulse', description: 'Create and manage treatment plans' },
+            { title: 'Appointments', url: '/doctor/appointments', icon: 'bi-calendar-check', description: 'Schedule and manage appointments' },
+            { title: 'AI Predictions', url: '/doctor/ai-predictions', icon: 'bi-robot', description: 'AI-powered medical predictions and insights' },
+            { title: 'Lab Orders', url: '/doctor/laborders', icon: 'bi-clipboard2-pulse', description: 'Manage laboratory test orders' },
+            { title: 'Profile', url: '/doctor/profile', icon: 'bi-person-circle', description: 'Doctor profile settings and information' }
+        ];
+        
+        // Search functionality
+        function performSearch(query, resultsContainer, resultsContent) {
+            if (query.length === 0) {
+                resultsContainer.classList.add('d-none');
+                return;
+            }
+            
+            const filteredPages = pages.filter(page => 
+                page.title.toLowerCase().includes(query.toLowerCase()) ||
+                page.description.toLowerCase().includes(query.toLowerCase())
+            );
+            
+            if (filteredPages.length === 0) {
+                resultsContent.innerHTML = '<div class="p-2 text-muted">No pages found</div>';
+            } else {
+                resultsContent.innerHTML = filteredPages.map(page => `
+                    <a href="${page.url}" class="search-result-item d-flex align-items-center">
+                        <i class="bi ${page.icon} me-2"></i>
+                        <div>
+                            <div class="fw-medium">${page.title}</div>
+                            <small class="text-muted">${page.description}</small>
+                        </div>
+                    </a>
+                `).join('');
+            }
+            
+            resultsContainer.classList.remove('d-none');
+        }
+        
+        // Desktop search
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsContent = document.getElementById('searchResultsContent');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                performSearch(this.value, searchResults, searchResultsContent);
+            });
+            
+            searchInput.addEventListener('focus', function() {
+                if (this.value.length > 0) {
+                    searchResults.classList.remove('d-none');
+                }
+            });
+        }
+        
+        // Mobile search
+        const mobileSearchInput = document.getElementById('mobileSearchInput');
+        const mobileSearchResults = document.getElementById('mobileSearchResults');
+        const mobileSearchResultsContent = document.getElementById('mobileSearchResultsContent');
+        
+        if (mobileSearchInput) {
+            mobileSearchInput.addEventListener('input', function() {
+                performSearch(this.value, mobileSearchResults, mobileSearchResultsContent);
+            });
+            
+            mobileSearchInput.addEventListener('focus', function() {
+                if (this.value.length > 0) {
+                    mobileSearchResults.classList.remove('d-none');
+                }
+            });
+        }
+        
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(event) {
+            if (searchInput && !searchInput.closest('.search-container').contains(event.target)) {
+                searchResults.classList.add('d-none');
+            }
+            if (mobileSearchInput && !mobileSearchInput.closest('.position-relative').contains(event.target)) {
+                mobileSearchResults.classList.add('d-none');
+            }
         });
         
         // Sidebar toggle functionality

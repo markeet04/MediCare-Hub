@@ -205,7 +205,7 @@ else
     <!-- Today's Overview Stats -->
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToAppointments">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden">
                 <div class="position-absolute bg-teal bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center mb-3">
@@ -232,7 +232,7 @@ else
         </div>
         
         <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" @onclick="NavigateToPatients">
+            <div class="card border-0 shadow-sm h-100 stat-card position-relative overflow-hidden" >
                 <div class="position-absolute bg-success bg-opacity-10" style="width: 120px; height: 120px; border-radius: 50%; top: -20px; right: -30px;"></div>
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center mb-3">
@@ -326,11 +326,69 @@ else
                                 <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
                                     <i class="bi bi-person-plus text-teal"></i>
                                 </div>
-                                <span>Add New Patient</span>
+                                <span>Ai-predictions</span>
                             </span>
                             <i class="bi bi-chevron-right"></i>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<!-- View All Notifications Modal -->
+@if (showAllNotificationsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">All Notifications</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAllNotificationsModal"></button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    @if (notifications?.Any() == true)
+                    {
+                        @foreach (var notification in notifications.OrderByDescending(n => n.CreatedAt))
+                        {
+                            <div class="p-3 border-bottom @(notification.IsRead ? "" : "bg-light")">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3 flex-shrink-0">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                            <i class="bi bi-info-circle text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        @if (!string.IsNullOrEmpty(notification.Title))
+                                        {
+                                            <h6 class="mb-1 fw-semibold">@notification.Title</h6>
+                                        }
+                                        @if (!string.IsNullOrEmpty(notification.Message))
+                                        {
+                                            <p class="mb-1 text-muted small">@notification.Message</p>
+                                        }
+                                        <small class="text-muted">@GetTimeAgo(notification.CreatedAt)</small>
+                                    </div>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary rounded-circle" style="width: 8px; height: 8px;"></div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-bell-slash fs-1 mb-3"></i>
+                            <p>No notifications</p>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAllNotificationsModal">Close</button>
                 </div>
             </div>
         </div>
@@ -392,6 +450,22 @@ else
             IsLoading = false;
         }
     }
+    // ...existing code...
+
+private bool showAllNotificationsModal = false;
+
+private void ViewAllNotifications()
+{
+    showAllNotificationsModal = true;
+    showNotifications = false;
+}
+
+private void CloseAllNotificationsModal()
+{
+    showAllNotificationsModal = false;
+}
+
+// ...existing code...
     private async Task MarkAllAsRead()
     {
         try
@@ -413,11 +487,7 @@ else
         }
     }
     
-    private void ViewAllNotifications()
-    {
-        Nav.NavigateTo("/doctor/notifications");
-        showNotifications = false;
-    }
+ 
     
     // User menu methods
     private void ToggleUserMenu()
@@ -525,7 +595,7 @@ else
 
     private void NavigateToNewPatient()
     {
-        Nav.NavigateTo("/doctor/patients/new");
+        Nav.NavigateTo("/doctor/ai-predictions");
     }
 
     private void StartConsultation()
