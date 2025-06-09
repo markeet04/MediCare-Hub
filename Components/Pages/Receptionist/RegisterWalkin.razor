@@ -3,13 +3,14 @@
 @layout BlazorApp1.Components.Layout.ReceptionistLayout
 @using BlazorApp1.Models.DTOs
 @inject IJSRuntime JSRuntime
+   @using System.Text.RegularExpressions
 @inject NavigationManager NavigationManager
 @inject BlazorApp1.Services.Interfaces.IReceptionistService ReceptionistService
 @inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
 @using BlazorApp1.Authentication
+
 <style>
-       /* Global Styles */
-    .walkin-page {
+        .walkin-page {
         min-height: 100vh;
         background-color: #f5f7fa;
         padding-bottom: 40px;
@@ -20,7 +21,6 @@
         margin: 0 auto;
     }
     
-    /* Header Banner */
     .header-banner {
         background: linear-gradient(135deg, #4a6bcd, #2a3c8d);
         color: white;
@@ -36,7 +36,6 @@
         margin-bottom: 5px;
     }
     
-    /* Main Card */
     .main-card {
         background: white;
         border-radius: 12px;
@@ -46,7 +45,6 @@
         border: none;
     }
     
-    /* Stepper */
 .stepper-wrapper {
     margin-bottom: 2rem;
     position: relative;
@@ -121,7 +119,6 @@
     font-weight: 600;
 }
 
-/* Form Section */
 .form-section {
     padding: 15px 0;
 }
@@ -143,7 +140,6 @@
     font-size: 16px;
 }
 
-/* Form Layout */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -155,7 +151,6 @@
     grid-column: span 2;
 }
 
-/* Form Controls */
 .form-floating {
     margin-bottom: 1rem;
     position: relative;
@@ -233,7 +228,6 @@
     color: #dc3545;
 }
 
-/* Patient Type Selector */
 .patient-type-selector {
     margin-bottom: 30px;
 }
@@ -267,7 +261,6 @@
     color: white;
 }
 
-/* Search Module */
 .search-module {
     margin-bottom: 30px;
 }
@@ -370,7 +363,6 @@
     font-size: 18px;
 }
 
-/* Form Cards */
 .form-card {
     border: 1px solid #e9ecef;
     border-radius: 10px;
@@ -462,7 +454,6 @@
     text-transform: uppercase;
 }
 
-/* Time Slots */
 .time-selector {
     margin-top: 20px;
 }
@@ -518,7 +509,6 @@
     gap: 20px;
 }
 
-/* Password Field */
 .password-container {
     position: relative;
 }
@@ -535,7 +525,6 @@
     z-index: 2;
 }
 
-/* Priority Selection */
 .priority-select {
     grid-column: span 2;
 }
@@ -597,7 +586,6 @@
     color: #6c757d;
 }
 
-/* Badge Styles */
 .badge {
     display: inline-block;
     padding: 5px 12px;
@@ -626,7 +614,6 @@
     color: #4a6bcd;
 }
 
-/* Actions Container */
 .actions-container {
     display: flex;
     justify-content: space-between;
@@ -689,7 +676,6 @@
     font-size: 14px;
 }
 
-/* Success Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -832,7 +818,6 @@
     border-top: 1px solid #e9ecef;
 }
 
-/* Responsive Styles */
 @@media (max-width: 991px) {
     .form-grid {
         grid-template-columns: 1fr;
@@ -888,7 +873,6 @@
     }
 }
 
-/* Animations */
 @@keyframes fadeIn {
     from {
         opacity: 0;
@@ -1039,15 +1023,22 @@
                                 }
                             </div>
 
-                            <div class="form-floating @(ValidationErrors.ContainsKey("CNIC") ? "is-invalid" : "")">
-                                <input type="text" id="cnic" class="form-control @(ValidationErrors.ContainsKey("CNIC") ? "is-invalid" : "")"
-                                       @bind="CNIC" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="CNIC" />
-                                <label for="cnic">CNIC <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("CNIC"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["CNIC"]</div>
-                                }
-                            </div>
+                           <div class="form-floating @(ValidationErrors.ContainsKey("CNIC") ? "is-invalid" : "")">
+    <input type="text" id="cnic" class="form-control @(ValidationErrors.ContainsKey("CNIC") ? "is-invalid" : "")"
+           value="@CNIC" @oninput="OnCNICInput" 
+           disabled="@(!IsNewPatient && SelectedPatient != null)" 
+           placeholder="CNIC" 
+           maxlength="15" />
+    <label for="cnic">CNIC (12345-1234567-1) <span class="required">*</span></label>
+    @if (ValidationErrors.ContainsKey("CNIC"))
+    {
+        <div class="invalid-feedback">@ValidationErrors["CNIC"]</div>
+    }
+    else
+    {
+        <div class="form-text">Format: 12345-1234567-1</div>
+    }
+</div>
 
                             <div class="form-floating @(ValidationErrors.ContainsKey("DateOfBirth") ? "is-invalid" : "")">
                                 <input type="date" id="dob" class="form-control @(ValidationErrors.ContainsKey("DateOfBirth") ? "is-invalid" : "")"
@@ -1074,15 +1065,22 @@
                                 }
                             </div>
 
-                            <div class="form-floating @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")">
-                                <input type="tel" id="phone" class="form-control @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")"
-                                       @bind="Phone" disabled="@(!IsNewPatient && SelectedPatient != null)" placeholder="Phone Number" />
-                                <label for="phone">Phone Number <span class="required">*</span></label>
-                                @if (ValidationErrors.ContainsKey("Phone"))
-                                {
-                                    <div class="invalid-feedback">@ValidationErrors["Phone"]</div>
-                                }
-                            </div>
+                         <div class="form-floating @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")">
+    <input type="tel" id="phone" class="form-control @(ValidationErrors.ContainsKey("Phone") ? "is-invalid" : "")"
+           value="@Phone" @oninput="OnPhoneInput"
+           disabled="@(!IsNewPatient && SelectedPatient != null)" 
+           placeholder="Phone Number"
+           maxlength="11" />
+    <label for="phone">Phone Number (03001234567) <span class="required">*</span></label>
+    @if (ValidationErrors.ContainsKey("Phone"))
+    {
+        <div class="invalid-feedback">@ValidationErrors["Phone"]</div>
+    }
+    else
+    {
+        <div class="form-text">Must start with 0 and be 11 digits long</div>
+    }
+</div>
                         </div>
                     }
                     <div class="actions-container">
@@ -1146,29 +1144,42 @@
                                     <p>Create login credentials for the patient portal</p>
                                 </div>
                                 <div class="card-body">
-                                    <div class="form-floating @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")">
-                                        <input type="text" id="username" class="form-control @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")"
-                                               @bind="Username" placeholder="Username" />
-                                        <label for="username">Username <span class="required">*</span></label>
-                                        @if (ValidationErrors.ContainsKey("Username"))
-                                        {
-                                            <div class="invalid-feedback">@ValidationErrors["Username"]</div>
-                                        }
-                                    </div>
+                                   <div class="form-floating @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")">
+    <input type="text" id="username" class="form-control @(ValidationErrors.ContainsKey("Username") ? "is-invalid" : "")"
+           @bind="Username" @bind:event="oninput"
+           placeholder="Username" 
+           minlength="5"
+           maxlength="20" />
+    <label for="username">Username (min 5 characters) <span class="required">*</span></label>
+    @if (ValidationErrors.ContainsKey("Username"))
+    {
+        <div class="invalid-feedback">@ValidationErrors["Username"]</div>
+    }
+    else
+    {
+        <div class="form-text">At least 5 characters, letters, numbers, and underscores only</div>
+    }
+</div>
 
                                     <div class="form-floating password-container @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")">
-                                        <input type="@(_showPassword ? "text" : "password")" id="password" 
-                                               class="form-control @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")"
-                                               @bind="PlainTextPassword" placeholder="Password" />
-                                        <label for="password">Password <span class="required">*</span></label>
-                                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility">
-                                            <i class="fas @(_showPassword ? "fa-eye-slash" : "fa-eye")"></i>
-                                        </button>
-                                        @if (ValidationErrors.ContainsKey("Password"))
-                                        {
-                                            <div class="invalid-feedback">@ValidationErrors["Password"]</div>
-                                        }
-                                    </div>
+    <input type="@(_showPassword ? "text" : "password")" id="password" 
+           class="form-control @(ValidationErrors.ContainsKey("Password") ? "is-invalid" : "")"
+           @bind="PlainTextPassword" @bind:event="oninput"
+           placeholder="Password" 
+           minlength="5" />
+    <label for="password">Password (min 5 characters) <span class="required">*</span></label>
+    <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility">
+        <i class="fas @(_showPassword ? "fa-eye-slash" : "fa-eye")"></i>
+    </button>
+    @if (ValidationErrors.ContainsKey("Password"))
+    {
+        <div class="invalid-feedback">@ValidationErrors["Password"]</div>
+    }
+    else
+    {
+        <div class="form-text">At least 5 characters long</div>
+    }
+</div>
                                 </div>
                             </div>
                         }
@@ -1545,53 +1556,117 @@
         Username    = patient.UserName;
     }
     
-    private async Task NextStep()
+   private async Task NextStep()
+{
+    _isLoading = true;
+    StateHasChanged();
+    
+    try
     {
-        ValidationErrors.Clear();
-        _isLoading = true;
-        StateHasChanged();
+        bool isStepValid = false;
         
-        try
+        if (_currentStep == 1)
         {
-            if (_currentStep == 1)
-            {
-                if (!ValidateStep1())
-                    return;
-            }
-            else if (_currentStep == 2)
-            {
-                if (!ValidateStep2())
-                    return;
-                    
-                // Create patient if new
-                if (IsNewPatient)
-                {
-                    await CreateNewPatientAsync();
-                }
-            }
-            
-            if (_currentStep < 3)
-                _currentStep++;
+            isStepValid = await ValidateStep1Async();
         }
-        finally
+        else if (_currentStep == 2)
         {
-            _isLoading = false;
-            StateHasChanged();
+            isStepValid = await ValidateStep2Async();
+            
+            // Create patient if new and validation passed
+            if (isStepValid && IsNewPatient)
+            {
+                await CreateNewPatientAsync();
+            }
+        }
+        
+        if (isStepValid && _currentStep < 3)
+        {
+            _currentStep++;
         }
     }
-    
-    private async Task CreateNewPatientAsync()
+    catch (Exception ex)
     {
-       try
+        Console.WriteLine($"Error in NextStep: {ex.Message}");
+        ValidationErrors["General"] = "An error occurred. Please try again.";
+    }
+    finally
     {
-        // Check if CNIC already exists
-        var existing = await ReceptionistService.SearchPatientsAsync(CNIC);
-        if (existing.Any(p => p.CNIC == CNIC))
-        {
-            ValidationErrors["CNIC"] = "A patient with this CNIC already exists.";
-            throw new InvalidOperationException("Duplicate CNIC");
-        }
+        _isLoading = false;
+        StateHasChanged();
+    }
+}
 
+// Add CNIC formatting on input
+private void OnCNICInput(ChangeEventArgs e)
+{
+    string input = e.Value?.ToString() ?? "";
+    
+    // Remove any existing formatting
+    string cleanInput = input.Replace("-", "").Replace(" ", "");
+    
+    // Limit to 13 digits
+    if (cleanInput.Length > 13)
+    {
+        cleanInput = cleanInput.Substring(0, 13);
+    }
+    
+    // Auto-format as user types
+    if (cleanInput.Length >= 5)
+    {
+        if (cleanInput.Length >= 12)
+        {
+            CNIC = $"{cleanInput.Substring(0, 5)}-{cleanInput.Substring(5, 7)}-{cleanInput.Substring(12)}";
+        }
+        else if (cleanInput.Length > 5)
+        {
+            CNIC = $"{cleanInput.Substring(0, 5)}-{cleanInput.Substring(5)}";
+        }
+    }
+    else
+    {
+        CNIC = cleanInput;
+    }
+    
+    // Clear CNIC validation error if exists
+    if (ValidationErrors.ContainsKey("CNIC"))
+    {
+        ValidationErrors.Remove("CNIC");
+    }
+}
+
+// Add phone formatting on input
+private void OnPhoneInput(ChangeEventArgs e)
+{
+    string input = e.Value?.ToString() ?? "";
+    
+    // Remove any non-digit characters except for the leading zero
+    string cleanInput = Regex.Replace(input, @"[^\d]", "");
+    
+    // Ensure it starts with 0 and limit to 11 digits
+    if (!cleanInput.StartsWith("0") && cleanInput.Length > 0)
+    {
+        cleanInput = "0" + cleanInput;
+    }
+    
+    if (cleanInput.Length > 11)
+    {
+        cleanInput = cleanInput.Substring(0, 11);
+    }
+    
+    Phone = cleanInput;
+    
+    // Clear phone validation error if exists
+    if (ValidationErrors.ContainsKey("Phone"))
+    {
+        ValidationErrors.Remove("Phone");
+    }
+}
+    
+   private async Task CreateNewPatientAsync()
+{
+    try
+    {
         var createDto = new PatientProfileDto
         {
             UserName      = Username,
@@ -1603,18 +1678,17 @@
             Address       = Address,
             BloodGroup    = BloodGroup
         };
+        
         var newPatientId = await ReceptionistService.RegisterWalkInPatientAsync(createDto, PlainTextPassword);
-
         SelectedPatient = await ReceptionistService.GetPatientByIdAsync(newPatientId);
     }
     catch (Exception ex)
     {
         Console.WriteLine($"Error creating patient: {ex.Message}");
-        if (!ValidationErrors.ContainsKey("CNIC"))
-            ValidationErrors["General"] = "Failed to create patient profile. Please try again.";
+        ValidationErrors["General"] = "Failed to create patient profile. Please try again.";
         throw;
     }
-    }
+}
     
     private void PreviousStep()
     {
@@ -1626,105 +1700,239 @@
     {
         DoctorId = 0; // Reset doctor selection when department changes
     }
+    private bool IsValidCNIC(string cnic)
+{
+    if (string.IsNullOrWhiteSpace(cnic))
+        return false;
     
-    private bool ValidateStep1()
+    // Remove any spaces or dashes for validation
+    string cleanCnic = cnic.Replace("-", "").Replace(" ", "");
+    
+    // Check if it's exactly 13 digits
+    if (cleanCnic.Length != 13 || !cleanCnic.All(char.IsDigit))
+        return false;
+    
+    return true;
+}
+
+private string FormatCNIC(string cnic)
+{
+    if (string.IsNullOrWhiteSpace(cnic))
+        return cnic;
+    
+    // Remove existing formatting
+    string cleanCnic = cnic.Replace("-", "").Replace(" ", "");
+    
+    // Format as 12345-1234567-1
+    if (cleanCnic.Length >= 13)
     {
-        bool isValid = true;
-        
-        if (IsNewPatient || SelectedPatient != null)
+        return $"{cleanCnic.Substring(0, 5)}-{cleanCnic.Substring(5, 7)}-{cleanCnic.Substring(12, 1)}";
+    }
+    
+    return cnic;
+}
+
+private bool IsValidPhoneNumber(string phone)
+{
+    if (string.IsNullOrWhiteSpace(phone))
+        return false;
+    
+    // Remove any spaces, dashes, or parentheses
+    string cleanPhone = Regex.Replace(phone, @"[\s\-\(\)]", "");
+    
+    // Check if it starts with 0 and is exactly 11 digits
+    return cleanPhone.Length == 11 && cleanPhone.StartsWith("0") && cleanPhone.All(char.IsDigit);
+}
+
+private async Task<bool> CheckForDuplicatesAsync()
+{
+    bool isValid = true;
+    
+    // Check CNIC duplicate
+    if (!string.IsNullOrWhiteSpace(CNIC))
+    {
+        try
         {
-            if (string.IsNullOrWhiteSpace(FirstName))
+            bool cnicExists = await ReceptionistService.CheckCNICExistsAsync(CNIC);
+            if (cnicExists)
             {
-                ValidationErrors["FirstName"] = "First name is required";
-                isValid = false;
-            }
-            
-            if (string.IsNullOrWhiteSpace(LastName))
-            {
-                ValidationErrors["LastName"] = "Last name is required";
-                isValid = false;
-            }
-            
-            if (string.IsNullOrWhiteSpace(CNIC))
-            {
-                ValidationErrors["CNIC"] = "CNIC is required";
-                isValid = false;
-            }
-            else if (CNIC.Length != 13)
-            {
-                ValidationErrors["CNIC"] = "CNIC must be 13 digits";
-                isValid = false;
-            }
-            
-            if (DateOfBirth == default || DateOfBirth > DateTime.Today)
-            {
-                ValidationErrors["DateOfBirth"] = "Please enter a valid date of birth";
-                isValid = false;
-            }
-            
-            if (string.IsNullOrWhiteSpace(Gender))
-            {
-                ValidationErrors["Gender"] = "Gender is required";
-                isValid = false;
-            }
-            
-            if (string.IsNullOrWhiteSpace(Phone))
-            {
-                ValidationErrors["Phone"] = "Phone number is required";
-                isValid = false;
-            }
-            else if (Phone.Length < 10)
-            {
-                ValidationErrors["Phone"] = "Please enter a valid phone number";
+                ValidationErrors["CNIC"] = "A patient with this CNIC already exists";
                 isValid = false;
             }
         }
-        else if (!IsNewPatient && SelectedPatient == null)
+        catch (Exception ex)
         {
-            ValidationErrors["General"] = "Please select an existing patient or choose 'New Patient'";
+            Console.WriteLine($"Error checking CNIC: {ex.Message}");
+        }
+    }
+    
+    // Check Username duplicate (only for new patients)
+    if (IsNewPatient && !string.IsNullOrWhiteSpace(Username))
+    {
+        try
+        {
+            bool usernameExists = await ReceptionistService.CheckUserNameExistsAsync(Username);
+            if (usernameExists)
+            {
+                ValidationErrors["Username"] = "This username is already taken";
+                isValid = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking username: {ex.Message}");
+        }
+    }
+    
+    return isValid;
+}
+    
+   private async Task<bool> ValidateStep1Async()
+{
+    bool isValid = true;
+    ValidationErrors.Clear();
+    
+    if (IsNewPatient || SelectedPatient != null)
+    {
+        if (string.IsNullOrWhiteSpace(FirstName))
+        {
+            ValidationErrors["FirstName"] = "First name is required";
             isValid = false;
         }
         
-        return isValid;
-    }
-    
-    private bool ValidateStep2()
-    {
-        bool isValid = true;
-        
-        if (IsNewPatient)
+        if (string.IsNullOrWhiteSpace(LastName))
         {
-            if (string.IsNullOrWhiteSpace(Address))
-            {
-                ValidationErrors["Address"] = "Address is required for new patients";
-                isValid = false;
-            }
-            
-            if (string.IsNullOrWhiteSpace(Username))
-            {
-                ValidationErrors["Username"] = "Username is required";
-                isValid = false;
-            }
-            else if (Username.Length < 3)
-            {
-                ValidationErrors["Username"] = "Username must be at least 3 characters";
-                isValid = false;
-            }
-            
-            if (string.IsNullOrWhiteSpace(PlainTextPassword))
-            {
-                ValidationErrors["Password"] = "Password is required";
-                isValid = false;
-            }
-            else if (PlainTextPassword.Length < 6)
-            {
-                ValidationErrors["Password"] = "Password must be at least 6 characters";
-                isValid = false;
-            }
+            ValidationErrors["LastName"] = "Last name is required";
+            isValid = false;
         }
         
-        return isValid;
+        if (string.IsNullOrWhiteSpace(CNIC))
+        {
+            ValidationErrors["CNIC"] = "CNIC is required";
+            isValid = false;
+        }
+        else if (!IsValidCNIC(CNIC))
+        {
+            ValidationErrors["CNIC"] = "CNIC must be in format 12345-1234567-1 (13 digits)";
+            isValid = false;
+        }
+        else
+        {
+            // Format CNIC automatically
+            CNIC = FormatCNIC(CNIC);
+        }
+        
+        if (DateOfBirth == default || DateOfBirth > DateTime.Today)
+        {
+            ValidationErrors["DateOfBirth"] = "Please enter a valid date of birth";
+            isValid = false;
+        }
+        else if (DateOfBirth > DateTime.Today.AddYears(-1))
+        {
+            ValidationErrors["DateOfBirth"] = "Patient must be at least 1 year old";
+            isValid = false;
+        }
+        
+        if (string.IsNullOrWhiteSpace(Gender))
+        {
+            ValidationErrors["Gender"] = "Gender is required";
+            isValid = false;
+        }
+        
+        if (string.IsNullOrWhiteSpace(Phone))
+        {
+            ValidationErrors["Phone"] = "Phone number is required";
+            isValid = false;
+        }
+        else if (!IsValidPhoneNumber(Phone))
+        {
+            ValidationErrors["Phone"] = "Phone number must start with 0 and be 11 digits long (e.g., 03001234567)";
+            isValid = false;
+        }
+        
+        // Check for duplicates
+        if (isValid)
+        {
+            bool noDuplicates = await CheckForDuplicatesAsync();
+            isValid = isValid && noDuplicates;
+        }
     }
+    else if (!IsNewPatient && SelectedPatient == null)
+    {
+        ValidationErrors["General"] = "Please select an existing patient or choose 'New Patient'";
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+// Enhanced ValidateStep2 method
+private async Task<bool> ValidateStep2Async()
+{
+    bool isValid = true;
+    ValidationErrors.Clear();
+    
+    if (IsNewPatient)
+    {
+        if (string.IsNullOrWhiteSpace(Address))
+        {
+            ValidationErrors["Address"] = "Address is required for new patients";
+            isValid = false;
+        }
+        
+        if (string.IsNullOrWhiteSpace(Username))
+        {
+            ValidationErrors["Username"] = "Username is required";
+            isValid = false;
+        }
+        else if (Username.Length < 5)
+        {
+            ValidationErrors["Username"] = "Username must be at least 5 characters long";
+            isValid = false;
+        }
+        else if (Username.Contains(" "))
+        {
+            ValidationErrors["Username"] = "Username cannot contain spaces";
+            isValid = false;
+        }
+        else if (!Regex.IsMatch(Username, @"^[a-zA-Z0-9_]+$"))
+        {
+            ValidationErrors["Username"] = "Username can only contain letters, numbers, and underscores";
+            isValid = false;
+        }
+        
+        if (string.IsNullOrWhiteSpace(PlainTextPassword))
+        {
+            ValidationErrors["Password"] = "Password is required";
+            isValid = false;
+        }
+        else if (PlainTextPassword.Length < 5)
+        {
+            ValidationErrors["Password"] = "Password must be at least 5 characters long";
+            isValid = false;
+        }
+        
+        // Check username duplicate if validation passed so far
+        if (isValid && !string.IsNullOrWhiteSpace(Username))
+        {
+            try
+            {
+                bool usernameExists = await ReceptionistService.CheckUserNameExistsAsync(Username);
+                if (usernameExists)
+                {
+                    ValidationErrors["Username"] = "This username is already taken";
+                    isValid = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking username: {ex.Message}");
+            }
+        }
+    }
+    
+    return isValid;
+}
     
     private bool ValidateStep3()
     {
@@ -1967,4 +2175,3 @@
         NavigationManager.NavigateTo("/receptionist/dashboard");
     }
 }
-

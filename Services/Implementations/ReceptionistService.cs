@@ -869,22 +869,79 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
     var newIdObj = await command.ExecuteScalarAsync();
     return Convert.ToInt32(newIdObj);
 }
-        public async Task<bool> CancelAppointmentAsync(int appointmentId, int receptionistId)
-        {
-            const string sql = @"
+     public async Task<bool> CancelAppointmentAsync(int appointmentId, int receptionistId)
+{
+    const string sql = @"
         UPDATE dbo.Appointments 
         SET Status = 'Cancelled', ReceptionistId = @ReceptionistId, UpdatedAt = SYSUTCDATETIME() 
         WHERE AppointmentId = @AppointmentId";
 
-            using var connection = new SqlConnection(_connectionString);
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@AppointmentId", appointmentId);
-            command.Parameters.AddWithValue("@ReceptionistId", receptionistId);
+    using var connection = new SqlConnection(_connectionString);
+    await connection.OpenAsync();
 
-            await connection.OpenAsync();
-            var rowsAffected = await command.ExecuteNonQueryAsync();
-            return rowsAffected > 0;
+    // Get doctor and patient IDs for notification
+    int doctorId = 0, patientId = 0;
+    string doctorName = "", patientName = "";
+    string getIdsSql = @"
+        SELECT a.DoctorId, a.PatientId, du.FullName AS DoctorName, pu.FullName AS PatientName
+        FROM dbo.Appointments a
+        INNER JOIN dbo.Users du ON a.DoctorId = du.UserId
+        INNER JOIN dbo.Users pu ON a.PatientId = pu.UserId
+        WHERE a.AppointmentId = @AppointmentId";
+    using (var getCmd = new SqlCommand(getIdsSql, connection))
+    {
+        getCmd.Parameters.AddWithValue("@AppointmentId", appointmentId);
+        using var reader = await getCmd.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            doctorId = reader.GetInt32(reader.GetOrdinal("DoctorId"));
+            patientId = reader.GetInt32(reader.GetOrdinal("PatientId"));
+            doctorName = reader.GetString(reader.GetOrdinal("DoctorName"));
+            patientName = reader.GetString(reader.GetOrdinal("PatientName"));
         }
+    }
+
+    using var command = new SqlCommand(sql, connection);
+    command.Parameters.AddWithValue("@AppointmentId", appointmentId);
+    command.Parameters.AddWithValue("@ReceptionistId", receptionistId);
+
+    var rowsAffected = await command.ExecuteNonQueryAsync();
+
+    if (rowsAffected > 0)
+    {
+        // Send notification to doctor
+        await SendNotificationToDoctorAsync(
+            doctorId,
+            "Appointment Cancelled",
+            $"The appointment with patient {patientName} has been cancelled by the receptionist."
+        );
+
+        // Send notification to patient
+        await SendNotificationToPatientAsync(
+            patientId,
+            "Appointment Cancelled",
+            $"Your appointment with Dr. {doctorName} has been cancelled by the receptionist."
+        );
+        return true;
+    }
+    return false;
+}
+
+// Add this helper method in ReceptionistService:
+public async Task SendNotificationToPatientAsync(int patientId, string title, string message)
+{
+    const string sql = @"
+        INSERT INTO dbo.Notifications (UserId, Title, Message, IsRead, CreatedAt)
+        VALUES (@PatientId, @Title, @Message, 0, SYSUTCDATETIME())";
+
+    using var connection = new SqlConnection(_connectionString);
+    await connection.OpenAsync();
+    using var cmd = new SqlCommand(sql, connection);
+    cmd.Parameters.AddWithValue("@PatientId", patientId);
+    cmd.Parameters.AddWithValue("@Title", title);
+    cmd.Parameters.AddWithValue("@Message", message);
+    await cmd.ExecuteNonQueryAsync();
+}
 
         public async Task<List<PatientProfileDto>> GetAllPatientsAsync(int pageNumber = 1, int pageSize = 20)
         {
@@ -1010,6 +1067,60 @@ public async Task ChangePasswordAsync(EditReceptionistPassword dto)
             }
             return appointments;
         }
+      public async Task MarkNotificationAsReadAsync(int notificationId)
+{
+    try
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string query = @"
+            UPDATE dbo.Notifications
+            SET IsRead = 1
+            WHERE UserId = @ReceptionistId AND IsRead = 0;
+        ";
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@NotificationId", notificationId);
+
+        await command.ExecuteNonQueryAsync();
+
+        _logger.LogInformation("Notification marked as read: {NotificationId}", notificationId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error marking notification as read: {NotificationId}", notificationId);
+        throw;
+    }
+}
+
+public async Task MarkAllNotificationsAsReadAsync(int receptionistId)
+{
+    try
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        const string query = @"
+            UPDATE dbo.Notifications
+            SET IsRead = 1
+            WHERE UserId = @ReceptionistId AND IsRead = 0;
+        ";
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@ReceptionistId", receptionistId);
+
+        var rowsAffected = await command.ExecuteNonQueryAsync();
+
+        _logger.LogInformation("Marked {Count} notifications as read for receptionist: {ReceptionistId}",
+                                rowsAffected, receptionistId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error marking all notifications as read for receptionist: {ReceptionistId}", receptionistId);
+        throw;
+    }
+}
 
         public async Task<bool> UpdatePatientProfileAsync(PatientProfileDto patientProfile)
         {

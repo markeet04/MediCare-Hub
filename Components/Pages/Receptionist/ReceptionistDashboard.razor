@@ -156,7 +156,17 @@
                                 </div>
                             </div>
                         }
+                          if (Notifications.Count > 5)
+    {
+        <div class="p-3 border-top text-center">
+            <button class="btn btn-sm btn-primary rounded-pill px-4" @onclick="ViewAllNotifications">
+                View All Notifications
+            </button>
+        </div>
+    }
                     }
+                    
+                    
                     else
                     {
                         <div class="p-4 text-center text-muted">
@@ -329,7 +339,7 @@
                             <tbody>
                                 @foreach (var appointment in FilteredAppointments.Take(5))
                                 {
-                                    <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)">
+                                    <tr class="appointment-row">
                                         <td class="ps-4">
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
@@ -379,7 +389,6 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
                 <h5 class="mb-0 fw-bold">Recent Activities</h5>
-                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="NavigateToCheckIns">View All</button>
             </div>
             <div class="card-body p-0">
                 @if (RecentAppointments != null && RecentAppointments.Any())
@@ -387,7 +396,7 @@
                     <div class="list-group list-group-flush">
                         @foreach (var appointment in RecentAppointments.Take(3))
                         {
-                            <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewPatientDetails(appointment.PatientId)">
+                            <div class="list-group-item px-4 py-3 d-flex activity-item" >
                                 <div class="me-3">
                                     <div class="rounded-circle @GetActivityIconClass(appointment.Status) text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
                                         <i class="bi @GetActivityIcon(appointment.Status)"></i>
@@ -598,7 +607,7 @@ var notifications      = await ReceptionistService.GetReceptionistNotificationsA
             if (CurrentUserSession == null || Notifications == null) return;
             
             // You'll need to add this method to IReceptionistService
-            // await ReceptionistService.MarkAllNotificationsAsReadAsync(CurrentUserSession.UserId);
+             await ReceptionistService.MarkAllNotificationsAsReadAsync(CurrentUserSession.UserId);
             
             foreach (var notification in Notifications)
             {
@@ -619,7 +628,20 @@ var notifications      = await ReceptionistService.GetReceptionistNotificationsA
         Nav.NavigateTo("/receptionist/profile");
         ShowUserMenu = false;
     }
+// ...existing code...
+private bool ShowAllNotificationsModal = false;
 
+private void ViewAllNotifications()
+{
+    ShowAllNotificationsModal = true;
+    ShowNotifications = false;
+}
+
+private void CloseAllNotificationsModal()
+{
+    ShowAllNotificationsModal = false;
+}
+// ...existing code...
     private void GoToSettings()
     {
         Nav.NavigateTo("/receptionist/settings");
@@ -744,7 +766,7 @@ var notifications      = await ReceptionistService.GetReceptionistNotificationsA
     
     private void NavigateToPatientSearch()
     {
-        Nav.NavigateTo("/receptionist/patient-search");
+        Nav.NavigateTo("/receptionist/patient-directory");
     }
     
     // Action methods

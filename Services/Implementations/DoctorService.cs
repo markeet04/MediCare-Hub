@@ -213,8 +213,33 @@ public async Task UpdatePatientHistoryAsync(PatientHistoryDto dto)
 
     using var cmd = new SqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@HistoryId", dto.HistoryId);
-    // Add all the same parameters as in AddPatientHistoryAsync
-    
+    cmd.Parameters.AddWithValue("@EncounterDate", dto.EncounterDate);
+    cmd.Parameters.AddWithValue("@Symptoms", (object?)dto.Symptoms ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Notes", (object?)dto.Notes ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@WeightKg", (object?)dto.WeightKg ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@HeightCm", (object?)dto.HeightCm ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@BMI", (object?)dto.BMI ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@PulseBPM", (object?)dto.PulseBPM ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@BloodPressure", (object?)dto.BloodPressure ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@TemperatureC", (object?)dto.TemperatureC ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@RespiratoryRate", (object?)dto.RespiratoryRate ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@OxygenSatPct", (object?)dto.OxygenSatPct ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Ethnicity", (object?)dto.Ethnicity ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@SmokingStatus", (object?)dto.SmokingStatus ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@TotalCholesterol", (object?)dto.TotalCholesterol ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@HDLCholesterol", (object?)dto.HDLCholesterol ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@DiabetesType", (object?)dto.DiabetesType ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@FamilyCVDHistory", (object?)dto.FamilyCVDHistory ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@OnBPMedication", (object?)dto.OnBPMedication ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@OnStatin", (object?)dto.OnStatin ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@WaistCm", (object?)dto.WaistCm ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@PhysicalActivity", (object?)dto.PhysicalActivity ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@EatsVegetablesDaily", (object?)dto.EatsVegetablesDaily ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@HighBloodGlucoseHx", (object?)dto.HighBloodGlucoseHx ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@FamilyDiabetesHistory", (object?)dto.FamilyDiabetesHistory ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Confusion", (object?)dto.Confusion ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@BloodUreaMmolPerL", (object?)dto.BloodUreaMmolPerL ?? DBNull.Value);
+
     await cmd.ExecuteNonQueryAsync();
 }
         public async Task<DoctorProfileDto?> GetDoctorProfileAsync(int doctorId)

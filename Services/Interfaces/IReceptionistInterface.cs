@@ -5,6 +5,8 @@ namespace BlazorApp1.Services.Interfaces
     public interface IReceptionistService
     {
         // Dashboard Statistics
+            Task MarkNotificationAsReadAsync(int notificationId);
+    Task MarkAllNotificationsAsReadAsync(int adminId);
         Task<int> GetTodayAppointmentsCountAsync();
         Task<int> GetPendingAppointmentsCountAsync();
         Task<int> GetTotalPatientsCountAsync();
