@@ -18,6 +18,8 @@
     private bool showProfileDropdown = false;
     private bool IsLoading = true;
     private string? ErrorMessage;
+    private bool showAllNotificationsModal = false;
+
 protected override async Task OnInitializedAsync()
     {
         try
@@ -120,6 +122,17 @@ protected override async Task OnInitializedAsync()
             _ => "N/A"
         };
     }
+
+    private void OpenAllNotificationsModal()
+    {
+        showAllNotificationsModal = true;
+        showNotificationDropdown = false;
+    }
+
+    private void CloseAllNotificationsModal()
+    {
+        showAllNotificationsModal = false;
+    }
 }
 
 <!-- Hero Section -->
@@ -166,9 +179,9 @@ protected override async Task OnInitializedAsync()
                                         </div>
                                     }
                                     <div class="dropdown-divider"></div>
-                                    <a href="/patient/notifications" class="dropdown-item text-center text-primary">
+                                    <button class="dropdown-item text-center text-primary" @onclick="OpenAllNotificationsModal" style="background:none;border:none;width:100%;">
                                         View All Notifications
-                                    </a>
+                                    </button>
                                 }
                                 else
                                 {
@@ -207,9 +220,7 @@ protected override async Task OnInitializedAsync()
                                 <a href="/patient/profile" class="dropdown-item">
                                     <i class="bi bi-person me-2"></i> Profile
                                 </a>
-                                <a href="/patient/settings" class="dropdown-item">
-                                    <i class="bi bi-gear me-2"></i> Settings
-                                </a>
+   
                                 <div class="dropdown-divider"></div>
                                 <button class="dropdown-item text-danger" @onclick="Logout">
                                     <i class="bi bi-box-arrow-right me-2"></i> Logout
@@ -388,6 +399,65 @@ protected override async Task OnInitializedAsync()
         </div>
     </div>
 </section>
+
+<!-- View All Notifications Modal -->
+@if (showAllNotificationsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">All Notifications</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAllNotificationsModal"></button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    @if (recentNotifications?.Any() == true)
+                    {
+                        @foreach (var notification in recentNotifications.OrderByDescending(n => n.CreatedAt))
+                        {
+                            <div class="p-3 border-bottom @(notification.IsRead ? "" : "bg-light")">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3 flex-shrink-0">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                            <i class="bi bi-info-circle text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        @if (!string.IsNullOrEmpty(notification.Title))
+                                        {
+                                            <h6 class="mb-1 fw-semibold">@notification.Title</h6>
+                                        }
+                                        @if (!string.IsNullOrEmpty(notification.Message))
+                                        {
+                                            <p class="mb-1 text-muted small">@notification.Message</p>
+                                        }
+                                        <small class="text-muted">@notification.CreatedAt.ToString("MMM dd, HH:mm")</small>
+                                    </div>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary rounded-circle" style="width: 8px; height: 8px;"></div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-bell-slash fs-1 mb-3"></i>
+                            <p>No notifications</p>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAllNotificationsModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Custom Styles -->
 <style>  

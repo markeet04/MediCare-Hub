@@ -163,7 +163,7 @@
                                     <div class="date-selector">
                                         <h5>Select Date</h5>
                                         <div class="calendar-grid">
-                                            @for (int i = 1; i < 15; i++)
+                                            @for (int i = 0; i < 15; i++)
                                             {
                                                 var date = DateTime.Today.AddDays(i);
                                                 var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
@@ -182,7 +182,7 @@
                                     </div>
 
                                     <!-- Time Slot Selection -->
-                                    @if (VisitDate != default && VisitDate > DateTime.Today)
+                                    @if (VisitDate != default && VisitDate >= DateTime.Today)
                                     {
                                         <div class="time-selector">
                                             <h5>Available Time Slots for @VisitDate.ToString("MMM dd, yyyy")</h5>
@@ -278,7 +278,7 @@
     private PatientProfileDto? CurrentPatient;
     
     // Form fields
-    private DateTime VisitDate { get; set; } = DateTime.Today.AddDays(1);
+    private DateTime VisitDate { get; set; } = DateTime.Today;
     private TimeOnly VisitTime { get; set; } = new TimeOnly(9, 0);
     private string Department { get; set; } = "";
     private int DoctorId { get; set; } = 0;
@@ -357,7 +357,7 @@
             var doctor = AvailableDoctors.FirstOrDefault(d => d.DoctorId == DoctorId);
             SelectedDoctorFee = doctor?.ConsultationFee;
             
-            if (VisitDate != default && VisitDate > DateTime.Today)
+            if (VisitDate != default && VisitDate == DateTime.Today)
             {
                 await LoadAvailableSlots();
             }
@@ -512,11 +512,11 @@
             isValid = false;
         }
 
-        if (VisitDate <= DateTime.Today)
-        {
-            ValidationErrors["VisitDate"] = "Please select a future date";
-            isValid = false;
-        }
+   if (VisitDate < DateTime.Today)
+{
+    ValidationErrors["VisitDate"] = "Please select today or a future date";
+    isValid = false;
+}
 
         if (VisitTime == default)
         {

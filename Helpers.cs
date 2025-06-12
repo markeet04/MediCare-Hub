@@ -8,10 +8,7 @@ namespace BlazorApp1.Helpers
         private static readonly decimal BaseSurvivalMale10Years = 0.977268040180206m;
         private static readonly decimal BaseSurvivalFemale10Years = 0.988876402378082m;
 
-        /// <summary>
-        /// Calculates 10-year cardiovascular disease risk using the full QRISK-3 algorithm.
-        /// Uses the official published coefficients and equations from QRISK.org.
-        /// </summary>
+      
         public static decimal Calculate(
             int age,
             bool isMale,
@@ -116,9 +113,6 @@ namespace BlazorApp1.Helpers
             };
         }
 
-        /// <summary>
-        /// Maps a numeric CVD risk percentage to a category.
-        /// </summary>
         public static string GetRiskCategory(decimal riskPercentage)
         {
             return riskPercentage switch

@@ -2080,46 +2080,51 @@ private async Task<bool> ValidateStep2Async()
         StateHasChanged();
     }
 
-    private async Task LoadAvailableSlots()
+   private async Task LoadAvailableSlots()
+{
+    if (DoctorId <= 0 || VisitDate == default) return;
+
+    _isLoadingSlots = true;
+    StateHasChanged();
+
+    try
     {
-        if (DoctorId <= 0 || VisitDate == default) return;
-        
-        _isLoadingSlots = true;
-        StateHasChanged();
-        
-        try
+        AvailableTimeSlots.Clear();
+
+        var startTime = new TimeOnly(9, 0);
+        var endTime = new TimeOnly(17, 0);
+
+        // If booking for today, skip past time slots
+        TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
+        for (var time = startTime; time < endTime; time = time.AddMinutes(30))
         {
-            AvailableTimeSlots.Clear();
-            
-            // Generate time slots (9 AM to 5 PM, 30-minute intervals)
-            var startTime = new TimeOnly(9, 0);
-            var endTime = new TimeOnly(17, 0);
-            
-            for (var time = startTime; time < endTime; time = time.AddMinutes(30))
+            // Only show future slots for today
+            if (VisitDate.Date == DateTime.Today && time <= now)
+                continue;
+
+            var appointmentDateTime = new DateTime(
+                VisitDate.Year, VisitDate.Month, VisitDate.Day,
+                time.Hour, time.Minute, 0);
+
+            var isTaken = await ReceptionistService.IsDoctorSlotTakenAsync(DoctorId, appointmentDateTime);
+
+            AvailableTimeSlots.Add(new TimeSlotDto
             {
-                var appointmentDateTime = new DateTime(
-                    VisitDate.Year, VisitDate.Month, VisitDate.Day,
-                    time.Hour, time.Minute, 0);
-                
-                var isTaken = await ReceptionistService.IsDoctorSlotTakenAsync(DoctorId, appointmentDateTime);
-                
-                AvailableTimeSlots.Add(new TimeSlotDto
-                {
-                    Time = time,
-                    IsTaken = isTaken
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading slots: {ex.Message}");
-        }
-        finally
-        {
-            _isLoadingSlots = false;
-            StateHasChanged();
+                Time = time,
+                IsTaken = isTaken
+            });
         }
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error loading slots: {ex.Message}");
+    }
+    finally
+    {
+        _isLoadingSlots = false;
+        StateHasChanged();
+    }
+}
     
     private void ClearPatientFields()
     {

@@ -1,12 +1,3 @@
-@*
-Assumptions:
-- AuthStateProvider has GetCurrentUserSessionAsync() method returning UserSessionDto with UserId and Role
-- IDoctorService methods: GetDoctorLabOrdersAsync, CreateLabOrderAsync, GetAssignedPatientsAsync, GetDoctorAppointmentsAsync
-- GetLabOrderByIdAsync method assumed to exist (or will need to be added to IDoctorService)
-- PatientSummaryDto has PatientId and Name properties
-- AppointmentDto has AppointmentId, Date, and PatientName properties
-- LabOrderDto includes TestType property (added assumption)
-*@
 
 @page "/doctor/laborders"
 @layout DoctorLayout

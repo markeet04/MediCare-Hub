@@ -82,12 +82,7 @@
                         </a>
                     </li>
 
-                    <li class="nav-item mb-2">
-                        <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/manage-appointments") ? "active bg-white text-primary" : "")" href="/receptionist/manage-appointments" data-page-title="Manage Appointments">
-                            <i class="bi bi-calendar-week me-3"></i>
-                            <span>Manage Appointments</span>
-                        </a>
-                    </li>
+                 
                     <li class="nav-item mb-2">
                         <a class="nav-link rounded-pill text-white d-flex align-items-center py-2 px-3 sidebar-link @(Nav.Uri.Contains("/patient-directory") ? "active bg-white text-primary" : "")" href="/receptionist/patient-directory" data-page-title="Patient Directory">
                             <i class="bi bi-people me-3"></i>
@@ -235,22 +230,55 @@
         --sidebar-width: 260px;
         --sidebar-width-collapsed: 0px;
     }
-    
+
     body {
         font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
         overflow-x: hidden;
     }
-    
+
     /* Sidebar styles */
     .sidebar {
-        width: var(--sidebar-width);
+        width: var(--sidebar-width) !important;
+        min-width: var(--sidebar-width) !important;
+        max-width: var(--sidebar-width) !important;
         transition: all 0.3s ease;
         z-index: 1030;
+        flex-shrink: 0;
+        box-sizing: border-box;
+        background-color: var(--bs-primary) !important;
     }
-    
+
     .sidebar-content {
         overflow-y: auto;
         max-height: calc(100vh - 60px - 58px);
+    }
+
+    /* Main content fills remaining space, no margin */
+    .flex-grow-1.d-flex.overflow-hidden > main {
+        width: 100%;
+        margin-left: 0;
+        transition: none;
+    }
+
+    @@media (max-width: 767.98px) {
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: calc(-1 * var(--sidebar-width));
+            height: 100vh;
+            box-shadow: none;
+            width: var(--sidebar-width) !important;
+            min-width: var(--sidebar-width) !important;
+            max-width: var(--sidebar-width) !important;
+        }
+        .sidebar[data-mobile-status="open"] {
+            left: 0;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .flex-grow-1.d-flex.overflow-hidden > main {
+            width: 100%;
+            margin-left: 0;
+        }
     }
     
     .card {

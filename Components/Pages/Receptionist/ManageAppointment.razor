@@ -4,7 +4,12 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
 @inject BlazorApp1.Services.Interfaces.IReceptionistService ReceptionistService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @using BlazorApp1.Models.DTOs
+@using BlazorApp1.Authentication
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject BlazorApp1.Authentication.AuthStateProvider AuthStateProvider
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -20,15 +25,13 @@
             <div class="col-md-3">
                 <label class="form-label">Date Range</label>
                 <div class="input-group">
-                    <!-- Date Range -->
-                    <input type="date" class="form-control" @bind="StartDate" @bind:event="oninput" />
+                    <input type="date" class="form-control" @bind="StartDate" />
                     <span class="input-group-text">to</span>
-                    <input type="date" class="form-control" @bind="EndDate" @bind:event="oninput" />
+                    <input type="date" class="form-control" @bind="EndDate" />
                 </div>
             </div>
             <div class="col-md-2">
                 <label class="form-label">Status</label>
-                <!-- Status -->
                 <select class="form-select" @bind="StatusFilter">
                     <option value="">All Status</option>
                     @if (AvailableStatuses != null)
@@ -42,7 +45,6 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Doctor</label>
-                <!-- Doctor -->
                 <select class="form-select" @bind="DoctorFilter">
                     <option value="">All Doctors</option>
                     @if (Doctors != null)
@@ -56,7 +58,7 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label">Patient ID</label>
-                <input type="text" class="form-control" placeholder="Patient ID" @bind="PatientIdFilter" @bind:event="oninput" @onkeyup="HandleSearch" />
+                <input type="text" class="form-control" placeholder="Patient ID" @bind="PatientIdFilter" />
             </div>
         </div>
         <hr />
@@ -71,21 +73,18 @@
                             type="text" 
                             class="form-control border-start-0 ps-0" 
                             placeholder="Search patient name, phone..." 
-                            @bind="SearchQuery" 
-                            @bind:event="oninput" 
-                            @onkeyup="HandleSearch" />
+                            @bind="SearchQuery" />
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="d-flex align-items-center mt-1">
-                    <!-- Checkboxes -->
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="includeCancelled" @bind="IncludeCancelled">
+                        <input class="form-check-input" type="checkbox" id="includeCancelled" @bind="IncludeCancelled" />
                         <label class="form-check-label" for="includeCancelled">Include cancelled</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="includeCompleted" @bind="IncludeCompleted">
+                        <input class="form-check-input" type="checkbox" id="includeCompleted" @bind="IncludeCompleted" />
                         <label class="form-check-label" for="includeCompleted">Include completed</label>
                     </div>
                 </div>
@@ -103,30 +102,6 @@
 </div>
 
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white py-3 border-0">
-        <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-                <button class="nav-link @(CurrentTab == "today" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("today")'>
-                    <i class="bi bi-calendar-day me-1"></i> Today (@TodayCount)
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link @(CurrentTab == "upcoming" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("upcoming")'>
-                    <i class="bi bi-calendar-week me-1"></i> Upcoming (@UpcomingCount)
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link @(CurrentTab == "pending" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("pending")'>
-                    <i class="bi bi-clock me-1"></i> Pending (@PendingCount)
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link @(CurrentTab == "all" ? "active text-primary" : "")" @onclick='() => SetCurrentTab("all")'>
-                    <i class="bi bi-list-ul me-1"></i> All Appointments
-                </button>
-            </li>
-        </ul>
-    </div>
     <div class="card-body p-0">
         @if (IsLoading)
         {
@@ -134,6 +109,14 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
+            </div>
+        }
+        else if (!IsAuthenticated)
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                <h5 class="mt-3 text-warning">Authentication Required</h5>
+                <p class="text-muted">Please log in to access appointment management</p>
             </div>
         }
         else if (FilteredAppointments.Any())
@@ -152,7 +135,7 @@
                     <tbody>
                         @foreach (var appointment in GetPaginatedAppointments())
                         {
-                            <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)">
+                            <tr class="appointment-row" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)" style="cursor: pointer;">
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
@@ -183,15 +166,44 @@
                                             <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)"><i class="bi bi-eye me-2"></i>View Details</button></li>
                                             @if (appointment.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
                                             {
-<li>
-   
-</li>                                            }
-                                            @if (!appointment.Status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !appointment.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => CheckInPatient(appointment.AppointmentId)"><i class="bi bi-box-arrow-in-right me-2"></i>Check In</button></li>
-                                                <li><button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => RescheduleAppointment(appointment.AppointmentId)"><i class="bi bi-calendar-check me-2"></i>Reschedule</button></li>
+                                                <li>
+                                                    <button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => CheckInPatient(appointment.AppointmentId)">
+                                                        <i class="bi bi-box-arrow-in-right me-2"></i>Check In
+                                                    </button>
+                                                </li>
                                                 <li><hr class="dropdown-divider"></li>
-                                                <li><button class="dropdown-item text-danger" @onclick:stopPropagation="true" @onclick="() => CancelAppointment(appointment.AppointmentId)"><i class="bi bi-x-lg me-2"></i>Cancel</button></li>
+                                                <li>
+                                                    <button class="dropdown-item text-danger" @onclick:stopPropagation="true" @onclick="() => CancelAppointment(appointment.AppointmentId)">
+                                                        <i class="bi bi-x-circle me-2"></i>Cancel Appointment
+                                                    </button>
+                                                </li>
+                                            }
+                                            @if (appointment.Status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <li>
+                                                    <button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => CheckInPatient(appointment.AppointmentId)">
+                                                        <i class="bi bi-box-arrow-in-right me-2"></i>Check In
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => RescheduleAppointment(appointment.AppointmentId)">
+                                                        <i class="bi bi-calendar-check me-2"></i>Reschedule
+                                                    </button>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <button class="dropdown-item text-danger" @onclick:stopPropagation="true" @onclick="() => CancelAppointment(appointment.AppointmentId)">
+                                                        <i class="bi bi-x-lg me-2"></i>Cancel
+                                                    </button>
+                                                </li>
+                                            }
+                                            @if (appointment.Status.Equals("Checked-In", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <li>
+                                                    <button class="dropdown-item" @onclick:stopPropagation="true" @onclick="() => MarkAsCompleted(appointment.AppointmentId)">
+                                                        <i class="bi bi-check-circle me-2"></i>Mark Completed
+                                                    </button>
+                                                </li>
                                             }
                                         </ul>
                                     </div>
@@ -246,15 +258,33 @@
     </div>
 }
 
+<!-- Loading overlay for actions -->
+@if (IsPerformingAction)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="card p-4">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border text-primary me-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>@ActionMessage</span>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    // Filter properties
-    private string CurrentTab { get; set; } = "today";
+    // Authentication properties
+    private bool IsAuthenticated { get; set; } = false;
+    private int CurrentReceptionistId { get; set; } = 0;
+    private string CurrentReceptionistName { get; set; } = "";
+
+    // Filter properties - SIMPLIFIED WITHOUT AUTO-FILTERING
     private string SearchQuery { get; set; } = "";
     private string PatientIdFilter { get; set; } = "";
     private DateTime StartDate { get; set; } = DateTime.Today;
     private DateTime EndDate { get; set; } = DateTime.Today.AddDays(7);
     private string StatusFilter { get; set; } = "";
-    private string SpecialtyFilter { get; set; } = "";
     private string DoctorFilter { get; set; } = "";
     private bool IncludeCancelled { get; set; } = false;
     private bool IncludeCompleted { get; set; } = false;
@@ -272,19 +302,50 @@
     private List<AppointmentDto> FilteredAppointments { get; set; } = new();
     private List<DoctorProfileDto> Doctors { get; set; } = new();
     private List<string> AvailableStatuses { get; set; } = new();
-    private List<string> DoctorSpecialties { get; set; } = new();
     
     // Loading and state
     private bool IsLoading { get; set; } = true;
-    
-    // Tab counts
-    private int TodayCount => AllAppointments.Count(a => a.ScheduledDateTime.Date == DateTime.Today);
-    private int UpcomingCount => AllAppointments.Count(a => a.ScheduledDateTime.Date > DateTime.Today);
-    private int PendingCount => AllAppointments.Count(a => a.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase));
+    private bool IsPerformingAction { get; set; } = false;
+    private string ActionMessage { get; set; } = "";
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadInitialData();
+        await InitializeAuthentication();
+        if (IsAuthenticated)
+        {
+            await LoadInitialData();
+        }
+    }
+
+    private async Task InitializeAuthentication()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            IsAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
+            if (IsAuthenticated)
+            {
+                var userIdClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier);
+                var nameClaim = authState.User.FindFirst(ClaimTypes.Name);
+
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int receptionistId))
+                {
+                    CurrentReceptionistId = receptionistId;
+                    CurrentReceptionistName = nameClaim?.Value ?? "Unknown";
+                }
+                else
+                {
+                    IsAuthenticated = false;
+                    await JSRuntime.InvokeVoidAsync("console.error", "Unable to retrieve receptionist ID from authentication state");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            IsAuthenticated = false;
+            await JSRuntime.InvokeVoidAsync("console.error", "Authentication initialization error: " + ex.Message);
+        }
     }
 
     private async Task LoadInitialData()
@@ -295,15 +356,9 @@
         try
         {
             // Load all required data
-            var loadTasks = new[]
-            {
-                LoadAppointments(),
-                LoadDoctors(),
-                LoadStatuses(),
-                LoadSpecialties()
-            };
-
-            await Task.WhenAll(loadTasks);
+            await LoadAppointments();
+            await LoadDoctors();
+            await LoadStatuses();
             
             // Apply initial filters
             ApplyFilters();
@@ -311,6 +366,7 @@
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("console.error", "Error loading data: " + ex.Message);
+            await ShowToast("Error loading appointment data. Please refresh the page.", "error");
         }
         finally
         {
@@ -321,75 +377,93 @@
 
     private async Task LoadAppointments()
     {
-        AllAppointments = await ReceptionistService.GetAllAppointmentsAsync(1, 1000); // Load all for filtering
+        try
+        {
+            AllAppointments = await ReceptionistService.GetAllAppointmentsAsync(1, int.MaxValue);
+            await JSRuntime.InvokeVoidAsync("console.log", $"Loaded {AllAppointments.Count} appointments");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading appointments: " + ex.Message);
+            AllAppointments = new List<AppointmentDto>();
+        }
     }
 
     private async Task LoadDoctors()
     {
-        Doctors = await ReceptionistService.GetAllDoctorsAsync();
+        try
+        {
+            Doctors = await ReceptionistService.GetAllDoctorsAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading doctors: " + ex.Message);
+            Doctors = new List<DoctorProfileDto>();
+        }
     }
 
     private async Task LoadStatuses()
     {
-        AvailableStatuses = await ReceptionistService.GetAvailableStatusesAsync();
-    }
-
-    private async Task LoadSpecialties()
-    {
-        DoctorSpecialties = await ReceptionistService.GetDoctorSpecialtiesAsync();
+        try
+        {
+            AvailableStatuses = await ReceptionistService.GetAvailableStatusesAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading statuses: " + ex.Message);
+            AvailableStatuses = new List<string> { "Pending", "Confirmed", "Checked-In", "Completed", "Cancelled" };
+        }
     }
 
     private void ApplyFilters()
     {
-        FilteredAppointments = AllAppointments.Where(appointment => 
+        try
         {
-            // Text search filter
-            bool matchesSearch = string.IsNullOrWhiteSpace(SearchQuery) || 
-                               appointment.PatientName.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
-                               appointment.PatientPhone?.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) == true;
-
-            // Patient ID filter
-            bool matchesPatientId = string.IsNullOrWhiteSpace(PatientIdFilter) ||
-                                  appointment.PatientId.ToString().Contains(PatientIdFilter);
-
-            // Status filter
-            bool matchesStatus = string.IsNullOrWhiteSpace(StatusFilter) ||
-                               appointment.Status.Equals(StatusFilter, StringComparison.OrdinalIgnoreCase);
-
-            // Specialty filter
-     
-
-            // Doctor filter
-            bool matchesDoctor = string.IsNullOrWhiteSpace(DoctorFilter) ||
-                               appointment.DoctorId.ToString() == DoctorFilter;
-
-            // Date range filter
-           bool matchesDateRange = appointment.ScheduledDateTime.Date >= StartDate.Date &&
-                                appointment.ScheduledDateTime.Date <= EndDate.Date;
- if (CurrentTab == "all")
-            matchesDateRange = true;
-            // Include/exclude filters
-            bool includeByStatus = (appointment.Status != "Cancelled" || IncludeCancelled) &&
-                                 (appointment.Status != "Completed" || IncludeCompleted);
-
-            // Tab-specific filters
-            bool matchesTab = CurrentTab switch
+            FilteredAppointments = AllAppointments.Where(appointment =>
             {
-                "today" => appointment.ScheduledDateTime.Date == DateTime.Today,
-                "upcoming" => appointment.ScheduledDateTime.Date > DateTime.Today,
-                "pending" => appointment.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase),
-                "all" => true,
-                _ => true
-            };
+                // Text search filter
+                bool matchesSearch = string.IsNullOrWhiteSpace(SearchQuery) ||
+                                     (appointment.PatientName?.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                     (appointment.PatientPhone?.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false);
 
-            return matchesSearch && matchesPatientId && matchesStatus 
-                    && matchesDoctor && matchesDateRange && 
-                   includeByStatus && matchesTab;
-        }).OrderBy(a => a.ScheduledDateTime).ToList();
+                // Patient ID filter
+                bool matchesPatientId = string.IsNullOrWhiteSpace(PatientIdFilter) ||
+                                        appointment.PatientId.ToString().Contains(PatientIdFilter);
 
-        // Reset to first page after filtering
-        CurrentPage = 1;
-        StateHasChanged();
+                // Status filter
+                bool matchesStatus = string.IsNullOrWhiteSpace(StatusFilter) ||
+                                     appointment.Status.Equals(StatusFilter, StringComparison.OrdinalIgnoreCase);
+
+                // Doctor filter
+                bool matchesDoctor = string.IsNullOrWhiteSpace(DoctorFilter) ||
+                                     appointment.DoctorId.ToString() == DoctorFilter;
+
+                // Date range filter
+                bool matchesDateRange = appointment.ScheduledDateTime.Date >= StartDate.Date &&
+                                        appointment.ScheduledDateTime.Date <= EndDate.Date;
+
+                // Include/exclude filters
+                bool includeByStatus = true;
+                if (appointment.Status?.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) == true && !IncludeCancelled)
+                    includeByStatus = false;
+                if (appointment.Status?.Equals("Completed", StringComparison.OrdinalIgnoreCase) == true && !IncludeCompleted)
+                    includeByStatus = false;
+
+                return matchesSearch && matchesPatientId && matchesStatus
+                       && matchesDoctor && matchesDateRange && includeByStatus;
+            })
+            .OrderBy(a => a.ScheduledDateTime)
+            .ToList();
+
+            // Reset to first page after filtering
+            CurrentPage = 1;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            JSRuntime.InvokeVoidAsync("console.error", "Error applying filters: " + ex.Message);
+            FilteredAppointments = new List<AppointmentDto>();
+        }
     }
 
     private List<AppointmentDto> GetPaginatedAppointments()
@@ -400,42 +474,11 @@
             .ToList();
     }
 
-    private void SetCurrentTab(string tab)
-    {
-        CurrentTab = tab;
-        CurrentPage = 1;
-        ApplyFilters();
-    }
-
-    private void OnFilterChanged()
-    {
-        ApplyFilters();
-    }
-
-    private void OnDateFilterChanged()
-    {
-        // Ensure end date is not before start date
-        if (EndDate < StartDate)
-        {
-            EndDate = StartDate.AddDays(7);
-        }
-        ApplyFilters();
-    }
-
-    private void HandleSearch(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            ApplyFilters();
-        }
-    }
-
     private void ResetFilters()
     {
         SearchQuery = "";
         PatientIdFilter = "";
         StatusFilter = "";
-        SpecialtyFilter = "";
         DoctorFilter = "";
         StartDate = DateTime.Today;
         EndDate = DateTime.Today.AddDays(7);
@@ -484,11 +527,21 @@
         Nav.NavigateTo($"/receptionist/appointments/{appointmentId}");
     }
 
-    private async Task UpdateAppointmentStatus(int appointmentId, string newStatus)
+    private async Task CheckInPatient(int appointmentId)
     {
+        if (!IsAuthenticated || CurrentReceptionistId <= 0)
+        {
+            await ShowToast("Authentication error. Please log in again.", "error");
+            return;
+        }
+
         try
         {
-            bool success = await ReceptionistService.UpdateAppointmentStatusAsync(appointmentId, newStatus, 1); // Replace 1 with actual receptionist ID
+            IsPerformingAction = true;
+            ActionMessage = "Checking in patient...";
+            StateHasChanged();
+
+            bool success = await ReceptionistService.CheckInPatientAsync(appointmentId, CurrentReceptionistId);
             
             if (success)
             {
@@ -496,41 +549,26 @@
                 var appointment = AllAppointments.FirstOrDefault(a => a.AppointmentId == appointmentId);
                 if (appointment != null)
                 {
-                    appointment.Status = newStatus;
+                    appointment.Status = "Checked-In";
                     ApplyFilters();
                 }
                 
-                await JSRuntime.InvokeVoidAsync("alert", $"Appointment status updated to {newStatus}");
+                await ShowToast("Patient checked in successfully", "success");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to update appointment status");
+                await ShowToast("Failed to check in patient", "error");
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await ShowToast($"Error: {ex.Message}", "error");
         }
-    }
-
-    private async Task CheckInPatient(int appointmentId)
-    {
-        try
+        finally
         {
-            bool success = await ReceptionistService.CheckInPatientAsync(appointmentId, 1); // Replace 1 with actual receptionist ID
-            
-            if (success)
-            {
-                await UpdateAppointmentStatus(appointmentId, "Checked-In");
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Failed to check in patient");
-            }
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            IsPerformingAction = false;
+            ActionMessage = "";
+            StateHasChanged();
         }
     }
 
@@ -541,13 +579,23 @@
 
     private async Task CancelAppointment(int appointmentId)
     {
+        if (!IsAuthenticated || CurrentReceptionistId <= 0)
+        {
+            await ShowToast("Authentication error. Please log in again.", "error");
+            return;
+        }
+
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to cancel this appointment?");
         
         if (confirmed)
         {
             try
             {
-                bool success = await ReceptionistService.CancelAppointmentAsync(appointmentId, 1); // Replace 1 with actual receptionist ID
+                IsPerformingAction = true;
+                ActionMessage = "Cancelling appointment...";
+                StateHasChanged();
+
+                bool success = await ReceptionistService.CancelAppointmentAsync(appointmentId, CurrentReceptionistId);
                 
                 if (success)
                 {
@@ -559,17 +607,94 @@
                         ApplyFilters();
                     }
                     
-                    await JSRuntime.InvokeVoidAsync("alert", "Appointment cancelled successfully");
+                    await ShowToast("Appointment cancelled successfully", "success");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Failed to cancel appointment");
+                    await ShowToast("Failed to cancel appointment", "error");
                 }
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await ShowToast($"Error: {ex.Message}", "error");
             }
+            finally
+            {
+                IsPerformingAction = false;
+                ActionMessage = "";
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task MarkAsCompleted(int appointmentId)
+    {
+        await UpdateAppointmentStatus(appointmentId, "Completed");
+    }
+
+    private async Task UpdateAppointmentStatus(int appointmentId, string newStatus)
+    {
+        if (!IsAuthenticated || CurrentReceptionistId <= 0)
+        {
+            await ShowToast("Authentication error. Please log in again.", "error");
+            return;
+        }
+
+        try
+        {
+            IsPerformingAction = true;
+            ActionMessage = $"Updating appointment status to {newStatus}...";
+            StateHasChanged();
+
+            bool success = await ReceptionistService.UpdateAppointmentStatusAsync(appointmentId, newStatus, CurrentReceptionistId);
+            
+            if (success)
+            {
+                // Update local data
+                var appointment = AllAppointments.FirstOrDefault(a => a.AppointmentId == appointmentId);
+                if (appointment != null)
+                {
+                    appointment.Status = newStatus;
+                    ApplyFilters();
+                }
+                
+                await ShowToast($"Appointment status updated to {newStatus}", "success");
+            }
+            else
+            {
+                await ShowToast("Failed to update appointment status", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"Error: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsPerformingAction = false;
+            ActionMessage = "";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ShowToast(string message, string type = "info")
+    {
+        var alertClass = type switch
+        {
+            "success" => "alert-success",
+            "error" => "alert-danger",
+            "warning" => "alert-warning",
+            _ => "alert-info"
+        };
+        
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", message, alertClass);
+        }
+        catch (Exception ex)
+        {
+            // Fallback to console if toast fails
+            await JSRuntime.InvokeVoidAsync("console.log", $"Toast message: {message}");
         }
     }
 }

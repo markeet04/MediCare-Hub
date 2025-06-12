@@ -59,7 +59,6 @@
                                             <th class="py-3 px-4 text-muted">Note Preview</th>
                                             <th class="py-3 px-4 text-muted">Created</th>
                                             <th class="py-3 px-4 text-muted">Appointment</th>
-                                            <th class="py-3 px-4 text-muted text-end">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -103,25 +102,7 @@
                                                         <span class="text-muted">General Note</span>
                                                     }
                                                 </td>
-                                                <td class="py-3 px-4 align-middle text-end">
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="bi bi-three-dots-vertical"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu shadow-sm">
-                                                            <li>
-                                                                <a class="dropdown-item" href="#" @onclick="() => OpenNotesModal(note.PatientId, note.PatientName)" @onclick:preventDefault="true">
-                                                                    <i class="bi bi-eye me-2"></i>View Details
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a class="dropdown-item" href="#" @onclick="() => OpenNotesModal(note.PatientId, note.PatientName)" @onclick:preventDefault="true">
-                                                                    <i class="bi bi-plus me-2"></i>Add Note
-                                                                </a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
+                                                
                                             </tr>
                                         }
                                     </tbody>

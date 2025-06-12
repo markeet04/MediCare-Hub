@@ -84,6 +84,15 @@
                     </div>
                 }
             </div>
+            @if (notifications?.Count() > 5)
+            {
+                <div class="p-3 border-top text-center">
+                    <button class="btn btn-sm btn-primary rounded-pill px-4" 
+                            @onclick="ViewAllNotifications">
+                        View All Notifications
+                    </button>
+                </div>
+            }
         </div>
     }
 </div>  
@@ -146,11 +155,7 @@
                             <i class="bi bi-person me-3"></i>
                             <span>Profile</span>
                         </button>
-                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" 
-                                @onclick="GoToSettings">
-                            <i class="bi bi-gear me-3"></i>
-                            <span>Settings</span>
-                        </button>
+
                         <hr class="my-2">
                         <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0 text-danger" 
                                 @onclick="Logout">
@@ -240,8 +245,8 @@ else
                         <div class="list-group list-group-flush">
                             @foreach (var order in recentLabOrders.Take(5))
                             {
-                                <div class="list-group-item px-4 py-3 d-flex activity-item" @onclick="() => ViewTestDetails(order.LabOrderId)">
-                                    <div class="me-3">
+                                <div class="list-group-item px-4 py-3 d-flex activity-item" >
+                                    <div class="me-3">  
                                         <div class="rounded-circle @GetStatusColor(order.Status) text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 45px; height: 45px;">
                                             <i class="bi @GetStatusIcon(order.Status)"></i>
                                         </div>
@@ -270,37 +275,27 @@ else
             
             <!-- Test Volume Chart -->
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
-                    <h5 class="mb-0 fw-bold">Test Volume Trends</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-teal @(TestVolumeView == "Daily" ? "active" : "")" @onclick='() => SwitchTestVolumeView("Daily")'>Daily</button>
-                        <button class="btn btn-sm btn-outline-teal @(TestVolumeView == "Weekly" ? "active" : "")" @onclick='() => SwitchTestVolumeView("Weekly")'>Weekly</button>
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+        <h5 class="mb-0 fw-bold">Test Volume Trends</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container d-flex align-items-center justify-content-center" style="height: 300px; position: relative;">
+            <div class="text-center w-100">
+                <h6 class="text-muted mb-4 fs-5">Test Status Distribution</h6>
+                <div class="d-flex justify-content-center align-items-center gap-5">
+                    <div class="text-center">
+                        <div class="fw-bold text-teal stat-number">@((dashboardStats?.PendingOrders ?? 0))</div>
+                        <small class="text-muted stat-label">Pending</small>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="height: 300px; position: relative;">
-                        <div class="row h-100">
-                            <div class="col-6 d-flex flex-column justify-content-center">
-                                <div class="text-center mb-3">
-                                    <h6 class="text-muted">Test Status Distribution</h6>
-                                    <div class="d-flex justify-content-around mt-2">
-                                        <div class="text-center">
-                                            <div class="fw-bold text-teal">@(dashboardStats?.PendingOrders ?? 0)</div>
-                                            <small class="text-muted">Pending</small>
-                                        </div>
-                                     
-                                        <div class="text-center">
-                                            <div class="fw-bold text-success">@(dashboardStats?.TotalCompleted ?? 0)</div>
-                                            <small class="text-muted">Completed</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                      
-                        </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-success stat-number">@((dashboardStats?.TotalCompleted ?? 0))</div>
+                        <small class="text-muted stat-label">Completed</small>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
         </div>
         
         <div class="col-lg-4">
@@ -342,35 +337,65 @@ else
             </div>
             
             <!-- Recent Completed Tests -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 border-0">
-                    <h5 class="mb-0 fw-bold">Recently Completed</h5>
+            
+            </div>
+        </div>
+    
+}
+
+<!-- View All Notifications Modal -->
+@if (showAllNotificationsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.4);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">All Notifications</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAllNotificationsModal"></button>
                 </div>
-                <div class="card-body p-0">
-                    @if (completedLabOrders?.Any() == true)
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    @if (notifications?.Any() == true)
                     {
-                        <div class="list-group list-group-flush">
-                            @foreach (var order in completedLabOrders.Take(3))
-                            {
-                                <div class="list-group-item p-3" @onclick="() => ViewTestDetails(order.LabOrderId)">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="rounded bg-success bg-opacity-10 text-success fw-bold p-2 me-3 text-center" style="min-width: 45px;">
-                                            <i class="bi bi-check2-circle"></i>
+                        @foreach (var notification in notifications.OrderByDescending(n => n.CreatedAt))
+                        {
+                            <div class="p-3 border-bottom @(notification.IsRead ? "" : "bg-light")">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3 flex-shrink-0">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                            <i class="bi bi-info-circle text-primary"></i>
                                         </div>
-                                  
                                     </div>
-                                    <small class="text-muted">Completed @GetTimeAgo(order.CompletedAt ?? DateTime.Now)</small>
+                                    <div class="flex-grow-1">
+                                        @if (!string.IsNullOrEmpty(notification.Title))
+                                        {
+                                            <h6 class="mb-1 fw-semibold">@notification.Title</h6>
+                                        }
+                                        @if (!string.IsNullOrEmpty(notification.Message))
+                                        {
+                                            <p class="mb-1 text-muted small">@notification.Message</p>
+                                        }
+                                        <small class="text-muted">@GetTimeAgo(notification.CreatedAt)</small>
+                                    </div>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary rounded-circle" style="width: 8px; height: 8px;"></div>
+                                        </div>
+                                    }
                                 </div>
-                            }
-                        </div>
+                            </div>
+                        }
                     }
                     else
                     {
                         <div class="p-4 text-center text-muted">
-                            <i class="bi bi-clipboard-check fs-1 mb-3"></i>
-                            <p>No completed tests yet</p>
+                            <i class="bi bi-bell-slash fs-1 mb-3"></i>
+                            <p>No notifications</p>
                         </div>
                     }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAllNotificationsModal">Close</button>
                 </div>
             </div>
         </div>
@@ -394,6 +419,7 @@ private bool showNotifications = false;
     
     // UI state
     private bool showUserMenu = false;
+    private bool showAllNotificationsModal = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -450,6 +476,17 @@ private async Task MarkAllAsRead()
     notifications = await LabTechnicianService.GetNotificationsAsync(currentLabTechId);
     unreadNotificationCount = 0;
     StateHasChanged();
+}
+
+private void ViewAllNotifications()
+{
+    showAllNotificationsModal = true;
+    showNotifications = false;
+}
+
+private void CloseAllNotificationsModal()
+{
+    showAllNotificationsModal = false;
 }
 
 private void ToggleNotifications()
@@ -519,6 +556,7 @@ private void ToggleNotifications()
     private void ToggleUserMenu()
     {
         showUserMenu = !showUserMenu;
+        showNotifications = false;
     }
     
     private void GoToProfile()
@@ -527,11 +565,7 @@ private void ToggleNotifications()
         showUserMenu = false;
     }
     
-    private void GoToSettings()
-    {
-        Nav.NavigateTo("/lab/settings");
-        showUserMenu = false;
-    }
+
     
     private async Task Logout()
     {
@@ -546,10 +580,7 @@ private void ToggleNotifications()
         }
     }
 
-    private void ViewTestDetails(int orderId)
-    {
-        Nav.NavigateTo($"/lab/orders/{orderId}");
-    }
+
 
     // Navigation methods
     private void NavigateToPendingTests()
@@ -574,7 +605,7 @@ private void ToggleNotifications()
 
     private void NavigateToAllTests()
     {
-        Nav.NavigateTo("/lab/orders");
+        Nav.NavigateTo("/lab/pending-tests");
     }
 
     private void NavigateToSubmitResults()
@@ -596,7 +627,6 @@ private void ToggleNotifications()
 <style>
     .activity-item {
         transition: all 0.3s ease;
-        cursor: pointer;
     }
 
     .activity-item:hover {
@@ -626,7 +656,6 @@ private void ToggleNotifications()
 
     .lab-stat-card {
         overflow: hidden;
-        cursor: pointer;
         transition: transform 0.3s ease;
     }
 
@@ -653,7 +682,6 @@ private void ToggleNotifications()
     }
 
     .list-group-item {
-        cursor: pointer;
         transition: background-color 0.3s ease;
     }
 
@@ -676,4 +704,33 @@ private void ToggleNotifications()
         --bs-teal: #20c997;
         --bs-teal-rgb: 32, 201, 151;
     }
+    // ...existing code...
+.chart-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    position: relative;
+}
+
+.stat-number {
+    font-size: 3rem;
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 1.25rem;
+    letter-spacing: 0.5px;
+}
+
+@@media (max-width: 768px) {
+    .stat-number {
+        font-size: 2rem;
+    }
+    .stat-label {
+        font-size: 1rem;
+    }
+}
+// ...existing code...
 </style>

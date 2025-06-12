@@ -223,10 +223,7 @@
                             <i class="bi bi-person me-3"></i>
                             <span>Profile</span>
                         </button>
-                        <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" @onclick="GoToSettings">
-                            <i class="bi bi-gear me-3"></i>
-                            <span>Settings</span>
-                        </button>
+
                         <hr class="my-2">
                         <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0 text-danger" @onclick="Logout">
                             <i class="bi bi-box-arrow-right me-3"></i>
@@ -306,12 +303,8 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
                 <h5 class="mb-0 fw-bold">Upcoming Appointments</h5>
                 <div class="d-flex">
-                    <select class="form-select form-select-sm me-2" @bind="AppointmentFilter" @bind:after="FilterAppointments">
-                        <option value="all">All</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="pending">Pending</option>
-                    </select>
-                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="NavigateToManageAppointments">View All</button>
+                
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="OpenAllAppointmentsModal">View All</button>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -461,6 +454,96 @@
 </div>
 
 
+<!-- All Appointments Modal -->
+@if (ShowAllAppointmentsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3); z-index:2000;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">All Appointments</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAllAppointmentsModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 d-flex align-items-center">
+                        <label class="me-2 fw-semibold">Filter:</label>
+                        <select class="form-select form-select-sm w-auto" @bind="AllAppointmentsFilter" @bind:after="FilterAllAppointments">
+                            <option value="all">All</option>
+                            <option value="confirmed">Confirmed/Completed</option>
+                            <option value="pending">Pending</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    @if (FilteredAllAppointments != null && FilteredAllAppointments.Any())
+                    {
+                        <div class="table-responsive" style="max-height: 400px; overflow-y:auto;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Doctor</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        @if (AllAppointmentsFilter != "confirmed" && AllAppointmentsFilter != "cancelled")
+                                        {
+                                            <th>Actions</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var appointment in FilteredAllAppointments)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-wrapper rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+                                                        <span class="text-primary fw-bold">@GetInitials(appointment.PatientName)</span>
+                                                    </div>
+                                                    <div class="ms-2">
+                                                        <span>@appointment.PatientName</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@appointment.DoctorName</td>
+                                            <td>
+                                                <span>@appointment.ScheduledDateTime.ToString("MMM dd, h:mm tt")</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(appointment.Status) rounded-pill px-3 py-2">@appointment.Status</span>
+                                            </td>
+                                            @if (AllAppointmentsFilter != "confirmed" && AllAppointmentsFilter != "cancelled")
+                                            {
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary rounded-circle" @onclick="() => CheckInPatient(appointment.AppointmentId)" disabled="@(!IsCheckInEnabled(appointment.Status))" title="Check In">
+                                                        <i class="bi bi-check-lg"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger rounded-circle ms-1" @onclick="() => CancelAppointment(appointment.AppointmentId)" disabled="@(!IsCancelEnabled(appointment.Status))" title="Cancel">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted p-4">
+                            <i class="bi bi-calendar-x fs-1 mb-3"></i>
+                            <p class="mb-0">No appointments found</p>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAllAppointmentsModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     // Properties
     private ReceptionistProfileDto? CurrentReceptionist { get; set; }
@@ -480,6 +563,12 @@
     private bool ShowNotifications { get; set; }
     private bool IsLoading { get; set; } = true;
     private bool ShowUserMenu { get; set; } = false;
+
+    // Modal state and filtering for All Appointments
+    private bool ShowAllAppointmentsModal = false;
+    private string AllAppointmentsFilter { get; set; } = "all";
+    private List<AppointmentDto>? AllAppointments { get; set; }
+    private List<AppointmentDto>? FilteredAllAppointments { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -628,8 +717,8 @@ var notifications      = await ReceptionistService.GetReceptionistNotificationsA
         Nav.NavigateTo("/receptionist/profile");
         ShowUserMenu = false;
     }
-// ...existing code...
-private bool ShowAllNotificationsModal = false;
+
+    private bool ShowAllNotificationsModal = false;
 
 private void ViewAllNotifications()
 {
@@ -641,13 +730,7 @@ private void CloseAllNotificationsModal()
 {
     ShowAllNotificationsModal = false;
 }
-// ...existing code...
-    private void GoToSettings()
-    {
-        Nav.NavigateTo("/receptionist/settings");
-        ShowUserMenu = false;
-    }
-    
+
     private async Task Logout()
     {
         try
@@ -849,5 +932,69 @@ private void CloseAllNotificationsModal()
     public void Dispose()
     {
         // Clean up any event listeners or resources if needed
+    }
+
+    private void OpenAllAppointmentsModal()
+    {
+        ShowAllAppointmentsModal = true;
+        _ = LoadAllAppointments();
+    }
+
+    private void CloseAllAppointmentsModal()
+    {
+        ShowAllAppointmentsModal = false;
+    }
+
+    private async Task LoadAllAppointments()
+    {
+        if (AllAppointments == null)
+        {
+            // Optionally show a loading spinner in modal
+            var result = await ReceptionistService.GetRecentAppointmentsAsync(100); // Or use GetAllAppointmentsAsync if paging is needed
+            AllAppointments = result.ToList();
+        }
+        FilterAllAppointments();
+        StateHasChanged();
+    }
+
+    private void FilterAllAppointments()
+    {
+        if (AllAppointments == null)
+        {
+            FilteredAllAppointments = new List<AppointmentDto>();
+            return;
+        }
+        switch (AllAppointmentsFilter)
+        {
+            case "confirmed":
+                FilteredAllAppointments = AllAppointments.Where(a =>
+                    a.Status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) ||
+                    a.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+                break;
+            case "pending":
+                FilteredAllAppointments = AllAppointments.Where(a =>
+                    a.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+                break;
+            case "cancelled":
+                FilteredAllAppointments = AllAppointments.Where(a =>
+                    a.Status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+                break;
+            default:
+                FilteredAllAppointments = AllAppointments.ToList();
+                break;
+        }
+    }
+
+    // Helper to enable/disable check-in/cancel buttons
+    private bool IsCheckInEnabled(string status)
+    {
+        return status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) || status.Equals("Pending", StringComparison.OrdinalIgnoreCase);
+    }
+    private bool IsCancelEnabled(string status)
+    {
+        return !status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !status.Equals("Completed", StringComparison.OrdinalIgnoreCase);
     }
 }

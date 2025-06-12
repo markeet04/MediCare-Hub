@@ -60,7 +60,6 @@
                                     <th class="px-4 py-3">Status</th>
                                     <th class="px-4 py-3">Order Date</th>
                                     <th class="px-4 py-3">Assignment</th>
-                                    <th class="px-4 py-3">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -92,10 +91,7 @@
                                                 }
                                                 else if (order.AssignmentStatus == "Assigned" && order.Status == "InProgress")
                                                 {
-                                                    <button class="btn btn-sm btn-success rounded-pill px-3" 
-                                                            @onclick="() => NavigateToSubmitResults(order.LabOrderId)">
-                                                        <i class="bi bi-file-earmark-medical me-1"></i>Submit Results
-                                                    </button>
+                                                 
                                                 }
                                                 <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" 
                                                         @onclick="() => ViewOrderDetails(order.LabOrderId)">
@@ -145,48 +141,7 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="mb-0 fw-bold">Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-3">
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" 
-                            @onclick="() => NavigateToSubmitResults()">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-file-earmark-medical text-teal"></i>
-                            </div>
-                            <span>Submit Test Results</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" 
-                            @onclick="NavigateToCompletedTests">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-check2-circle text-teal"></i>
-                            </div>
-                            <span>View Completed Tests</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <button class="btn btn-outline-teal d-flex align-items-center justify-content-between p-3 rounded-3 quick-action-btn" 
-                            @onclick="RefreshOrders">
-                        <span class="d-flex align-items-center">
-                            <div class="rounded-circle bg-teal bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-arrow-clockwise text-teal"></i>
-                            </div>
-                            <span>Refresh Orders</span>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <!-- Claim Confirmation Modal -->
@@ -417,11 +372,7 @@
                     }
                     else if (SelectedOrderForView.AssignmentStatus == "Assigned" && SelectedOrderForView.Status == "InProgress")
                     {
-                        <button class="btn btn-success rounded-pill px-4" 
-                                @onclick="() => NavigateToSubmitResults(SelectedOrderForView.LabOrderId)"
-                                data-bs-dismiss="modal">
-                            <i class="bi bi-file-earmark-medical me-1"></i>Submit Results
-                        </button>
+                        
                     }
                 }
             </div>

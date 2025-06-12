@@ -181,11 +181,7 @@ else
                                 <i class="bi bi-person me-3"></i>
                                 <span>Profile</span>
                             </button>
-                            <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0" 
-                                    @onclick="GoToSettings">
-                                <i class="bi bi-gear me-3"></i>
-                                <span>Settings</span>
-                            </button>
+
                             <hr class="my-2">
                             <button class="btn btn-light w-100 d-flex align-items-center p-3 border-0 rounded-0 text-danger" 
                                     @onclick="Logout">
@@ -262,7 +258,7 @@ else
                         <div class="list-group list-group-flush">
                             @foreach (var appointment in TodayAppointments.OrderBy(a => a.ScheduledDateTime))
                             {
-                                <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" @onclick="() => ViewAppointmentDetails(appointment.AppointmentId)">
+                                <div class="list-group-item px-4 py-3 d-flex align-items-center appointment-item" >
                                     <div class="me-3 position-relative">
                                         <div class="rounded-circle bg-teal bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
                                             <span class="text-teal fw-bold">@GetPatientInitials(appointment.PatientName)</span>
@@ -502,11 +498,7 @@ private void CloseAllNotificationsModal()
         showUserMenu = false;
     }
     
-    private void GoToSettings()
-    {
-        Nav.NavigateTo("/doctor/settings");
-        showUserMenu = false;
-    }
+ 
     
     private async Task Logout()
     {
